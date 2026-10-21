@@ -175,6 +175,74 @@ jobs:
           source = source[:switch_match.start(1)] + switch_patch + source[switch_match.end(1):]
           settings.write_text(source, encoding="utf-8")
 
+          # Apply a real VGRAM dark graphite + muted gold palette to Telegram's actual default UI.
+          # This changes the chat list, action bars, common surfaces, text, dividers and message bubbles,
+          # rather than only adding a VGRAM label to Settings.
+          theme_colors = root / "TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java"
+          theme_source = theme_colors.read_text(encoding="utf-8")
+          palette = {
+              "key_windowBackgroundWhite": "0xff111214",
+              "key_dialogBackground": "0xff191a1d",
+              "key_dialogBackgroundGray": "0xff151619",
+              "key_windowBackgroundWhiteBlackText": "0xfff0f0ec",
+              "key_windowBackgroundWhiteGrayText": "0xffa0a09a",
+              "key_windowBackgroundWhiteGrayText2": "0xff92928d",
+              "key_windowBackgroundWhiteGrayText3": "0xff777872",
+              "key_windowBackgroundWhiteGrayText4": "0xff777872",
+              "key_windowBackgroundWhiteGrayText5": "0xffaaa9a1",
+              "key_windowBackgroundWhiteGrayText6": "0xff8c8c85",
+              "key_windowBackgroundWhiteHintText": "0xff777872",
+              "key_windowBackgroundWhiteBlueText": "0xffc5b878",
+              "key_windowBackgroundWhiteBlueText2": "0xffc5b878",
+              "key_windowBackgroundWhiteBlueText3": "0xffb5a75e",
+              "key_windowBackgroundWhiteBlueText4": "0xffd2c47d",
+              "key_windowBackgroundWhiteBlueText5": "0xffc5b878",
+              "key_windowBackgroundWhiteBlueText6": "0xffc5b878",
+              "key_windowBackgroundWhiteBlueText7": "0xffb5a75e",
+              "key_windowBackgroundWhiteBlueButton": "0xffb7a85e",
+              "key_windowBackgroundWhiteBlueIcon": "0xffc5b878",
+              "key_windowBackgroundWhiteLinkText": "0xffc5b878",
+              "key_windowBackgroundWhiteBlueHeader": "0xffc5b878",
+              "key_windowBackgroundWhiteInputField": "0xff393a3d",
+              "key_windowBackgroundWhiteInputFieldActivated": "0xffc5b878",
+              "key_listSelector": "0x18c5b878",
+              "key_divider": "0xff2b2c2f",
+              "key_actionBarDefault": "0xff151619",
+              "key_actionBarDefaultIcon": "0xffe5e4dd",
+              "key_actionBarDefaultTitle": "0xfff0f0ec",
+              "key_actionBarDefaultSubtitle": "0xff92928d",
+              "key_actionBarDefaultSelector": "0x18c5b878",
+              "key_actionBarDefaultSearch": "0xfff0f0ec",
+              "key_actionBarDefaultSearchPlaceholder": "0xff92928d",
+              "key_actionBarDefaultSubmenuItem": "0xfff0f0ec",
+              "key_actionBarDefaultSubmenuItemIcon": "0xffc5b878",
+              "key_actionBarDefaultSubmenuBackground": "0xff1b1c1f",
+              "key_actionBarDefaultSubmenuSeparator": "0xff303135",
+              "key_chats_unreadCounter": "0xffb7a85e",
+              "key_chats_unreadCounterMuted": "0xff55565a",
+              "key_chats_name": "0xfff0f0ec",
+              "key_chats_nameArchived": "0xffd6d5cf",
+              "key_chats_message": "0xffa0a09a",
+              "key_chats_messageArchived": "0xff858680",
+              "key_chats_message_threeLines": "0xff92928d",
+              "key_chats_nameMessage": "0xffc5b878",
+              "key_chats_nameMessageArchived": "0xffb5a75e",
+              "key_chats_nameMessage_threeLines": "0xffd2c47d",
+              "key_chats_nameMessageArchived_threeLines": "0xffaaa9a1",
+              "key_chat_inBubble": "0xff242528",
+              "key_chat_inBubbleSelected": "0xff34332c",
+              "key_chat_outBubble": "0xff393727",
+              "key_chat_outBubbleSelected": "0xff4a4630",
+              "key_chat_messagePanelBackground": "0xff191a1d",
+          }
+          for key, value in palette.items():
+              pattern = rf'(?m)^(\\s*defaultColors\\[{re.escape(key)}\\]\\s*=\\s*)[^;]+;'
+              theme_source, count = re.subn(pattern, rf'\\g<1>{value};', theme_source, count=1)
+              if count != 1:
+                  raise SystemExit("VGRAM palette could not patch ThemeColors key: " + key)
+          theme_colors.write_text(theme_source, encoding="utf-8")
+          print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
+
           props = root / "gradle.properties"
           text = props.read_text(encoding="utf-8")
           text = re.sub(r'(?m)^APP_VERSION_CODE=.*$', 'APP_VERSION_CODE=1', text)
