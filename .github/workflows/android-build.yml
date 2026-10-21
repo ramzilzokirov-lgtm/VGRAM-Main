@@ -74,13 +74,6 @@ jobs:
               "vgram_badge_uzi": ("U", "#B58AFF", "#F2C94C", "M13 13 L13 24 Q13 31 22 29 L31 13"),
           }
           for name, (letter, hair, accent, glyph) in badge_specs.items():
-              svg = f\'''<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="19" fill="#101010" fill-opacity="0.82" stroke="{accent}" stroke-width="1.8"/>
-                <path d="M9 17 Q8 4 22 5 Q36 5 35 17 L31 14 L28 9 L20 13 L14 10 Z" fill="{hair}"/>
-                <path d="{glyph}" fill="none" stroke="{accent}" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="16" cy="20" r="2.4" fill="{accent}"/><circle cx="28" cy="20" r="2.4" fill="{accent}"/>
-                <path d="M17 27 Q22 30 27 27" fill="none" stroke="#D9D9D9" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>\'''
               (drawable / (name + ".xml")).write_text(
                   '<?xml version="1.0" encoding="utf-8"?>\\n'
                   '<vector xmlns:android="http://schemas.android.com/apk/res/android" '
