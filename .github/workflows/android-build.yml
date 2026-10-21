@@ -118,6 +118,21 @@ jobs:
           buildvars.write_text(text, encoding="utf-8")
           PY
 
+      - name: Validate VGRAM build patch before compiling
+        working-directory: upstream
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
+          s = p.read_text(encoding="utf-8")
+          required = ['VGRAM — Оформление', 'Обновления VGRAM', 'Разработчики', 'case 27:', 'case 28:', 'case 29:']
+          missing = [x for x in required if x not in s]
+          if missing:
+              raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
+          print("VGRAM settings entries and handlers are present.")
+          PY
+
       - name: Build debug APK
         working-directory: upstream
         env:
