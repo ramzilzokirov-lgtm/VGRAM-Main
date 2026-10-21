@@ -1,0 +1,110 @@
+name: VGRAM Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/android-build.yml"
+      - "README.md"
+      - "VGRAM_FEATURES.md"
+      - "PLUGIN_API.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vgram-android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Fetch Telegram source and build VGRAM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout VGRAM build configuration
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+
+      - name: Fetch clean Telegram Android source
+        run: |
+          git clone --recursive --shallow-submodules --depth 1 https://github.com/DrKLO/Telegram.git upstream
+          cd upstream
+          git rev-parse HEAD | tee ../upstream-telegram-commit.txt
+
+      - name: Apply VGRAM bootstrap branding
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, re
+
+          root = Path("upstream")
+          strings = root / "TMessagesProj/src/main/res/values/strings.xml"
+          text = strings.read_text(encoding="utf-8")
+          text = re.sub(r'(<string\s+name="AppName">).*?(</string>)', r'\1VGRAM\2', text, count=1)
+          text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
+          strings.write_text(text, encoding="utf-8")
+
+          props = root / "gradle.properties"
+          text = props.read_text(encoding="utf-8")
+          text = re.sub(r'(?m)^APP_VERSION_CODE=.*$', 'APP_VERSION_CODE=1', text)
+          text = re.sub(r'(?m)^APP_VERSION_NAME=.*$', 'APP_VERSION_NAME=0.1', text)
+          # CI memory limit is smaller than a developer workstation.
+          text = re.sub(r'(?m)^org.gradle.jvmargs=.*$', 'org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8', text)
+          props.write_text(text, encoding="utf-8")
+
+          buildvars = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
+          text = buildvars.read_text(encoding="utf-8")
+          text = re.sub(r'public static boolean CHECK_UPDATES = true;', 'public static boolean CHECK_UPDATES = false;', text, count=1)
+          api_id = os.environ.get("TG_API_ID", "").strip()
+          api_hash = os.environ.get("TG_API_HASH", "").strip()
+          if api_id and api_hash:
+              if not api_id.isdigit():
+                  raise SystemExit("TG_API_ID must contain digits only")
+              text = re.sub(r'public static int APP_ID = \d+;', f'public static int APP_ID = {api_id};', text, count=1)
+              text = re.sub(r'public static String APP_HASH = "[^"]*";', f'public static String APP_HASH = "{api_hash}";', text, count=1)
+          else:
+              print("WARNING: TG_API_ID/TG_API_HASH secrets not both set; upstream development API values remain. Configure your own values before distribution.")
+          buildvars.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Build debug APK
+        working-directory: upstream
+        env:
+          ANDROID_NDK_HOME: ${{ github.workspace }}/upstream/${{ '' }}  # NDK is also resolved from sdkmanager's installed SDK
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+        run: |
+          chmod +x gradlew
+          ./gradlew :TMessagesProj_App:assembleAfatDebug --no-daemon --stacktrace
+
+      - name: Collect APK and build metadata
+        if: always()
+        run: |
+          mkdir -p output
+          find upstream/TMessagesProj_App/build/outputs/apk -type f -name "*.apk" -exec cp {} output/VGRAM-debug.apk \; 2>/dev/null || true
+          cp upstream-telegram-commit.txt output/ 2>/dev/null || true
+          printf 'VGRAM version: 0.1\nBuild run: %s\n' "${GITHUB_RUN_NUMBER}" > output/build-info.txt
+
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VGRAM-debug-apk
+          path: output/
+          if-no-files-found: error
+          retention-days: 14
