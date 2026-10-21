@@ -62,6 +62,21 @@ jobs:
           text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
           strings.write_text(text, encoding="utf-8")
 
+          # Add a visible VGRAM appearance entry to the existing profile/settings list.
+          profile = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+          ptext = profile.read_text(encoding="utf-8")
+          def replace_once(old, new, label):
+              global ptext
+              if old not in ptext:
+                  raise SystemExit("Could not apply VGRAM UI patch: " + label)
+              ptext = ptext.replace(old, new, 1)
+          replace_once("    private int privacyRow;", "    private int privacyRow;\n    private int vgramAppearanceRow;", "appearance row field")
+          replace_once("            } else if (position == privacyRow) {\n                presentFragment(new PrivacySettingsActivity().setCurrentPassword(currentPassword));", "            } else if (position == vgramAppearanceRow) {\n                presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));\n            } else if (position == privacyRow) {\n                presentFragment(new PrivacySettingsActivity().setCurrentPassword(currentPassword));", "appearance click handler")
+          replace_once("                chatRow = rowCount++;\n                privacyRow = rowCount++;", "                chatRow = rowCount++;\n                vgramAppearanceRow = rowCount++;\n                privacyRow = rowCount++;", "appearance row placement")
+          replace_once("                    } else if (position == privacyRow) {\n                        textCell.setTextAndIcon(LocaleController.getString(R.string.PrivacyPolicy), R.drawable.msg2_policy, false);", "                    } else if (position == vgramAppearanceRow) {\n                        textCell.setTextAndIcon(\"VGRAM: Оформление\", R.drawable.msg2_settings, true);\n                    } else if (position == privacyRow) {\n                        textCell.setTextAndIcon(LocaleController.getString(R.string.PrivacyPolicy), R.drawable.msg2_policy, false);", "appearance row label")
+          replace_once("return position == notificationRow || position == numberRow || position == privacyRow ||", "return position == notificationRow || position == numberRow || position == privacyRow || position == vgramAppearanceRow ||", "appearance row enabled state")
+          profile.write_text(ptext, encoding="utf-8")
+
           props = root / "gradle.properties"
           text = props.read_text(encoding="utf-8")
           text = re.sub(r'(?m)^APP_VERSION_CODE=.*$', 'APP_VERSION_CODE=1', text)
