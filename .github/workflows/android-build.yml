@@ -75,7 +75,7 @@ jobs:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
           source = source.replace(list_anchor, list_patch, 1)
           # Regex matching avoids brittle whitespace / indentation mismatches.
-          switch_pattern = r'(?m)(            case 26: \\{\\n                presentFragment\\(new AudioRecorderSettingsActivity\\(\\)\\);\\n                break;\\n            \\})'
+          switch_pattern = r'(?s)(case 26:\s*\{\s*presentFragment\(new AudioRecorderSettingsActivity\(\)\);\s*break;\s*\})'
           switch_match = re.search(switch_pattern, source)
           if not switch_match:
               raise SystemExit("VGRAM patch failed: SettingsActivity case 26 handler not found")
