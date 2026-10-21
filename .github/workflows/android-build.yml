@@ -9,6 +9,7 @@ on:
       - "README.md"
       - "VGRAM_FEATURES.md"
       - "PLUGIN_API.md"
+      - "VGRAM_ICON.png"
 
 permissions:
   contents: read
@@ -62,8 +63,35 @@ jobs:
           text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
           strings.write_text(text, encoding="utf-8")
 
-          # Profile UI patch is intentionally omitted until its upstream source anchor is verified.
-
+          # Integrate VGRAM entries into the real upstream SettingsActivity.
+          settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
+          source = settings.read_text(encoding="utf-8")
+          list_anchor = '        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));'
+          list_patch = list_anchor + '''
+          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "VGRAM — Оформление", "Темы и цвета интерфейса"));
+          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Обновления VGRAM", "Релизы и новые версии"));
+          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Разработчики", "Информация о проекте"));'''
+          if source.count(list_anchor) != 1:
+              raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
+          source = source.replace(list_anchor, list_patch, 1)
+          switch_anchor = '''            case 26: {
+                presentFragment(new AudioRecorderSettingsActivity());
+                break;
+            }'''
+          switch_patch = switch_anchor + '''
+            case 27:
+                presentSettingFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
+                break;
+            case 28:
+                Browser.openUrl(getParentActivity(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main/releases");
+                break;
+            case 29:
+                Browser.openUrl(getParentActivity(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main");
+                break;'''
+          if source.count(switch_anchor) != 1:
+              raise SystemExit("VGRAM patch failed: SettingsActivity click-handler anchor changed")
+          source = source.replace(switch_anchor, switch_patch, 1)
+          settings.write_text(source, encoding="utf-8")
 
           props = root / "gradle.properties"
           text = props.read_text(encoding="utf-8")
