@@ -86,7 +86,6 @@ jobs:
       - name: Build debug APK
         working-directory: upstream
         env:
-          ANDROID_NDK_HOME: ${{ github.workspace }}/upstream/${{ '' }}  # NDK is also resolved from sdkmanager's installed SDK
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
         run: |
           chmod +x gradlew
