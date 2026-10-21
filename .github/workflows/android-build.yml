@@ -114,6 +114,35 @@ jobs:
           """, encoding="utf-8")
           print("Restored missing upstream resources: preview_smile, wallet_action_card_gradient, wallet_card_diamond.")
 
+          # Restore every drawable named by the current upstream Java compile errors.
+          compatibility_drawables = {
+              "preview_back": """<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+              <path android:fillColor="#FFBDBDBD" android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20z"/>
+          </vector>
+          """,
+              "preview_mic": """<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+              <path android:fillColor="#FFBDBDBD" android:pathData="M12,14a3,3 0,0 0,3,-3V5a3,3 0,0 0,-6 0v6a3,3 0,0 0,3 3zM17,11a5,5 0,0 1,-10 0H5a7,7 0,0 0,6 6.93V21h2v-3.07A7,7 0,0 0,19 11z"/>
+          </vector>
+          """,
+              "dino_pic": """<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="64dp" android:height="64dp" android:viewportWidth="64" android:viewportHeight="64">
+              <path android:fillColor="#FF83B56B" android:pathData="M12,42V27l8,-8h17l8,6h7v10h-8v8h-8v-7h-8v7h-8v-5z"/>
+              <path android:fillColor="#FFB8D7A2" android:pathData="M20,22l4,-7h12l5,8z"/>
+              <path android:fillColor="#FF263238" android:pathData="M34,25a3,3 0,1 0,6 0a3,3 0,1 0,-6 0"/>
+              <path android:fillColor="#FFFFD166" android:pathData="M46,29h10l-4,5h-6z"/>
+              <path android:fillColor="#FF5B8C4F" android:pathData="M12,42h8v8h-8zM36,42h8v8h-8z"/>
+          </vector>
+          """
+          }
+          for name, xml in compatibility_drawables.items():
+              (drawable_res / (name + ".xml")).write_text(xml, encoding="utf-8")
+          print("Restored additional compile-time drawables: preview_back, preview_mic, dino_pic.")
+
           # Integrate VGRAM entries into the real upstream SettingsActivity.
           settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
           source = settings.read_text(encoding="utf-8")
@@ -182,6 +211,12 @@ jobs:
           if missing:
               raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
           print("VGRAM settings entries and handlers are present.")
+          required_drawables = ["preview_smile", "preview_back", "preview_mic", "dino_pic", "wallet_action_card_gradient", "wallet_card_diamond"]
+          drawable_dir = Path("TMessagesProj/src/main/res/drawable")
+          missing_drawables = [name for name in required_drawables if not (drawable_dir / (name + ".xml")).is_file()]
+          if missing_drawables:
+              raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
+          print("All compatibility drawables needed by the build are present.")
           PY
 
       - name: Build debug APK
