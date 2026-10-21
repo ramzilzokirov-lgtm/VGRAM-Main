@@ -63,6 +63,36 @@ jobs:
           text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
           strings.write_text(text, encoding="utf-8")
 
+          # Generate four transparent VGRAM character-style badge assets in the build tree.
+          # SVG vector art is kept inside this single workflow file; no extra repository files needed.
+          drawable = root / "TMessagesProj/src/main/res/drawable-nodpi"
+          drawable.mkdir(parents=True, exist_ok=True)
+          badge_specs = {
+              "vgram_badge_n": ("N", "#D8DCE8", "#F2C94C", "M18 12 L30 28 L30 12"),
+              "vgram_badge_v": ("V", "#D8DCE8", "#F2C94C", "M13 13 L22 29 L31 13"),
+              "vgram_badge_j": ("J", "#D8DCE8", "#F2C94C", "M29 13 L29 25 Q29 31 22 29"),
+              "vgram_badge_uzi": ("U", "#B58AFF", "#F2C94C", "M13 13 L13 24 Q13 31 22 29 L31 13"),
+          }
+          for name, (letter, hair, accent, glyph) in badge_specs.items():
+              svg = f\'''<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="19" fill="#101010" fill-opacity="0.82" stroke="{accent}" stroke-width="1.8"/>
+                <path d="M9 17 Q8 4 22 5 Q36 5 35 17 L31 14 L28 9 L20 13 L14 10 Z" fill="{hair}"/>
+                <path d="{glyph}" fill="none" stroke="{accent}" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="16" cy="20" r="2.4" fill="{accent}"/><circle cx="28" cy="20" r="2.4" fill="{accent}"/>
+                <path d="M17 27 Q22 30 27 27" fill="none" stroke="#D9D9D9" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>\'''
+              (drawable / (name + ".xml")).write_text(
+                  '<?xml version="1.0" encoding="utf-8"?>\\n'
+                  '<vector xmlns:android="http://schemas.android.com/apk/res/android" '
+                  'android:width="48dp" android:height="48dp" android:viewportWidth="44" android:viewportHeight="44">'
+                  '<path android:fillColor="#101010" android:fillAlpha="0.82" android:pathData="M22,3 A19,19 0,1 0,22 41 A19,19 0,1 0,22 3"/>'
+                  f'<path android:fillColor="{hair}" android:pathData="M9,17 C8,4 36,5 35,17 L31,14 L28,9 L20,13 L14,10 Z"/>'
+                  f'<path android:fillColor="#00000000" android:strokeColor="{accent}" android:strokeWidth="3.1" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="{glyph.replace("M", "M", 1)}"/>'
+                  f'<path android:fillColor="{accent}" android:pathData="M13.6,20 a2.4,2.4 0,1 0,4.8 0 a2.4,2.4 0,1 0,-4.8 0 M25.6,20 a2.4,2.4 0,1 0,4.8 0 a2.4,2.4 0,1 0,-4.8 0"/>'
+                  '<path android:fillColor="#00000000" android:strokeColor="#D9D9D9" android:strokeWidth="1.2" android:pathData="M17,27 Q22,30 27,27"/>'
+                  '</vector>', encoding="utf-8")
+          print("Generated transparent-background N, V, J and Uzi badge vector resources.")
+
           # Integrate VGRAM entries into the real upstream SettingsActivity.
           settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
           source = settings.read_text(encoding="utf-8")
