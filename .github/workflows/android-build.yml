@@ -236,8 +236,8 @@ jobs:
               "key_chat_messagePanelBackground": "0xff191a1d",
           }
           for key, value in palette.items():
-              pattern = rf'(?m)^(\\s*defaultColors\\[{re.escape(key)}\\]\\s*=\\s*)[^;]+;'
-              theme_source, count = re.subn(pattern, rf'\\g<1>{value};', theme_source, count=1)
+              pattern = rf'(?m)^(\s*defaultColors\[{re.escape(key)}\]\s*=\s*)[^;]+;'
+              theme_source, count = re.subn(pattern, rf'\g<1>{value};', theme_source, count=1)
               if count != 1:
                   raise SystemExit("VGRAM palette could not patch ThemeColors key: " + key)
           theme_colors.write_text(theme_source, encoding="utf-8")
