@@ -74,23 +74,25 @@ jobs:
           if source.count(list_anchor) != 1:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
           source = source.replace(list_anchor, list_patch, 1)
-          switch_anchor = '''            case 26: {
-                presentFragment(new AudioRecorderSettingsActivity());
+          # Regex matching avoids brittle whitespace / indentation mismatches.
+          switch_pattern = r'(?m)(            case 26: \\{\\n                presentFragment\\(new AudioRecorderSettingsActivity\\(\\)\\);\\n                break;\\n            \\})'
+          switch_match = re.search(switch_pattern, source)
+          if not switch_match:
+              raise SystemExit("VGRAM patch failed: SettingsActivity case 26 handler not found")
+          switch_patch = switch_match.group(1) + '''
+            case 27: {
+                presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
+                break;
+            }
+            case 28: {
+                Browser.openUrl(getContext(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main/releases");
+                break;
+            }
+            case 29: {
+                Browser.openUrl(getContext(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main");
                 break;
             }'''
-          switch_patch = switch_anchor + '''
-            case 27:
-                presentSettingFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
-                break;
-            case 28:
-                Browser.openUrl(getParentActivity(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main/releases");
-                break;
-            case 29:
-                Browser.openUrl(getParentActivity(), "https://github.com/ramzilzokirov-lgtm/VGRAM-Main");
-                break;'''
-          if source.count(switch_anchor) != 1:
-              raise SystemExit("VGRAM patch failed: SettingsActivity click-handler anchor changed")
-          source = source.replace(switch_anchor, switch_patch, 1)
+          source = source[:switch_match.start(1)] + switch_patch + source[switch_match.end(1):]
           settings.write_text(source, encoding="utf-8")
 
           props = root / "gradle.properties"
