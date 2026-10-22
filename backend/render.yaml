@@ -1,21 +1,15 @@
-databases:
-  - name: vgram-db
-    plan: basic-256mb
-    databaseName: vgram
-    user: vgram
-
 services:
   - type: web
     name: vgram-backend
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
     healthCheckPath: /health
     envVars:
+      # Set this to a free PostgreSQL connection string, e.g. Neon Free.
+      # sync:false makes Render ask for the value instead of provisioning a paid database.
       - key: DATABASE_URL
-        fromDatabase:
-          name: vgram-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
