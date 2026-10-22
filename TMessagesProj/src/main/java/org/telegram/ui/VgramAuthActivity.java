@@ -142,7 +142,7 @@ public final class VgramAuthActivity extends Activity {
                     client.getCurrentUser(new VgramApiClient.Callback() {
                         @Override public void onSuccess(JSONObject user) {
                             runOnUiThread(() -> {
-                                String number = user.optString("internal_number", "не назначен");
+                                String number = user.optString("number", "не назначен");
                                 String name = user.optString("display_name", username);
                                 status.setText("Вы вошли как " + name + "\nНомер VGRAM: " + number
                                         + "\nНа старте доступен аккаунт и API. Интерфейс чатов ещё подключается.");
