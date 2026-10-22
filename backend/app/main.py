@@ -134,6 +134,11 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)) -> AuthRespon
     user = User(number=issue_number(db), username=username, display_name=display_name, password_hash=password_hash.hash(body.password), stars=STARTER_STARS)
     db.add(user)
     try:
+        # Keep account creation and the one-time starter grant in one transaction:
+        # either both persist, or neither does.
+        db.flush()
+        from .stars import StarLedger
+        db.add(StarLedger(user_id=user.id, delta=STARTER_STARS, reason="signup_bonus"))
         db.commit()
     except Exception as exc:
         db.rollback()
@@ -141,10 +146,6 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)) -> AuthRespon
             raise HTTPException(status_code=409, detail="Username is already taken") from None
         raise
     db.refresh(user)
-    # Record the one-time starter grant after successful account creation.
-    from .stars import StarLedger
-    db.add(StarLedger(user_id=user.id, delta=STARTER_STARS, reason="signup_bonus"))
-    db.commit()
     return AuthResponse(access_token=token_for(user), expires_in=TOKEN_MINUTES * 60, user=user)
 
 
