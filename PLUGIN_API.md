@@ -1,37 +1,41 @@
-# VGRAM plugin API — initial safety specification
+# VGRAM Plugin API v1
 
-This is a design document, not an implemented runtime.
+This API is implemented as a **declarative JSON manifest**. It does not execute downloaded Java, Kotlin, DEX, JAR, native libraries, or scripts. Imported manifests are stored locally and can be disabled or removed from **Settings → VGRAM Studio → Plugins VGRAM**.
 
-## Initial supported plugin types
+## Supported manifest
 
-The first plugin API should support declarative data only:
-- Theme palette and typography presets.
-- Animation presets selected from an allowlist of built-in transitions.
-- Settings-page descriptors with validated labels and bounded values.
+Save the following as `dusk-theme.json` and import it from the plugin manager:
 
-Do not support loading arbitrary Java, Kotlin, DEX, JAR, native libraries, scripts, or executable code from downloaded plugins in the initial version.
+```json
+{
+  "id": "org.vgram.theme.dusk",
+  "name": "Dusk Gold",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "A muted gold accent for the VGRAM interface.",
+  "capabilities": ["theme"],
+  "accentColor": "#C5B878"
+}
+```
 
-## Manifest
+## Manifest fields
 
-A future plugin manifest may be a JSON document with:
-- `id`: reverse-domain identifier, unique and stable.
-- `name`: display name.
-- `version`: semantic version.
-- `apiVersion`: supported VGRAM plugin API version.
-- `description`: short description.
-- `capabilities`: explicit allowlisted capabilities (initially only `theme`, `animationPreset`, and `settings`).
+- `id`: stable identifier, 3–80 characters; letters, digits, `.`, `_`, and `-` only.
+- `name`: required display name, up to 60 characters.
+- `version`: required version label, up to 32 characters.
+- `apiVersion`: must be `1`.
+- `description`: optional, up to 240 characters.
+- `capabilities`: non-empty list containing only `theme` or `animationPreset`.
+- `accentColor`: optional `#RRGGBB` color for a theme manifest.
+- `animationPreset`: optional built-in value `soft` or `none`.
 
-The manifest format alone does not grant permissions. Unknown fields and capabilities must be rejected. Validate lengths, ranges, color formats and animation identifiers. Never allow a plugin to request Telegram account data, messages, contacts, tokens, filesystem access or network access through this first API.
+Unknown fields and unsupported capabilities are rejected. Manifest files are limited to 64 KiB. Enabling a theme can change the VGRAM accent color; enabling an animation preset toggles the built-in soft animations. A plugin does not receive access to Telegram messages, contacts, account credentials, or network APIs.
 
-## Trust and distribution
+## Trust and limitations
 
-- Show the source, version and requested capabilities before enabling a plugin.
-- Keep plugins disabled by default and provide a one-tap disable/remove action.
-- Verify signed release metadata and artifact hashes before install.
-- Do not treat a checksum from the same untrusted download location as proof of publisher identity.
-- Do not bundle secrets in the APK or plugin.
-- Keep an audit log of owner-issued badge changes separately from plugin settings.
-
-## Compatibility
-
-Increment `apiVersion` only with documented migration behavior. Reject incompatible plugins safely and keep the base messenger functional if a plugin is invalid.
+- Import only manifests from sources you trust. A checksum by itself does not prove who published a plugin.
+- Plugins are local to this device and are not synchronized to other devices.
+- This first API is not a marketplace and does not load executable code.
+- Disabling or removing a plugin is available in the in-app plugin manager.
+- VGRAM profile badges and owner-only badge issuance are separate features; a plugin cannot grant badges or claim Telegram verification.
+- API changes must be versioned and documented. Incompatible API versions are rejected.
