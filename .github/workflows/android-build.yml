@@ -638,6 +638,8 @@ jobs:
           import android.net.Uri;
           import android.os.Bundle;
           import android.widget.LinearLayout;
+          import org.telegram.messenger.BuildVars;
+          import org.telegram.messenger.VgramApiDiagnostics;
 
           public class VgramDevelopersActivity extends VgramBaseActivity {
               @Override protected void onCreate(Bundle state) {
@@ -651,6 +653,21 @@ jobs:
                   String version = "неизвестна";
                   try { version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception ignored) { }
                   card("Установленная версия", "VGRAM " + version + "\n\nПроверка и загрузка обновлений доступны внутри приложения.");
+                  String hashStatus = "не задан";
+                  try {
+                      if (BuildVars.APP_HASH != null && !BuildVars.APP_HASH.trim().isEmpty()) {
+                          java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                          byte[] bytes = digest.digest(BuildVars.APP_HASH.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                          StringBuilder fingerprint = new StringBuilder();
+                          for (byte b : bytes) fingerprint.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+                          hashStatus = fingerprint.toString().equals(VgramApiDiagnostics.UPSTREAM_APP_HASH_SHA256) ? "совпадает с исходником" : "отличается от исходника";
+                      }
+                  } catch (Exception ignored) { hashStatus = "не удалось проверить"; }
+                  String idStatus = BuildVars.APP_ID == VgramApiDiagnostics.UPSTREAM_APP_ID ? "совпадает с исходником" : "отличается от исходника";
+                  card("Диагностика Telegram API",
+                      "API ID: " + BuildVars.APP_ID + " (" + idStatus + ")\\nAPI Hash: " + hashStatus +
+                      "\\nIP дата-центра: автоматически из конфигурации Telegram — адреса не зашиты в приложение." +
+                      "\\nХеш API не отображается. Сравнение проводится с исходником Telegram, использованным при этой сборке.");
               }
 
               private void open(String url) {
@@ -1083,6 +1100,22 @@ jobs:
 
           buildvars = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
           text = buildvars.read_text(encoding="utf-8")
+          # Capture the actual upstream API constants before optional VGRAM credentials replace them.
+          import hashlib
+          original_id_match = re.search(r'public static int APP_ID = (\\d+);', text)
+          original_hash_match = re.search(r'public static String APP_HASH = "([^"]*)";', text)
+          if not original_id_match or not original_hash_match:
+              raise SystemExit("VGRAM API diagnostics failed: upstream BuildVars constants not found")
+          original_api_id = original_id_match.group(1)
+          original_api_hash_sha256 = hashlib.sha256(original_hash_match.group(1).encode("utf-8")).hexdigest()
+          diagnostics = root / "TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java"
+          diagnostics.write_text(
+              "package org.telegram.messenger;\\n\\n" +
+              "public final class VgramApiDiagnostics {\\n" +
+              "    public static final int UPSTREAM_APP_ID = " + original_api_id + ";\\n" +
+              "    public static final String UPSTREAM_APP_HASH_SHA256 = \\"" + original_api_hash_sha256 + "\\";\\n" +
+              "    private VgramApiDiagnostics() {}\\n" +
+              "}\\n", encoding="utf-8")
           text = re.sub(r'public static boolean CHECK_UPDATES = true;', 'public static boolean CHECK_UPDATES = false;', text, count=1)
           api_id = os.environ.get("TG_API_ID", "").strip()
           api_hash = os.environ.get("TG_API_HASH", "").strip()
@@ -1121,7 +1154,16 @@ jobs:
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
           if any(name not in manifest for name in ["VgramSettingsActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "vgram_launcher_icon"]):
               raise SystemExit("VGRAM Android manifest integration incomplete")
-          print("VGRAM custom screen classes and launcher icon are registered.")
+          api_diagnostics = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java")
+          if not api_diagnostics.is_file():
+              raise SystemExit("VGRAM API diagnostics source missing")
+          gradle = Path("TMessagesProj/build.gradle").read_text(encoding="utf-8")
+          if "com.google.android.material:material:1.12.0" not in gradle:
+              raise SystemExit("VGRAM Material Components dependency missing")
+          for theme in ["Theme.Material3.DayNight.NoActionBar"]:
+              if theme not in manifest:
+                  raise SystemExit("VGRAM Material 3 activity theme missing")
+          print("VGRAM custom screens, API diagnostics and Material 3 dependencies are registered.")
           PY
 
       - name: Prepare stable VGRAM signing key
