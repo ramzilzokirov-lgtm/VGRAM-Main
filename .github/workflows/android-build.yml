@@ -853,22 +853,24 @@ jobs:
           text = re.sub(r"(?m)^APP_VERSION_CODE=.*$", "APP_VERSION_CODE=" + run_number, text)
           text = re.sub(r"(?m)^APP_VERSION_NAME=.*$", "APP_VERSION_NAME=" + version_name, text)
           text = re.sub(r"(?m)^APP_PACKAGE=.*$", "APP_PACKAGE=org.vgram.messenger", text)
-          # Keep Google Services resource generation working for VGRAM's independent package ID.
+          # Firebase's Google Services Gradle plugin requires a client entry for each
+          # Android applicationId, including the beta flavor's .beta suffix.
           import json
           google_services = root / "TMessagesProj_App/google-services.json"
           if google_services.is_file():
               google_data = json.loads(google_services.read_text(encoding="utf-8"))
               clients = google_data.get("client", [])
-              existing = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == "org.vgram.messenger"), None)
-              if existing is None:
-                  template = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == "org.telegram.messenger"), None)
-                  if template is None:
-                      raise SystemExit("VGRAM build patch failed: no upstream Firebase client template found")
-                  cloned = json.loads(json.dumps(template))
-                  cloned["client_info"]["android_client_info"]["package_name"] = "org.vgram.messenger"
-                  clients.append(cloned)
-                  google_data["client"] = clients
-                  google_services.write_text(json.dumps(google_data, indent=2) + "\n", encoding="utf-8")
+              template = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") in ("org.telegram.messenger", "org.telegram.messenger.beta")), None)
+              if template is None:
+                  raise SystemExit("VGRAM build patch failed: no upstream Firebase client template found")
+              for package_name in ("org.vgram.messenger", "org.vgram.messenger.beta"):
+                  existing = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == package_name), None)
+                  if existing is None:
+                      cloned = json.loads(json.dumps(template))
+                      cloned["client_info"]["android_client_info"]["package_name"] = package_name
+                      clients.append(cloned)
+              google_data["client"] = clients
+              google_services.write_text(json.dumps(google_data, indent=2) + "\n", encoding="utf-8")
           # CI memory limit is smaller than a developer workstation.
           text = re.sub(r'(?m)^org.gradle.jvmargs=.*$', 'org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8', text)
           props.write_text(text, encoding="utf-8")
