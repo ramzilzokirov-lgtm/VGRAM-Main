@@ -10,6 +10,7 @@ on:
       - "VGRAM_FEATURES.md"
       - "PLUGIN_API.md"
       - "VGRAM_ICON.png"
+      - "TELEGRAM_UPSTREAM_COMMIT.txt"
 
 permissions:
   contents: write
@@ -43,9 +44,17 @@ jobs:
 
       - name: Fetch clean Telegram Android source
         run: |
-          git clone --recursive --shallow-submodules --depth 1 https://github.com/DrKLO/Telegram.git upstream
-          cd upstream
-          git rev-parse HEAD | tee ../upstream-telegram-commit.txt
+          UPSTREAM_COMMIT="$(tr -d '\r\n' < TELEGRAM_UPSTREAM_COMMIT.txt)"
+          if [[ ! "$UPSTREAM_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "TELEGRAM_UPSTREAM_COMMIT.txt must contain a full 40-character commit SHA."
+            exit 1
+          fi
+          git init upstream
+          git -C upstream remote add origin https://github.com/DrKLO/Telegram.git
+          git -C upstream fetch --depth 1 origin "$UPSTREAM_COMMIT"
+          git -C upstream checkout --detach FETCH_HEAD
+          git -C upstream submodule update --init --recursive --depth 1
+          git -C upstream rev-parse HEAD | tee upstream-telegram-commit.txt
 
       - name: Apply VGRAM bootstrap branding
         env:
