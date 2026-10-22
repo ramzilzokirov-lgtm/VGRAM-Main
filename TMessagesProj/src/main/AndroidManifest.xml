@@ -207,6 +207,8 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity-alias>
 
+                <activity android:name="org.telegram.ui.VgramAuthActivity" android:exported="false" android:label="VGRAM — аккаунт" />
+
         <activity
             android:name="org.telegram.ui.LaunchActivity"
             android:theme="@style/Theme.TMessages.Start"

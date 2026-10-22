@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vgram-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Set this to a free PostgreSQL connection string, e.g. Neon Free.
+      # sync:false makes Render ask for the value instead of provisioning a paid database.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
