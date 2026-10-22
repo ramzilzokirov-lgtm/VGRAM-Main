@@ -46,7 +46,17 @@ jobs:
         run: |
           set -euo pipefail
           UPSTREAM_COMMIT="$(tr -d '\r\n' < TELEGRAM_UPSTREAM_COMMIT.txt)"
-          if ! echo "$UPSTREAM_COMMIT" | grep -Eq '^[0-9a-f]{40}
+          if ! printf '%s' "$UPSTREAM_COMMIT" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "TELEGRAM_UPSTREAM_COMMIT.txt must contain a full 40-character commit SHA" >&2
+            exit 1
+          fi
+          git init upstream
+          git -C upstream remote add origin https://github.com/DrKLO/Telegram.git
+          git -C upstream fetch --depth 1 origin "$UPSTREAM_COMMIT"
+          git -C upstream checkout --detach FETCH_HEAD
+          git -C upstream submodule update --init --recursive --depth 1
+          git -C upstream rev-parse HEAD | tee upstream-telegram-commit.txt
+          test "$(cat upstream-telegram-commit.txt)" = "$UPSTREAM_COMMIT"
       - name: Apply VGRAM bootstrap branding
         env:
           TG_API_ID: ${{ secrets.TG_API_ID }}
