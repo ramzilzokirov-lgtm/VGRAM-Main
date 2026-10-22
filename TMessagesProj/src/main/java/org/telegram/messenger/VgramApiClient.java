@@ -86,6 +86,32 @@ public final class VgramApiClient {
         request("GET", "/v1/chats", null, true, callback);
     }
 
+    public void startChat(String internalNumber, Callback callback) {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("number", internalNumber);
+        } catch (JSONException e) {
+            callback.onError("Не удалось подготовить номер пользователя");
+            return;
+        }
+        request("POST", "/v1/chats", body, true, callback);
+    }
+
+    public void getMessages(String conversationId, Callback callback) {
+        request("GET", "/v1/chats/" + conversationId + "/messages", null, true, callback);
+    }
+
+    public void sendMessage(String conversationId, String message, Callback callback) {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("body", message);
+        } catch (JSONException e) {
+            callback.onError("Не удалось подготовить сообщение");
+            return;
+        }
+        request("POST", "/v1/chats/" + conversationId + "/messages", body, true, callback);
+    }
+
     public void getStarsBalance(Callback callback) {
         request("GET", "/v1/stars/balance", null, true, callback);
     }
