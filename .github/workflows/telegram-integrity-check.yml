@@ -1,0 +1,65 @@
+name: VGRAM Telegram Integrity Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify upstream Telegram source and API configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Fetch official Telegram Android source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/DrKLO/Telegram.git telegram-upstream
+          cd telegram-upstream
+          echo "UPSTREAM_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "Official Telegram source revision: $(git rev-parse HEAD)"
+
+      - name: Compare configured API values without printing secrets
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, sys
+          from pathlib import Path
+
+          source = Path("telegram-upstream/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java")
+          if not source.exists():
+              raise SystemExit("FAIL: upstream BuildVars.java was not found")
+          text = source.read_text(encoding="utf-8")
+
+          id_match = re.search(r'public\\s+static\\s+int\\s+APP_ID\\s*=\\s*(\\d+)\\s*;', text)
+          hash_match = re.search(r'public\\s+static\\s+String\\s+APP_HASH\\s*=\\s*"([^"]+)"\\s*;', text)
+          if not id_match or not hash_match:
+              raise SystemExit("FAIL: could not identify APP_ID / APP_HASH in upstream BuildVars.java")
+
+          upstream_id = id_match.group(1)
+          upstream_hash = hash_match.group(1)
+          configured_id = os.environ.get("TG_API_ID", "").strip()
+          configured_hash = os.environ.get("TG_API_HASH", "").strip()
+
+          print("Official source constants: found")
+          print("TG_API_ID secret: " + ("configured" if configured_id else "MISSING"))
+          print("TG_API_HASH secret: " + ("configured" if configured_hash else "MISSING"))
+          if not configured_id or not configured_hash:
+              print("RESULT: INCOMPLETE — add TG_API_ID and TG_API_HASH in GitHub Actions secrets.")
+              print("Do not paste credentials into workflow files or logs.")
+              sys.exit(1)
+
+          print("API ID matches upstream source: " + ("YES" if configured_id == upstream_id else "NO"))
+          print("API Hash matches upstream source: " + ("YES" if configured_hash == upstream_hash else "NO"))
+          print("API Hash value: hidden")
+          if configured_id == upstream_id and configured_hash == upstream_hash:
+              print("RESULT: configured API values match the checked-out upstream source.")
+          else:
+              print("RESULT: values differ from upstream constants. This is a comparison only; it does not prove the values are invalid.")
+          PY
