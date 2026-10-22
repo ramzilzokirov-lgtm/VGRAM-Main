@@ -18,14 +18,25 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Fetch official Telegram Android source
+      - name: Checkout VGRAM build configuration
+        uses: actions/checkout@v4
+
+      - name: Fetch pinned official Telegram Android source
         shell: bash
         run: |
           set -euo pipefail
-          git clone --depth 1 https://github.com/DrKLO/Telegram.git telegram-upstream
-          cd telegram-upstream
-          echo "UPSTREAM_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-          echo "Official Telegram source revision: $(git rev-parse HEAD)"
+          UPSTREAM_COMMIT="$(tr -d '\r\n' < TELEGRAM_UPSTREAM_COMMIT.txt)"
+          if [[ ! "$UPSTREAM_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "TELEGRAM_UPSTREAM_COMMIT.txt must contain a full 40-character commit SHA."
+            exit 1
+          fi
+          git init telegram-upstream
+          git -C telegram-upstream remote add origin https://github.com/DrKLO/Telegram.git
+          git -C telegram-upstream fetch --depth 1 origin "$UPSTREAM_COMMIT"
+          git -C telegram-upstream checkout --detach FETCH_HEAD
+          git -C telegram-upstream submodule update --init --recursive --depth 1
+          echo "UPSTREAM_COMMIT=$(git -C telegram-upstream rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "Pinned Telegram source revision: $(git -C telegram-upstream rev-parse HEAD)"
 
       - name: Compare configured API values without printing secrets
         env:
