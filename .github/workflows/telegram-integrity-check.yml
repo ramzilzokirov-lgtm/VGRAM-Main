@@ -37,8 +37,8 @@ jobs:
               raise SystemExit("FAIL: upstream BuildVars.java was not found")
           text = source.read_text(encoding="utf-8")
 
-          id_match = re.search(r'public\\s+static\\s+int\\s+APP_ID\\s*=\\s*(\\d+)\\s*;', text)
-          hash_match = re.search(r'public\\s+static\\s+String\\s+APP_HASH\\s*=\\s*"([^"]+)"\\s*;', text)
+          id_match = re.search(r'public\s+static\s+int\s+APP_ID\s*=\s*(\d+)\s*;', text)
+          hash_match = re.search(r'public\s+static\s+String\s+APP_HASH\s*=\s*"([^"]+)"\s*;', text)
           if not id_match or not hash_match:
               raise SystemExit("FAIL: could not identify APP_ID / APP_HASH in upstream BuildVars.java")
 
