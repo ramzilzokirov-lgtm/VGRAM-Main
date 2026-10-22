@@ -4,21 +4,20 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.content.SharedPreferences;
-import android.widget.Toast;
 
 import org.json.JSONObject;
 import org.telegram.messenger.VgramApiClient;
 
 /**
  * Initial independent VGRAM account screen. It is intentionally not made the
- * launcher until an HTTPS backend has been deployed and configured.
+ * launcher until an HTTPS backend has been deployed and configured. Tokens are kept
+ * in memory only; this screen deliberately does not persist bearer credentials in plaintext.
  */
 public final class VgramAuthActivity extends Activity {
     private static final String PREFS = "vgram_account";
@@ -135,14 +134,11 @@ public final class VgramAuthActivity extends Activity {
             return;
         }
         prefs.edit().putString("server_url", server).apply();
-        client.setAccessToken(prefs.getString("access_token", null));
         setBusy(true, register ? "Создаём аккаунт…" : "Выполняем вход…");
         VgramApiClient.Callback callback = new VgramApiClient.Callback() {
             @Override public void onSuccess(JSONObject response) {
                 runOnUiThread(() -> {
                     setBusy(false, "Успешно. Проверяю профиль…");
-                    String token = client.getAccessToken();
-                    if (token != null) prefs.edit().putString("access_token", token).apply();
                     client.getCurrentUser(new VgramApiClient.Callback() {
                         @Override public void onSuccess(JSONObject user) {
                             runOnUiThread(() -> {
