@@ -135,6 +135,7 @@ public final class VgramAuthActivity extends Activity {
             return;
         }
         prefs.edit().putString("server_url", server).apply();
+        client.setAccessToken(prefs.getString("access_token", null));
         setBusy(true, register ? "Создаём аккаунт…" : "Выполняем вход…");
         VgramApiClient.Callback callback = new VgramApiClient.Callback() {
             @Override public void onSuccess(JSONObject response) {
