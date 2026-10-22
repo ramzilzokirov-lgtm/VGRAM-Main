@@ -673,10 +673,23 @@ jobs:
                       }
                   } catch (Exception ignored) { hashStatus = "не удалось проверить"; }
                   String idStatus = BuildVars.APP_ID == VgramApiDiagnostics.UPSTREAM_APP_ID ? "совпадает с исходником" : "отличается от исходника";
-                  card("Диагностика Telegram API",
-                      "API ID: " + BuildVars.APP_ID + " (" + idStatus + ")\nAPI Hash: " + hashStatus +
-                      "\nIP дата-центра: автоматически из конфигурации Telegram — адреса не зашиты в приложение." +
-                      "\nХеш API не отображается. Сравнение проводится с исходником Telegram, использованным при этой сборке.");
+                  LinearLayout api = card("Параметры Telegram API",
+                      "Значения ниже — именно те, которые использует эта сборка VGRAM. Нажми кнопку, чтобы скопировать значение.\n\nAPI ID: " + BuildVars.APP_ID +
+                      "\nAPI Hash: " + (BuildVars.APP_HASH == null ? "не задан" : BuildVars.APP_HASH) +
+                      "\n\nAPI ID в исходнике: " + VgramApiDiagnostics.UPSTREAM_APP_ID + " (" + idStatus + ")" +
+                      "\nSHA-256 отпечаток исходного API Hash: " + VgramApiDiagnostics.UPSTREAM_APP_HASH_SHA256 +
+                      "\nIP-адреса дата-центров Telegram клиент получает динамически; фиксированный IP в коде не используется.");
+                  addButton(api, "Копировать API ID", () -> copyApiValue(String.valueOf(BuildVars.APP_ID)));
+                  addButton(api, "Копировать API Hash", () -> copyApiValue(BuildVars.APP_HASH == null ? "" : BuildVars.APP_HASH));
+              }
+
+              private void copyApiValue(String value) {
+                  android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                  if (clipboard != null) {
+                      clipboard.setPrimaryClip(android.content.ClipData.newPlainText("VGRAM Telegram API", value));
+                      android.widget.Toast.makeText(this, "Скопировано", android.widget.Toast.LENGTH_SHORT).show();
+                  }
+              }
               }
 
               private void open(String url) {
