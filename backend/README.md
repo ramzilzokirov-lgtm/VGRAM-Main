@@ -16,6 +16,10 @@
 - `POST /v1/auth/login` — вход по имени и паролю.
 - `GET /v1/users/me` — текущий пользователь (Bearer token).
 - `GET /v1/users/by-number/{number}` — поиск пользователя по внутреннему номеру (Bearer token).
+- `POST /v1/chats` — создать или открыть личный чат по номеру `+888`.
+- `GET /v1/chats` — список личных чатов.
+- `GET /v1/chats/{conversation_id}/messages` — история сообщений.
+- `POST /v1/chats/{conversation_id}/messages` — отправить текстовое сообщение.
 
 Пример регистрации:
 
