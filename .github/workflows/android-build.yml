@@ -177,198 +177,198 @@ jobs:
           ui_dir.mkdir(parents=True, exist_ok=True)
           (ui_dir / "VgramTheme.java").write_text(r'''package org.telegram.ui;
 
-import android.content.Context;
-import org.telegram.messenger.NotificationCenter;
-import org.telegram.ui.ActionBar.Theme;
+          import android.content.Context;
+          import org.telegram.messenger.NotificationCenter;
+          import org.telegram.ui.ActionBar.Theme;
 
-public final class VgramTheme {
-    private VgramTheme() {}
-    public static int accent(Context context) {
-        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", 0xffc5b878);
-    }
-    public static void apply(Context context) {
-        int a = accent(context);
-        Theme.setColor(Theme.key_windowBackgroundWhite, 0xff111214, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xfff0f0ec, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffa0a09a, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteBlueButton, a, false);
-        Theme.setColor(Theme.key_actionBarDefault, 0xff151619, false);
-        Theme.setColor(Theme.key_actionBarDefaultIcon, 0xffe5e4dd, false);
-        Theme.setColor(Theme.key_actionBarDefaultTitle, 0xfff0f0ec, false);
-        Theme.setColor(Theme.key_chats_unreadCounter, a, false);
-        Theme.setColor(Theme.key_chats_nameMessage, a, false);
-        Theme.setColor(Theme.key_chat_outBubble, blend(a, 0xff222326, 0.30f), false);
-        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
-    }
-    private static int blend(int foreground, int background, float amount) {
-        int r = (int) (android.graphics.Color.red(foreground) * amount + android.graphics.Color.red(background) * (1f - amount));
-        int g = (int) (android.graphics.Color.green(foreground) * amount + android.graphics.Color.green(background) * (1f - amount));
-        int b = (int) (android.graphics.Color.blue(foreground) * amount + android.graphics.Color.blue(background) * (1f - amount));
-        return android.graphics.Color.rgb(r, g, b);
-    }
-}
-''', encoding="utf-8")
+          public final class VgramTheme {
+              private VgramTheme() {}
+              public static int accent(Context context) {
+                  return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", 0xffc5b878);
+              }
+              public static void apply(Context context) {
+                  int a = accent(context);
+                  Theme.setColor(Theme.key_windowBackgroundWhite, 0xff111214, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xfff0f0ec, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffa0a09a, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlueButton, a, false);
+                  Theme.setColor(Theme.key_actionBarDefault, 0xff151619, false);
+                  Theme.setColor(Theme.key_actionBarDefaultIcon, 0xffe5e4dd, false);
+                  Theme.setColor(Theme.key_actionBarDefaultTitle, 0xfff0f0ec, false);
+                  Theme.setColor(Theme.key_chats_unreadCounter, a, false);
+                  Theme.setColor(Theme.key_chats_nameMessage, a, false);
+                  Theme.setColor(Theme.key_chat_outBubble, blend(a, 0xff222326, 0.30f), false);
+                  NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
+              }
+              private static int blend(int foreground, int background, float amount) {
+                  int r = (int) (android.graphics.Color.red(foreground) * amount + android.graphics.Color.red(background) * (1f - amount));
+                  int g = (int) (android.graphics.Color.green(foreground) * amount + android.graphics.Color.green(background) * (1f - amount));
+                  int b = (int) (android.graphics.Color.blue(foreground) * amount + android.graphics.Color.blue(background) * (1f - amount));
+                  return android.graphics.Color.rgb(r, g, b);
+              }
+          }
+          ''', encoding="utf-8")
 
           (ui_dir / "VgramBaseActivity.java").write_text(r'''package org.telegram.ui;
 
-import android.app.Activity;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
-import android.os.Bundle;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
+          import android.app.Activity;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.os.Bundle;
+          import android.view.Gravity;
+          import android.widget.LinearLayout;
+          import android.widget.ScrollView;
+          import android.widget.TextView;
 
-abstract class VgramBaseActivity extends Activity {
-    protected LinearLayout body;
-    protected int accent() { return VgramTheme.accent(this); }
-    protected int dp(float value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
+          abstract class VgramBaseActivity extends Activity {
+              protected LinearLayout body;
+              protected int accent() { return VgramTheme.accent(this); }
+              protected int dp(float value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
 
-    @Override protected void onCreate(Bundle state) { super.onCreate(state); }
+              @Override protected void onCreate(Bundle state) { super.onCreate(state); }
 
-    protected void setupScreen(String eyebrow, String title, String subtitle) {
-        getWindow().setStatusBarColor(0xff101114);
-        getWindow().setNavigationBarColor(0xff101114);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+              protected void setupScreen(String eyebrow, String title, String subtitle) {
+                  getWindow().setStatusBarColor(0xff101114);
+                  getWindow().setNavigationBarColor(0xff101114);
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
             new int[] { 0xff17191d, 0xff101114, 0xff141518 }));
-        root.setPadding(dp(18), dp(10), dp(18), dp(14));
+                  root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView back = label("‹", 31, 0xfff0f0ec, true);
-        back.setGravity(Gravity.CENTER);
-        back.setBackground(panel(0xff24262a, accent(), 18));
-        header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(46)));
-        back.setOnClickListener(v -> finish());
+                  LinearLayout header = new LinearLayout(this);
+                  header.setGravity(Gravity.CENTER_VERTICAL);
+                  TextView back = label("‹", 31, 0xfff0f0ec, true);
+                  back.setGravity(Gravity.CENTER);
+                  back.setBackground(panel(0xff24262a, accent(), 18));
+                  header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(46)));
+                  back.setOnClickListener(v -> finish());
 
-        LinearLayout brand = new LinearLayout(this);
-        brand.setOrientation(LinearLayout.VERTICAL);
-        brand.setPadding(dp(13), 0, 0, 0);
-        brand.addView(label("VGRAM  /  STUDIO", 11, accent(), true));
-        brand.addView(label(eyebrow, 10, 0xff8d8f94, true));
-        header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
-        root.addView(header, new LinearLayout.LayoutParams(-1, -2));
+                  LinearLayout brand = new LinearLayout(this);
+                  brand.setOrientation(LinearLayout.VERTICAL);
+                  brand.setPadding(dp(13), 0, 0, 0);
+                  brand.addView(label("VGRAM  /  STUDIO", 11, accent(), true));
+                  brand.addView(label(eyebrow, 10, 0xff8d8f94, true));
+                  header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
+                  root.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(false);
-        scroll.setClipToPadding(false);
-        scroll.setPadding(0, dp(12), 0, dp(8));
-        body = new LinearLayout(this);
-        body.setOrientation(LinearLayout.VERTICAL);
-        TextView heading = label(title, 29, 0xfff2f1ec, true);
-        body.addView(heading, margin(0, 0, 0, 7));
-        TextView description = label(subtitle, 14, 0xffa4a49f, false);
-        description.setLineSpacing(dp(3), 1f);
-        body.addView(description, margin(0, 0, 0, 19));
-        scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView footer = label("VGRAM  •  TELEGRAM NETWORK", 10, 0xff67696d, true);
-        footer.setGravity(Gravity.CENTER);
-        root.addView(footer, margin(0, dp(5), 0, 0));
-        setContentView(root);
-    }
+                  ScrollView scroll = new ScrollView(this);
+                  scroll.setFillViewport(false);
+                  scroll.setClipToPadding(false);
+                  scroll.setPadding(0, dp(12), 0, dp(8));
+                  body = new LinearLayout(this);
+                  body.setOrientation(LinearLayout.VERTICAL);
+                  TextView heading = label(title, 29, 0xfff2f1ec, true);
+                  body.addView(heading, margin(0, 0, 0, 7));
+                  TextView description = label(subtitle, 14, 0xffa4a49f, false);
+                  description.setLineSpacing(dp(3), 1f);
+                  body.addView(description, margin(0, 0, 0, 19));
+                  scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
+                  root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+                  TextView footer = label("VGRAM  •  TELEGRAM NETWORK", 10, 0xff67696d, true);
+                  footer.setGravity(Gravity.CENTER);
+                  root.addView(footer, margin(0, dp(5), 0, 0));
+                  setContentView(root);
+              }
 
-    protected LinearLayout card(String title, String description) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(17), dp(17), dp(17), dp(17));
-        boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
-        int fill = glass ? 0xe51e2024 : 0xff1e2024;
-        int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
-        card.setBackground(panel(fill, stroke, 24));
-        card.addView(label(title, 16, 0xfff1f0eb, true), margin(0, 0, 0, 7));
-        TextView sub = label(description, 13, 0xffa3a49f, false);
-        sub.setLineSpacing(dp(3), 1f);
-        card.addView(sub);
-        body.addView(card, margin(0, 0, 0, 12));
-        return card;
-    }
+              protected LinearLayout card(String title, String description) {
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setPadding(dp(17), dp(17), dp(17), dp(17));
+                  boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
+                  int fill = glass ? 0xe51e2024 : 0xff1e2024;
+                  int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
+                  card.setBackground(panel(fill, stroke, 24));
+                  card.addView(label(title, 16, 0xfff1f0eb, true), margin(0, 0, 0, 7));
+                  TextView sub = label(description, 13, 0xffa3a49f, false);
+                  sub.setLineSpacing(dp(3), 1f);
+                  card.addView(sub);
+                  body.addView(card, margin(0, 0, 0, 12));
+                  return card;
+              }
 
-    protected TextView label(String value, float size, int color, boolean bold) {
-        TextView text = new TextView(this);
-        text.setText(value);
-        text.setTextSize(size);
-        text.setTextColor(color);
-        text.setTypeface(Typeface.create(bold ? "sans-serif-medium" : "sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL));
-        text.setIncludeFontPadding(true);
-        return text;
-    }
+              protected TextView label(String value, float size, int color, boolean bold) {
+                  TextView text = new TextView(this);
+                  text.setText(value);
+                  text.setTextSize(size);
+                  text.setTextColor(color);
+                  text.setTypeface(Typeface.create(bold ? "sans-serif-medium" : "sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL));
+                  text.setIncludeFontPadding(true);
+                  return text;
+              }
 
-    protected TextView addButton(LinearLayout parent, String value, Runnable action) {
-        TextView button = label(value, 14, 0xff171713, true);
-        button.setGravity(Gravity.CENTER);
-        button.setPadding(dp(16), dp(14), dp(16), dp(14));
-        button.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+              protected TextView addButton(LinearLayout parent, String value, Runnable action) {
+                  TextView button = label(value, 14, 0xff171713, true);
+                  button.setGravity(Gravity.CENTER);
+                  button.setPadding(dp(16), dp(14), dp(16), dp(14));
+                  button.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
             new int[] { accent(), darken(accent()) }));
-        button.setClickable(true);
-        button.setFocusable(true);
-        button.setOnClickListener(v -> {
+                  button.setClickable(true);
+                  button.setFocusable(true);
+                  button.setOnClickListener(v -> {
             if (getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("animations", true)) {
                 v.animate().scaleX(0.98f).scaleY(0.98f).setDuration(70).withEndAction(() ->
                     v.animate().scaleX(1f).scaleY(1f).setDuration(90).start()).start();
             }
             if (action != null) action.run();
-        });
-        parent.addView(button, margin(0, dp(13), 0, 0));
-        return button;
-    }
+                  });
+                  parent.addView(button, margin(0, dp(13), 0, 0));
+                  return button;
+              }
 
-    protected LinearLayout.LayoutParams margin(int left, int top, int right, int bottom) {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(dp(left), dp(top), dp(right), dp(bottom));
-        return lp;
-    }
+              protected LinearLayout.LayoutParams margin(int left, int top, int right, int bottom) {
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+                  lp.setMargins(dp(left), dp(top), dp(right), dp(bottom));
+                  return lp;
+              }
 
-    protected GradientDrawable panel(int fill, int stroke, int radius) {
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(fill);
-        shape.setCornerRadius(dp(radius));
-        shape.setStroke(dp(1), stroke);
-        return shape;
-    }
+              protected GradientDrawable panel(int fill, int stroke, int radius) {
+                  GradientDrawable shape = new GradientDrawable();
+                  shape.setColor(fill);
+                  shape.setCornerRadius(dp(radius));
+                  shape.setStroke(dp(1), stroke);
+                  return shape;
+              }
 
-    protected int darken(int color) {
-        return Color.rgb((int)(Color.red(color) * .78f), (int)(Color.green(color) * .78f), (int)(Color.blue(color) * .78f));
-    }
-}
-''', encoding="utf-8")
+              protected int darken(int color) {
+                  return Color.rgb((int)(Color.red(color) * .78f), (int)(Color.green(color) * .78f), (int)(Color.blue(color) * .78f));
+              }
+          }
+          ''', encoding="utf-8")
 
           (ui_dir / "VgramSettingsActivity.java").write_text(r'''package org.telegram.ui;
 
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.os.Bundle;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+          import android.graphics.Color;
+          import android.graphics.drawable.GradientDrawable;
+          import android.os.Bundle;
+          import android.view.Gravity;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
 
-public class VgramSettingsActivity extends VgramBaseActivity {
-    private final int[] colors = { 0xffc5b878, 0xffa78bfa, 0xff72d6ce, 0xffe58b9a };
-    private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
+          public class VgramSettingsActivity extends VgramBaseActivity {
+              private final int[] colors = { 0xffc5b878, 0xffa78bfa, 0xff72d6ce, 0xffe58b9a };
+              private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
-    @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        build();
-    }
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  build();
+              }
 
-    private void build() {
-        setupScreen("PERSONALIZATION", "VGRAM Studio", "Настрой интерфейс под себя. Изменения сохраняются на устройстве.");
-        card("DARK LIQUID GLASS", "Графитовые поверхности, приглушённые цвета, тонкие контуры и собственные элементы управления.");
+              private void build() {
+                  setupScreen("PERSONALIZATION", "VGRAM Studio", "Настрой интерфейс под себя. Изменения сохраняются на устройстве.");
+                  card("DARK LIQUID GLASS", "Графитовые поверхности, приглушённые цвета, тонкие контуры и собственные элементы управления.");
 
-        LinearLayout palette = card("Акцент интерфейса", "Цвет выделения применяется к основным цветам Telegram и экранам VGRAM.");
-        LinearLayout swatches = new LinearLayout(this);
-        swatches.setOrientation(LinearLayout.HORIZONTAL);
-        swatches.setGravity(Gravity.CENTER_VERTICAL);
-        swatches.setPadding(0, dp(15), 0, 0);
-        int active = accent();
-        for (int i = 0; i < colors.length; i++) {
+                  LinearLayout palette = card("Акцент интерфейса", "Цвет выделения применяется к основным цветам Telegram и экранам VGRAM.");
+                  LinearLayout swatches = new LinearLayout(this);
+                  swatches.setOrientation(LinearLayout.HORIZONTAL);
+                  swatches.setGravity(Gravity.CENTER_VERTICAL);
+                  swatches.setPadding(0, dp(15), 0, 0);
+                  int active = accent();
+                  for (int i = 0; i < colors.length; i++) {
             final int color = colors[i];
             TextView swatch = label((color == active ? "●" : "○") + "\n" + names[i], 10, color, true);
             swatch.setGravity(Gravity.CENTER);
@@ -383,139 +383,139 @@ public class VgramSettingsActivity extends VgramBaseActivity {
                 VgramTheme.apply(this);
                 recreate();
             });
-        }
-        palette.addView(swatches);
-        addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
-        addToggle("Мягкие анимации", "Небольшие анимации на элементах VGRAM.", "animations", true);
+                  }
+                  palette.addView(swatches);
+                  addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
+                  addToggle("Мягкие анимации", "Небольшие анимации на элементах VGRAM.", "animations", true);
 
-        LinearLayout reset = card("Сбросить оформление", "Вернуть приглушённый золотой акцент и эффекты по умолчанию.");
-        addButton(reset, "Сбросить настройки", () -> {
+                  LinearLayout reset = card("Сбросить оформление", "Вернуть приглушённый золотой акцент и эффекты по умолчанию.");
+                  addButton(reset, "Сбросить настройки", () -> {
             getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().clear().apply();
             VgramTheme.apply(this);
             recreate();
-        });
-        LinearLayout plugins = card("Плагины VGRAM", "Описание формата, безопасных расширений и примеры находятся в документации API.");
-        addButton(plugins, "Открыть документацию API", () -> {
+                  });
+                  LinearLayout plugins = card("Плагины VGRAM", "Описание формата, безопасных расширений и примеры находятся в документации API.");
+                  addButton(plugins, "Открыть документацию API", () -> {
             try {
                 startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://github.com/ramzilzokirov-lgtm/VGRAM-Main/blob/main/PLUGIN_API.md")));
             } catch (Exception ignored) { }
-        });
-    }
+                  });
+              }
 
-    private void addToggle(String title, String description, String key, boolean fallback) {
-        LinearLayout item = card(title, description);
-        boolean enabled = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean(key, fallback);
-        TextView state = label(enabled ? "ВКЛ  ●" : "ВЫКЛ  ○", 12, accent(), true);
-        state.setGravity(Gravity.CENTER);
-        state.setPadding(dp(12), dp(10), dp(12), dp(10));
-        state.setBackground(panel(0xff27292d, Color.argb(100, Color.red(accent()), Color.green(accent()), Color.blue(accent())), 14));
-        item.addView(state, margin(0, dp(13), 0, 0));
-        item.setClickable(true);
-        item.setOnClickListener(v -> {
+              private void addToggle(String title, String description, String key, boolean fallback) {
+                  LinearLayout item = card(title, description);
+                  boolean enabled = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean(key, fallback);
+                  TextView state = label(enabled ? "ВКЛ  ●" : "ВЫКЛ  ○", 12, accent(), true);
+                  state.setGravity(Gravity.CENTER);
+                  state.setPadding(dp(12), dp(10), dp(12), dp(10));
+                  state.setBackground(panel(0xff27292d, Color.argb(100, Color.red(accent()), Color.green(accent()), Color.blue(accent())), 14));
+                  item.addView(state, margin(0, dp(13), 0, 0));
+                  item.setClickable(true);
+                  item.setOnClickListener(v -> {
             boolean next = !getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean(key, fallback);
             getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean(key, next).apply();
             recreate();
-        });
-        state.setOnClickListener(v -> item.performClick());
-    }
-}
-''', encoding="utf-8")
+                  });
+                  state.setOnClickListener(v -> item.performClick());
+              }
+          }
+          ''', encoding="utf-8")
 
           (ui_dir / "VgramDevelopersActivity.java").write_text(r'''package org.telegram.ui;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.widget.LinearLayout;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.widget.LinearLayout;
 
-public class VgramDevelopersActivity extends VgramBaseActivity {
-    @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        setupScreen("PROJECT INFORMATION", "Команда VGRAM", "Информация о проекте и людях, которые над ним работают.");
-        LinearLayout owner = card("ramzilzokirov-lgtm", "АВТОР И ВЛАДЕЛЕЦ\n\nСоздатель проекта VGRAM. Отвечает за направление проекта и его развитие.");
-        addButton(owner, "Профиль автора на GitHub", () -> open("https://github.com/ramzilzokirov-lgtm"));
-        card("ChatGPT", "ИИ-ПОМОЩНИК\n\nПомощь с проектированием интерфейса, поиском ошибок, документацией и реализацией функций.");
-        LinearLayout project = card("О проекте", "VGRAM — независимый Android-клиент, использующий инфраструктуру Telegram. Это не официальный продукт Telegram.");
-        addButton(project, "Исходный код VGRAM", () -> open("https://github.com/ramzilzokirov-lgtm/VGRAM-Main"));
-        String version = "неизвестна";
-        try { version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception ignored) { }
-        card("Установленная версия", "VGRAM " + version + "\n\nПроверка и загрузка обновлений доступны внутри приложения.");
-    }
+          public class VgramDevelopersActivity extends VgramBaseActivity {
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  setupScreen("PROJECT INFORMATION", "Команда VGRAM", "Информация о проекте и людях, которые над ним работают.");
+                  LinearLayout owner = card("ramzilzokirov-lgtm", "АВТОР И ВЛАДЕЛЕЦ\n\nСоздатель проекта VGRAM. Отвечает за направление проекта и его развитие.");
+                  addButton(owner, "Профиль автора на GitHub", () -> open("https://github.com/ramzilzokirov-lgtm"));
+                  card("ChatGPT", "ИИ-ПОМОЩНИК\n\nПомощь с проектированием интерфейса, поиском ошибок, документацией и реализацией функций.");
+                  LinearLayout project = card("О проекте", "VGRAM — независимый Android-клиент, использующий инфраструктуру Telegram. Это не официальный продукт Telegram.");
+                  addButton(project, "Исходный код VGRAM", () -> open("https://github.com/ramzilzokirov-lgtm/VGRAM-Main"));
+                  String version = "неизвестна";
+                  try { version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception ignored) { }
+                  card("Установленная версия", "VGRAM " + version + "\n\nПроверка и загрузка обновлений доступны внутри приложения.");
+              }
 
-    private void open(String url) {
-        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) { }
-    }
-}
-''', encoding="utf-8")
+              private void open(String url) {
+                  try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) { }
+              }
+          }
+          ''', encoding="utf-8")
 
           (ui_dir / "VgramUpdateActivity.java").write_text(r'''package org.telegram.ui;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.core.content.FileProvider;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.os.Environment;
+          import android.provider.Settings;
+          import android.view.View;
+          import android.widget.LinearLayout;
+          import android.widget.ProgressBar;
+          import android.widget.TextView;
+          import android.widget.Toast;
+          import androidx.core.content.FileProvider;
+          import org.json.JSONArray;
+          import org.json.JSONObject;
+          import java.io.ByteArrayOutputStream;
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.InputStream;
+          import java.net.HttpURLConnection;
+          import java.net.URL;
 
-public class VgramUpdateActivity extends VgramBaseActivity {
-    private TextView status;
-    private TextView notes;
-    private TextView action;
-    private ProgressBar progress;
-    private String downloadUrl;
-    private String remoteVersion;
-    private volatile File pendingFile;
-    private boolean waitingForInstallPermission;
+          public class VgramUpdateActivity extends VgramBaseActivity {
+              private TextView status;
+              private TextView notes;
+              private TextView action;
+              private ProgressBar progress;
+              private String downloadUrl;
+              private String remoteVersion;
+              private volatile File pendingFile;
+              private boolean waitingForInstallPermission;
 
-    @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        setupScreen("UPDATE CENTER", "Обновления VGRAM", "Проверка релиза, загрузка APK и установка — внутри приложения.");
-        LinearLayout release = card("Центр обновлений", "Проверьте версию и список изменений без перехода в браузер.");
-        status = label("Подключаемся к серверу релизов…", 14, 0xfff0f0ec, true);
-        status.setLineSpacing(dp(3), 1f);
-        release.addView(status, margin(0, dp(13), 0, 0));
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setMax(100);
-        progress.setVisibility(View.GONE);
-        release.addView(progress, margin(0, dp(14), 0, 0));
-        notes = label("", 12, 0xffa3a49f, false);
-        release.addView(notes, margin(0, dp(12), 0, 0));
-        action = addButton(release, "Проверить обновления", this::checkRelease);
-        card("Как проходит установка", "1. VGRAM проверяет последний релиз.\n2. APK скачивается с отображением прогресса.\n3. Android открывает системную установку. Пользователь подтверждает установку.");
-        checkRelease();
-    }
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  setupScreen("UPDATE CENTER", "Обновления VGRAM", "Проверка релиза, загрузка APK и установка — внутри приложения.");
+                  LinearLayout release = card("Центр обновлений", "Проверьте версию и список изменений без перехода в браузер.");
+                  status = label("Подключаемся к серверу релизов…", 14, 0xfff0f0ec, true);
+                  status.setLineSpacing(dp(3), 1f);
+                  release.addView(status, margin(0, dp(13), 0, 0));
+                  progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+                  progress.setMax(100);
+                  progress.setVisibility(View.GONE);
+                  release.addView(progress, margin(0, dp(14), 0, 0));
+                  notes = label("", 12, 0xffa3a49f, false);
+                  release.addView(notes, margin(0, dp(12), 0, 0));
+                  action = addButton(release, "Проверить обновления", this::checkRelease);
+                  card("Как проходит установка", "1. VGRAM проверяет последний релиз.\n2. APK скачивается с отображением прогресса.\n3. Android открывает системную установку. Пользователь подтверждает установку.");
+                  checkRelease();
+              }
 
-    @Override protected void onResume() {
-        super.onResume();
-        if (waitingForInstallPermission && Build.VERSION.SDK_INT >= 26 && getPackageManager().canRequestPackageInstalls()) {
+              @Override protected void onResume() {
+                  super.onResume();
+                  if (waitingForInstallPermission && Build.VERSION.SDK_INT >= 26 && getPackageManager().canRequestPackageInstalls()) {
             waitingForInstallPermission = false;
             File file = pendingFile;
             pendingFile = null;
             if (file != null) installApk(file);
-        }
-    }
+                  }
+              }
 
-    private void checkRelease() {
-        action.setEnabled(false);
-        action.setText("Проверяем…");
-        status.setText("Подключение к GitHub Releases…");
-        notes.setText("");
-        new Thread(() -> {
+              private void checkRelease() {
+                  action.setEnabled(false);
+                  action.setText("Проверяем…");
+                  status.setText("Подключение к GitHub Releases…");
+                  notes.setText("");
+                  new Thread(() -> {
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL("https://api.github.com/repos/ramzilzokirov-lgtm/VGRAM-Main/releases/latest").openConnection();
@@ -579,19 +579,19 @@ public class VgramUpdateActivity extends VgramBaseActivity {
             } finally {
                 if (connection != null) connection.disconnect();
             }
-        }, "VGRAM-Release-Check").start();
-    }
+                  }, "VGRAM-Release-Check").start();
+              }
 
-    private void downloadAndInstall() {
-        if (downloadUrl == null || downloadUrl.isEmpty()) { checkRelease(); return; }
-        action.setEnabled(false);
-        action.setText("Подготовка загрузки…");
-        status.setText("Скачиваем APK…");
-        notes.setText("");
-        progress.setVisibility(View.VISIBLE);
-        progress.setIndeterminate(false);
-        progress.setProgress(0);
-        new Thread(() -> {
+              private void downloadAndInstall() {
+                  if (downloadUrl == null || downloadUrl.isEmpty()) { checkRelease(); return; }
+                  action.setEnabled(false);
+                  action.setText("Подготовка загрузки…");
+                  status.setText("Скачиваем APK…");
+                  notes.setText("");
+                  progress.setVisibility(View.VISIBLE);
+                  progress.setIndeterminate(false);
+                  progress.setProgress(0);
+                  new Thread(() -> {
             HttpURLConnection connection = null;
             File partial = null;
             try {
@@ -647,15 +647,15 @@ public class VgramUpdateActivity extends VgramBaseActivity {
             } finally {
                 if (connection != null) connection.disconnect();
             }
-        }, "VGRAM-APK-Download").start();
-    }
+                  }, "VGRAM-APK-Download").start();
+              }
 
-    private void installApk(File file) {
-        if (file == null || !file.isFile() || file.length() < 1024 * 1024) {
+              private void installApk(File file) {
+                  if (file == null || !file.isFile() || file.length() < 1024 * 1024) {
             status.setText("APK не найден или повреждён. Скачайте обновление повторно.");
             return;
-        }
-        try {
+                  }
+                  try {
             if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
                 pendingFile = file;
                 waitingForInstallPermission = true;
@@ -668,29 +668,29 @@ public class VgramUpdateActivity extends VgramBaseActivity {
             install.setDataAndType(uri, "application/vnd.android.package-archive");
             install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(install);
-        } catch (Exception error) {
+                  } catch (Exception error) {
             status.setText("Не удалось открыть установщик Android: " + (error.getMessage() == null ? "ошибка доступа к APK" : error.getMessage()));
             Toast.makeText(this, "Не удалось запустить установку APK", Toast.LENGTH_LONG).show();
-        }
-    }
+                  }
+              }
 
-    private int compareVersions(String left, String right) {
-        String[] a = left.split("[.+-]");
-        String[] b = right.split("[.+-]");
-        int count = Math.max(a.length, b.length);
-        for (int i = 0; i < count; i++) {
+              private int compareVersions(String left, String right) {
+                  String[] a = left.split("[.+-]");
+                  String[] b = right.split("[.+-]");
+                  int count = Math.max(a.length, b.length);
+                  for (int i = 0; i < count; i++) {
             int av = i < a.length ? number(a[i]) : 0;
             int bv = i < b.length ? number(b[i]) : 0;
             if (av != bv) return av > bv ? 1 : -1;
-        }
-        return 0;
-    }
+                  }
+                  return 0;
+              }
 
-    private int number(String part) {
-        try { return Integer.parseInt(part.replaceAll("[^0-9]", "")); } catch (Exception ignored) { return 0; }
-    }
-}
-''', encoding="utf-8")
+              private int number(String part) {
+                  try { return Integer.parseInt(part.replaceAll("[^0-9]", "")); } catch (Exception ignored) { return 0; }
+              }
+          }
+          ''', encoding="utf-8")
 
           # Register internal screens. Upstream already provides FileProvider and REQUEST_INSTALL_PACKAGES.
           manifest = root / "TMessagesProj/src/main/AndroidManifest.xml"
