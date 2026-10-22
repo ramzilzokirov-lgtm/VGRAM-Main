@@ -1,0 +1,77 @@
+name: Import original Telegram source into VGRAM-Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type IMPORT-TELEGRAM to import the upstream Android source into this repository"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-telegram-source
+  cancel-in-progress: false
+
+jobs:
+  import-source:
+    if: ${{ inputs.confirm == 'IMPORT-TELEGRAM' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout VGRAM-Main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch official Telegram Android source and submodules
+        run: |
+          git clone --recursive --shallow-submodules --depth 1 https://github.com/DrKLO/Telegram.git /tmp/telegram-upstream
+          git -C /tmp/telegram-upstream rev-parse HEAD > /tmp/telegram-upstream-commit.txt
+
+      - name: Import source tree while preserving VGRAM configuration
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/vgram-preserve
+          cp -a .github /tmp/vgram-preserve/ 2>/dev/null || true
+          for f in VGRAM_FEATURES.md VGRAM_FULL_SPEC.md PLUGIN_API.md; do
+            if [ -f "$f" ]; then cp "$f" /tmp/vgram-preserve/; fi
+          done
+          cp /tmp/telegram-upstream/LICENSE /tmp/vgram-preserve/TELEGRAM_UPSTREAM_LICENSE
+          cp /tmp/telegram-upstream/README.md /tmp/vgram-preserve/TELEGRAM_UPSTREAM_README.md
+          rsync -a --delete --exclude='.git/' /tmp/telegram-upstream/ ./
+          # Keep VGRAM's build automation and feature documentation.
+          cp -a /tmp/vgram-preserve/.github ./
+          for f in VGRAM_FEATURES.md VGRAM_FULL_SPEC.md PLUGIN_API.md TELEGRAM_UPSTREAM_LICENSE TELEGRAM_UPSTREAM_README.md; do
+            if [ -f "/tmp/vgram-preserve/$f" ]; then cp "/tmp/vgram-preserve/$f" "./$f"; fi
+          done
+          cp /tmp/telegram-upstream-commit.txt TELEGRAM_UPSTREAM_COMMIT.txt
+          cat > README.md <<'EOF'
+          # VGRAM
+
+          VGRAM is an unofficial Android Telegram client based on the original Telegram for Android source.
+
+          - Upstream source: https://github.com/DrKLO/Telegram
+          - Upstream commit used for the last source import: see [TELEGRAM_UPSTREAM_COMMIT.txt](TELEGRAM_UPSTREAM_COMMIT.txt)
+          - VGRAM feature specification: [VGRAM_FULL_SPEC.md](VGRAM_FULL_SPEC.md)
+          - Plugin API draft: [PLUGIN_API.md](PLUGIN_API.md)
+
+          VGRAM is not affiliated with Telegram. Telegram API credentials and Firebase configuration must be configured for your own application before distributing builds. See the upstream README preserved as TELEGRAM_UPSTREAM_README.md and the Telegram source license.
+          EOF
+          echo "Imported upstream commit: $(cat TELEGRAM_UPSTREAM_COMMIT.txt)"
+          git status --short
+
+      - name: Commit imported Telegram source
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Import original Telegram Android source for VGRAM"
+          git push origin HEAD:main
