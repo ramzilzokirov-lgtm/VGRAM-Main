@@ -560,6 +560,13 @@ jobs:
               }
 
               private void validate(JSONObject manifest) throws Exception {
+                  java.util.Iterator<String> keys = manifest.keys();
+                  while (keys.hasNext()) {
+                      String key = keys.next();
+                      if (!key.equals("id") && !key.equals("name") && !key.equals("version") && !key.equals("apiVersion") && !key.equals("description") && !key.equals("capabilities") && !key.equals("accentColor") && !key.equals("animationPreset")) {
+                          throw new IllegalArgumentException("Неизвестное поле: " + key);
+                      }
+                  }
                   String id = manifest.optString("id", "");
                   String name = manifest.optString("name", "");
                   String version = manifest.optString("version", "");
@@ -571,7 +578,7 @@ jobs:
                   if (capabilities == null || capabilities.length() == 0 || capabilities.length() > 4) throw new IllegalArgumentException("Укажи разрешённые capabilities");
                   for (int i = 0; i < capabilities.length(); i++) {
                       String cap = capabilities.optString(i, "");
-                      if (!cap.equals("theme") && !cap.equals("animationPreset") && !cap.equals("settings")) {
+                      if (!cap.equals("theme") && !cap.equals("animationPreset")) {
                           throw new IllegalArgumentException("Capability запрещена: " + cap);
                       }
                   }
@@ -595,9 +602,12 @@ jobs:
                           int color = Color.parseColor(manifest.getString("accentColor"));
                           getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("accent", color).apply();
                       }
-                      if ("none".equals(manifest.optString("animationPreset"))) {
+                      JSONArray capabilities = manifest.optJSONArray("capabilities");
+                      boolean animationAllowed = false;
+                      if (capabilities != null) for (int i = 0; i < capabilities.length(); i++) if ("animationPreset".equals(capabilities.optString(i))) animationAllowed = true;
+                      if (animationAllowed && "none".equals(manifest.optString("animationPreset"))) {
                           getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("animations", false).apply();
-                      } else if ("soft".equals(manifest.optString("animationPreset"))) {
+                      } else if (animationAllowed && "soft".equals(manifest.optString("animationPreset"))) {
                           getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("animations", true).apply();
                       }
                       VgramTheme.apply(this);
