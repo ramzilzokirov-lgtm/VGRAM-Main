@@ -165,3 +165,7 @@ def lookup_user(number: str, db: Session = Depends(get_db), _user: User = Depend
     if user is None:
         raise HTTPException(status_code=404, detail="VGRAM user not found")
     return user
+
+
+from .chat import router as chat_router
+app.include_router(chat_router)
