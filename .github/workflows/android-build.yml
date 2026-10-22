@@ -302,18 +302,24 @@ jobs:
               }
 
               protected LinearLayout card(String title, String description) {
-                  LinearLayout card = new LinearLayout(this);
-                  card.setOrientation(LinearLayout.VERTICAL);
-                  card.setPadding(dp(17), dp(17), dp(17), dp(17));
                   boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
                   int fill = glass ? 0xe51e2024 : 0xff1e2024;
                   int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
-                  card.setBackground(panel(fill, stroke, 24));
+                  com.google.android.material.card.MaterialCardView surface = new com.google.android.material.card.MaterialCardView(this);
+                  surface.setCardBackgroundColor(fill);
+                  surface.setRadius(dp(24));
+                  surface.setStrokeColor(stroke);
+                  surface.setStrokeWidth(dp(1));
+                  surface.setCardElevation(dp(1));
+                  LinearLayout card = new LinearLayout(this);
+                  card.setOrientation(LinearLayout.VERTICAL);
+                  card.setPadding(dp(17), dp(17), dp(17), dp(17));
+                  surface.addView(card);
                   card.addView(label(title, 16, 0xfff1f0eb, true), margin(0, 0, 0, 7));
                   TextView sub = label(description, 13, 0xffa3a49f, false);
                   sub.setLineSpacing(dp(3), 1f);
                   card.addView(sub);
-                  body.addView(card, margin(0, 0, 0, 12));
+                  body.addView(surface, margin(0, 0, 0, 12));
                   return card;
               }
 
@@ -328,11 +334,18 @@ jobs:
               }
 
               protected TextView addButton(LinearLayout parent, String value, Runnable action) {
-                  TextView button = label(value, 14, 0xff171713, true);
+                  com.google.android.material.button.MaterialButton button = new com.google.android.material.button.MaterialButton(this);
+                  button.setText(value);
+                  button.setTextSize(14);
+                  button.setTextColor(0xff171713);
+                  button.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
                   button.setGravity(Gravity.CENTER);
+                  button.setInsetTop(0);
+                  button.setInsetBottom(0);
+                  button.setCornerRadius(dp(14));
+                  button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accent()));
+                  button.setElevation(0);
                   button.setPadding(dp(16), dp(14), dp(16), dp(14));
-                  button.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] { accent(), darken(accent()) }));
                   button.setClickable(true);
                   button.setFocusable(true);
                   button.setOnClickListener(v -> {
@@ -528,7 +541,7 @@ jobs:
               }
 
               private void buildAgain() {
-                  build();
+                  recreate();
               }
 
               @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -929,14 +942,27 @@ jobs:
           }
           ''', encoding="utf-8")
 
+          # Use the Android Material Components library and a Material 3 theme for VGRAM screens.
+          # Keep the upstream Telegram screens intact; only VGRAM-owned activities use this theme.
+          gradle_file = root / "TMessagesProj/build.gradle"
+          gradle_text = gradle_file.read_text(encoding="utf-8")
+          material_dependency = "implementation 'com.google.android.material:material:1.12.0'"
+          if material_dependency not in gradle_text:
+              dependency_anchor = "dependencies {"
+              if gradle_text.count(dependency_anchor) != 1:
+                  raise SystemExit("VGRAM Material 3 patch failed: Gradle dependencies block not found")
+              gradle_text = gradle_text.replace(dependency_anchor, dependency_anchor + "\\n    " + material_dependency, 1)
+              gradle_file.write_text(gradle_text, encoding="utf-8")
+          print("Added Material Components dependency for VGRAM's Material 3 screens.")
+
           # Register internal screens. Upstream already provides FileProvider and REQUEST_INSTALL_PACKAGES.
           manifest = root / "TMessagesProj/src/main/AndroidManifest.xml"
           manifest_text = manifest.read_text(encoding="utf-8")
           app_end = "    </application>"
-          screen_declarations = """        <activity android:name="org.telegram.ui.VgramSettingsActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
-          <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
-          <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
-          <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
+          screen_declarations = """        <activity android:name="org.telegram.ui.VgramSettingsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           """
           manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
           if "org.telegram.ui.VgramUpdateActivity" not in manifest_text:
