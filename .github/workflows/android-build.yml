@@ -690,7 +690,6 @@ jobs:
                       android.widget.Toast.makeText(this, "Скопировано", android.widget.Toast.LENGTH_SHORT).show();
                   }
               }
-              }
 
               private void open(String url) {
                   try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) { }
