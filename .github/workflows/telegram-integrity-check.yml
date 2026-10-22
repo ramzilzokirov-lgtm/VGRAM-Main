@@ -2,6 +2,12 @@ name: VGRAM Telegram Integrity Check
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - ".github/workflows/telegram-integrity-check.yml"
+      - ".github/workflows/android-build.yml"
 
 permissions:
   contents: read
