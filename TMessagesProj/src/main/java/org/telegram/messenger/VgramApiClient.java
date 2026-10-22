@@ -128,6 +128,15 @@ public final class VgramApiClient {
                 connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
                 connection.setReadTimeout(READ_TIMEOUT_MS);
                 connection.setRequestProperty("Accept", "application/json");
+                if (authenticated) {
+                    String token = accessToken;
+                    if (token == null || token.trim().isEmpty()) {
+                        callback.onError("Сначала войдите в VGRAM");
+                        return;
+                    }
+                    // Set headers before opening the output stream, which may commit them.
+                    connection.setRequestProperty("Authorization", "Bearer " + token);
+                }
                 if (body != null) {
                     connection.setDoOutput(true);
                     connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
@@ -135,14 +144,6 @@ public final class VgramApiClient {
                     try (OutputStream output = connection.getOutputStream()) {
                         output.write(bytes);
                     }
-                }
-                if (authenticated) {
-                    String token = accessToken;
-                    if (token == null || token.trim().isEmpty()) {
-                        callback.onError("Сначала войдите в VGRAM");
-                        return;
-                    }
-                    connection.setRequestProperty("Authorization", "Bearer " + token);
                 }
                 int status = connection.getResponseCode();
                 InputStream stream = status >= 200 && status < 300
