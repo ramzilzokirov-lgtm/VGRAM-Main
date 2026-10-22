@@ -142,6 +142,22 @@ jobs:
               (drawable_res / (name + ".xml")).write_text(xml, encoding="utf-8")
           print("Restored additional compile-time drawables: preview_back, preview_mic, dino_pic.")
 
+          # Original VGRAM launcher mark: metallic face, violet hair and muted gold eyes.
+          icon_xml = drawable / "vgram_launcher_icon.xml"
+          icon_xml.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#FF151619" android:pathData="M0,0 H108 V108 H0 Z"/>
+              <path android:fillColor="#FF4B3D67" android:pathData="M17,47 L12,25 L31,33 L42,13 L53,30 L75,15 L72,36 L93,31 L82,51 L82,72 L68,91 L35,91 L22,74 Z"/>
+              <path android:fillColor="#FFBFC3CF" android:pathData="M28,42 Q33,34 44,35 L67,35 Q78,38 79,50 L76,70 Q71,85 54,87 Q36,84 31,70 Z"/>
+              <path android:fillColor="#FF6C588D" android:pathData="M27,42 L19,31 L36,35 L42,19 L50,34 L70,24 L68,39 L82,35 L75,50 L62,44 L45,43 Z"/>
+              <path android:fillColor="#FFF2C94C" android:pathData="M35,52 L49,48 L47,59 L35,61 Z M59,48 L73,52 L72,61 L60,59 Z"/>
+              <path android:fillColor="#FF24242A" android:pathData="M41,54 L45,53 L44,57 L40,58 Z M65,54 L69,55 L68,58 L64,57 Z"/>
+              <path android:fillColor="#FF777B88" android:pathData="M45,70 Q54,76 64,70 L62,74 Q54,81 46,74 Z"/>
+              <path android:fillColor="#00FFFFFF" android:strokeColor="#66C5B878" android:strokeWidth="1.3" android:pathData="M7,54 Q7,7 54,7 Q101,7 101,54 Q101,101 54,101 Q7,101 7,54 Z"/>
+          </vector>
+          """, encoding="utf-8")
+
           # Integrate VGRAM entries into the real upstream SettingsActivity.
           settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
           source = settings.read_text(encoding="utf-8")
@@ -172,6 +188,8 @@ jobs:
                 break;
             }'''
           source = source[:switch_match.start(1)] + switch_patch + source[switch_match.end(1):]
+          settings.write_text(source, encoding="utf-8")
+
           # Add native, fully branded VGRAM screens to the upstream Android application.
           ui_dir = root / "TMessagesProj/src/main/java/org/telegram/ui"
           ui_dir.mkdir(parents=True, exist_ok=True)
@@ -478,6 +496,7 @@ jobs:
               private TextView action;
               private ProgressBar progress;
               private String downloadUrl;
+              private String checksumUrl;
               private String remoteVersion;
               private volatile File pendingFile;
               private boolean waitingForInstallPermission;
@@ -536,18 +555,21 @@ jobs:
                 String changelog = release.optString("body", "").trim();
                 JSONArray assets = release.optJSONArray("assets");
                 downloadUrl = null;
+                checksumUrl = null;
                 if (assets != null) {
                     for (int i = 0; i < assets.length(); i++) {
                         JSONObject asset = assets.optJSONObject(i);
                         if (asset == null) continue;
                         String name = asset.optString("name", "");
-                        if (name.toLowerCase(java.util.Locale.US).endsWith(".apk") && name.toLowerCase(java.util.Locale.US).contains("vgram")) {
+                        if ("VGRAM-debug.apk.sha256".equalsIgnoreCase(name)) {
+                            checksumUrl = asset.optString("browser_download_url", null);
+                        } else if ("VGRAM-debug.apk".equalsIgnoreCase(name)) {
                             downloadUrl = asset.optString("browser_download_url", null);
-                            if (downloadUrl != null && !downloadUrl.isEmpty()) break;
                         }
                     }
                 }
                 if (downloadUrl == null || downloadUrl.isEmpty()) throw new IllegalStateException("В последнем релизе пока нет APK-файла.");
+                if (checksumUrl == null || checksumUrl.isEmpty()) throw new IllegalStateException("У релиза нет SHA-256 контрольной суммы.");
                 String current;
                 try { current = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
                 catch (Exception e) { current = "0.0.0"; }
@@ -626,6 +648,9 @@ jobs:
                     out.getFD().sync();
                 }
                 if (written < 1024 * 1024) throw new IllegalStateException("Файл загрузился не полностью или не является APK.");
+                    String expectedChecksum = fetchExpectedChecksum();
+                    String actualChecksum = sha256(partial);
+                    if (!actualChecksum.equalsIgnoreCase(expectedChecksum)) throw new IllegalStateException("Контрольная сумма APK не совпала. Файл удалён, установка отменена.");
                 if (target.exists() && !target.delete()) throw new IllegalStateException("Не удалось заменить старый APK.");
                 if (!partial.renameTo(target)) throw new IllegalStateException("Не удалось сохранить APK.");
                 runOnUiThread(() -> {
@@ -648,6 +673,39 @@ jobs:
                 if (connection != null) connection.disconnect();
             }
                   }, "VGRAM-APK-Download").start();
+              }
+
+                            private String fetchExpectedChecksum() throws Exception {
+                  HttpURLConnection connection = (HttpURLConnection) new URL(checksumUrl).openConnection();
+                  connection.setConnectTimeout(15000);
+                  connection.setReadTimeout(20000);
+                  connection.setRequestProperty("User-Agent", "VGRAM-Android-Update");
+                  try {
+                      if (connection.getResponseCode() != 200) throw new IllegalStateException("Не удалось получить SHA-256 контрольную сумму.");
+                      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                      try (InputStream in = connection.getInputStream()) {
+                          byte[] buffer = new byte[1024];
+                          int count;
+                          while ((count = in.read(buffer)) != -1) bytes.write(buffer, 0, count);
+                      }
+                      String[] parts = bytes.toString("UTF-8").trim().split("\\s+");
+                      if (parts.length == 0 || !parts[0].matches("(?i)[0-9a-f]{64}")) throw new IllegalStateException("Некорректная SHA-256 контрольная сумма.");
+                      return parts[0];
+                  } finally {
+                      connection.disconnect();
+                  }
+              }
+
+              private String sha256(File file) throws Exception {
+                  java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                  try (InputStream in = new java.io.FileInputStream(file)) {
+                      byte[] buffer = new byte[16384];
+                      int count;
+                      while ((count = in.read(buffer)) != -1) digest.update(buffer, 0, count);
+                  }
+                  StringBuilder result = new StringBuilder();
+                  for (byte b : digest.digest()) result.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+                  return result.toString();
               }
 
               private void installApk(File file) {
@@ -700,6 +758,7 @@ jobs:
           <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
           """
+          manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
           if "org.telegram.ui.VgramUpdateActivity" not in manifest_text:
               if manifest_text.count(app_end) != 1:
                   raise SystemExit("VGRAM patch failed: AndroidManifest application closing tag changed")
@@ -794,6 +853,22 @@ jobs:
           text = re.sub(r"(?m)^APP_VERSION_CODE=.*$", "APP_VERSION_CODE=" + run_number, text)
           text = re.sub(r"(?m)^APP_VERSION_NAME=.*$", "APP_VERSION_NAME=" + version_name, text)
           text = re.sub(r"(?m)^APP_PACKAGE=.*$", "APP_PACKAGE=org.vgram.messenger", text)
+          # Keep Google Services resource generation working for VGRAM's independent package ID.
+          import json
+          google_services = root / "TMessagesProj_App/google-services.json"
+          if google_services.is_file():
+              google_data = json.loads(google_services.read_text(encoding="utf-8"))
+              clients = google_data.get("client", [])
+              existing = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == "org.vgram.messenger"), None)
+              if existing is None:
+                  template = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == "org.telegram.messenger"), None)
+                  if template is None:
+                      raise SystemExit("VGRAM build patch failed: no upstream Firebase client template found")
+                  cloned = json.loads(json.dumps(template))
+                  cloned["client_info"]["android_client_info"]["package_name"] = "org.vgram.messenger"
+                  clients.append(cloned)
+                  google_data["client"] = clients
+                  google_services.write_text(json.dumps(google_data, indent=2) + "\n", encoding="utf-8")
           # CI memory limit is smaller than a developer workstation.
           text = re.sub(r'(?m)^org.gradle.jvmargs=.*$', 'org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8', text)
           props.write_text(text, encoding="utf-8")
@@ -832,6 +907,13 @@ jobs:
           if missing_drawables:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
+          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java"]:
+              if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
+                  raise SystemExit("VGRAM screen source missing: " + source_name)
+          manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "vgram_launcher_icon"]):
+              raise SystemExit("VGRAM Android manifest integration incomplete")
+          print("VGRAM custom screen classes and launcher icon are registered.")
           PY
 
       - name: Prepare stable VGRAM signing key
@@ -861,7 +943,9 @@ jobs:
           mkdir -p output
           find upstream/TMessagesProj_App/build/outputs/apk -type f -name "*.apk" -exec cp {} output/VGRAM-debug.apk \; 2>/dev/null || true
           cp upstream-telegram-commit.txt output/ 2>/dev/null || true
-          printf 'VGRAM version: 0.1\nBuild run: %s\n' "${GITHUB_RUN_NUMBER}" > output/build-info.txt
+          VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
+          if [ -f output/VGRAM-debug.apk ]; then (cd output && sha256sum VGRAM-debug.apk > VGRAM-debug.apk.sha256); fi
+          printf 'VGRAM version: %s\nBuild run: %s\n' "$VERSION" "${GITHUB_RUN_NUMBER}" > output/build-info.txt
 
       - name: Upload APK artifact
         if: success()
@@ -879,5 +963,5 @@ jobs:
         run: |
           VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
           TAG="v${VERSION}"
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. Install only APKs published by the official VGRAM-Main repository."
-          gh release upload "$TAG" output/VGRAM-debug.apk --clobber
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
+          gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
