@@ -505,7 +505,10 @@ jobs:
                               boolean next = !prefs.getBoolean("enabled." + id, false);
                               prefs.edit().putBoolean("enabled." + id, next).apply();
                               if (next) applyManifest(manifest);
-                              else VgramTheme.apply(this);
+                              else {
+                                  getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("accent", 0xffc5b878).putBoolean("animations", true).apply();
+                                  VgramTheme.apply(this);
+                              }
                               buildAgain();
                           });
                           addButton(item, "Удалить плагин", () -> {
@@ -590,7 +593,7 @@ jobs:
                       if (caps != null) for (int i = 0; i < caps.length(); i++) if ("theme".equals(caps.optString(i))) theme = true;
                       if (theme && manifest.has("accentColor")) {
                           int color = Color.parseColor(manifest.getString("accentColor"));
-                          prefs.edit().putInt("accent", color).apply();
+                          getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("accent", color).apply();
                       }
                       if ("none".equals(manifest.optString("animationPreset"))) {
                           getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("animations", false).apply();
