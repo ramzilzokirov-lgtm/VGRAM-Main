@@ -141,6 +141,10 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)) -> AuthRespon
             raise HTTPException(status_code=409, detail="Username is already taken") from None
         raise
     db.refresh(user)
+    # Record the one-time starter grant after successful account creation.
+    from .stars import StarLedger
+    db.add(StarLedger(user_id=user.id, delta=STARTER_STARS, reason="signup_bonus"))
+    db.commit()
     return AuthResponse(access_token=token_for(user), expires_in=TOKEN_MINUTES * 60, user=user)
 
 
@@ -168,4 +172,6 @@ def lookup_user(number: str, db: Session = Depends(get_db), _user: User = Depend
 
 
 from .chat import router as chat_router
+from .stars import router as stars_router
 app.include_router(chat_router)
+app.include_router(stars_router)
