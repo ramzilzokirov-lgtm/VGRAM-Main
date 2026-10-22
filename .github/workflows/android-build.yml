@@ -951,7 +951,7 @@ jobs:
               dependency_anchor = "dependencies {"
               if gradle_text.count(dependency_anchor) != 1:
                   raise SystemExit("VGRAM Material 3 patch failed: Gradle dependencies block not found")
-              gradle_text = gradle_text.replace(dependency_anchor, dependency_anchor + "\\n    " + material_dependency, 1)
+              gradle_text = gradle_text.replace(dependency_anchor, dependency_anchor + "\n    " + material_dependency, 1)
               gradle_file.write_text(gradle_text, encoding="utf-8")
           print("Added Material Components dependency for VGRAM's Material 3 screens.")
 
