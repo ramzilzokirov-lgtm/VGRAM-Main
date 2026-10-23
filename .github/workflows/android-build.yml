@@ -8,6 +8,7 @@ on:
       - ".github/workflows/android-build.yml"
       - "README.md"
       - "VGRAM_FEATURES.md"
+      - "VGRAM_FULL_SPEC.md"
       - "PLUGIN_API.md"
       - "VGRAM_ICON.png"
       - "TELEGRAM_UPSTREAM_COMMIT.txt"
