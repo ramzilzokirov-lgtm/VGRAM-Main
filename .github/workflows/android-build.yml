@@ -188,20 +188,14 @@ jobs:
           if source.count(faq_handler) != 1:
               raise SystemExit("VGRAM help-menu patch failed: FAQ handler changed")
           source = source.replace(faq_handler, '                getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));', 1)
-          feature_handler = '''            case 23: {
-                if (MessagesController.getInstance(currentAccount).isFrozen()) {
-                    AccountFrozenAlert.show(currentAccount);
-                } else {
-                    Browser.openUrl(getContext(), LocaleController.getString(R.string.TelegramFeaturesUrl));
-                }
-                break;
-            }'''
-          if source.count(feature_handler) != 1:
-              raise SystemExit("VGRAM help-menu patch failed: features handler changed")
-          source = source.replace(feature_handler, '''            case 23: {
+          feature_pattern = r'(?s)case 23:\s*\{.*?\n\s*\}\s*(?=\n\s*case 24:)'
+          feature_replacement = '''case 23: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
                 break;
-            }''', 1)
+            }'''
+          source, feature_count = re.subn(feature_pattern, feature_replacement, source, count=1)
+          if feature_count != 1:
+              raise SystemExit("VGRAM help-menu patch failed: could not locate case 23 before case 24")
 
           list_anchor = '        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));'
           list_patch = list_anchor + '''
