@@ -205,6 +205,10 @@ jobs:
             case 30: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramPluginsActivity.class));
                 break;
+            }
+            case 31: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class));
+                break;
             }'''
           source = source[:switch_match.start(1)] + switch_patch + source[switch_match.end(1):]
           settings.write_text(source, encoding="utf-8")
