@@ -176,10 +176,10 @@ jobs:
           source = settings.read_text(encoding="utf-8")
           list_anchor = '        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));'
           list_patch = list_anchor + '''
-          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "VGRAM — Оформление", "Темы и цвета интерфейса"));
+          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "Оформление VGRAM", "Темы, цвета и внешний вид"));
           items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Обновления VGRAM", "Релизы и новые версии"));
           items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Разработчики", "Информация о проекте"));
-          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Плагины VGRAM", "Безопасные темы и пресеты"));
+          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Плагины VGRAM", "Управление установленными расширениями"));
           items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Бейджи VGRAM", "TESTER · OG · FRIENDS · TEAM"));'''
           if source.count(list_anchor) != 1:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
@@ -1093,7 +1093,7 @@ jobs:
 
               // Obfuscation only hides the plain text from casual inspection; this is not server-grade security.
               private static String adminPassword() {
-                  int[] encoded = {123, 12, 120, 87, 68, 0, 26, 30, 28, 20};
+                  int[] encoded = {95, 76, 87, 68, 65, 31, 29, 28, 30};
                   StringBuilder value = new StringBuilder();
                   for (int part : encoded) value.append((char) (part ^ 45));
                   return value.toString();
