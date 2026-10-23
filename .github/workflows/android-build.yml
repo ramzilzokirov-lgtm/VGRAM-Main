@@ -1578,7 +1578,7 @@ jobs:
           import android.content.SharedPreferences;
           import android.os.Handler;
           import android.os.Looper;
-          import android.widget.TextView;
+          import org.telegram.ui.Components.SimpleTextView;
           import org.json.JSONArray;
           import org.json.JSONObject;
           import java.io.ByteArrayOutputStream;
@@ -1590,10 +1590,10 @@ jobs:
           public final class VgramBadgeSync {
               private static final String API = "https://vgram-31xt.onrender.com";
               private static final Handler MAIN = new Handler(Looper.getMainLooper());
-              private static final WeakHashMap<TextView, String> SUFFIXES = new WeakHashMap<>();
+              private static final WeakHashMap<SimpleTextView, String> SUFFIXES = new WeakHashMap<>();
               private VgramBadgeSync() {}
 
-              public static void apply(Context context, long telegramId, TextView title) {
+              public static void apply(Context context, long telegramId, SimpleTextView title) {
                   if (context == null || title == null || telegramId <= 0) return;
                   final String id = Long.toString(telegramId);
                   final Context app = context.getApplicationContext();
@@ -1640,7 +1640,7 @@ jobs:
                   }).start();
               }
 
-              private static void render(TextView title, String suffix) {
+              private static void render(SimpleTextView title, String suffix) {
                   if (title == null) return;
                   CharSequence currentText = title.getText();
                   String current = currentText == null ? "" : currentText.toString();
