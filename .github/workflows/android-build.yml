@@ -261,8 +261,8 @@ jobs:
               # Insert into the real onCreate body using a whitespace-tolerant regex.
               # Never silently ship a build where the app-wide theme hook was skipped.
               launch_source, hook_count = re.subn(
-                  r'(public\\s+void\\s+onCreate\\s*\\(\\s*Bundle\\s+savedInstanceState\\s*\\)\\s*\\{[\\s\\S]*?super\\.onCreate\\(savedInstanceState\\)\\s*;)',
-                  r'\\1\\n        VgramTheme.apply(this);',
+                  r'(public\s+void\s+onCreate\s*\(\s*Bundle\s+savedInstanceState\s*\)\s*\{[\s\S]*?super\.onCreate\(savedInstanceState\)\s*;)',
+                  r'\1\n        VgramTheme.apply(this);',
                   launch_source,
                   count=1
               )
@@ -1455,7 +1455,7 @@ jobs:
           # The image remains local to this installation; cross-user banners require a backend.
           profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
           profile_source = profile_activity.read_text(encoding="utf-8")
-          profile_anchor_pattern = r'(?m)^(\\s*)topView\\.setBackgroundColor\\(getThemedColor\\(Theme\\.key_windowBackgroundGray\\)\\);\\s*
+          profile_anchor_pattern = r'(?m)^(\s*)topView\.setBackgroundColor\(getThemedColor\(Theme\.key_windowBackgroundGray\)\);\s*$'
           profile_banner_code = """        topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
                   if (userId == UserConfig.getInstance(currentAccount).getClientUserId()) {
                       try {
