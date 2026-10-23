@@ -1625,33 +1625,23 @@ jobs:
             echo "ERROR: Gradle produced no APK files."
             exit 1
           fi
-          if [ "${#apks[@]}" -gt 1 ]; then
-            mapfile -t fat_apks < <(printf '%s\n' "${apks[@]}" | grep -E '/afat/debug/.*\.apk
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: VGRAM-debug-apk
-          path: output/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Publish APK for in-app OTA
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
-          TAG="v${VERSION}"
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
-          gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
- || true)
-            if [ "${#fat_apks[@]}" -ne 1 ]; then
-              printf 'ERROR: Expected exactly one fat debug APK, found %s APKs:\n' "${#apks[@]}"
+          selected=""
+          for candidate in "${apks[@]}"; do
+            if [[ "$candidate" == */afat/debug/*.apk ]]; then
+              if [ -n "$selected" ]; then
+                echo "ERROR: Multiple fat debug APKs found."
+                printf '  %s\n' "$selected" "$candidate"
+                exit 1
+              fi
+              selected="$candidate"
+            fi
+          done
+          if [ -z "$selected" ]; then
+            if [ "${#apks[@]}" -ne 1 ]; then
+              echo "ERROR: Could not uniquely select the APK. Found:"
               printf '  %s\n' "${apks[@]}"
               exit 1
             fi
-            selected="${fat_apks[0]}"
-          else
             selected="${apks[0]}"
           fi
           echo "Selected APK: $selected"
