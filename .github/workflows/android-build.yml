@@ -1370,19 +1370,19 @@ jobs:
           # changes do not break the build simply because a color key was renamed or removed.
           extended_palette = {
               "key_dialogTextBlack": "0xfff0f0ec",
-              "key_dialogTextLink": "0xffc5b878",
-              "key_dialogTextBlue": "0xffc5b878",
-              "key_dialogTextBlue2": "0xffc5b878",
+              "key_dialogTextLink": "0xffffc857",
+              "key_dialogTextBlue": "0xffffc857",
+              "key_dialogTextBlue2": "0xffb59aff",
               "key_dialogTextBlue4": "0xffd2c47d",
               "key_dialogTextGray": "0xffa0a09a",
               "key_dialogTextGray2": "0xff92928d",
               "key_dialogTextGray3": "0xff777872",
               "key_dialogTextGray4": "0xff777872",
               "key_dialogTextHint": "0xff777872",
-              "key_dialogIcon": "0xffc5b878",
+              "key_dialogIcon": "0xffffc857",
               "key_dialogGrayLine": "0xff303135",
               "key_dialogInputField": "0xff303135",
-              "key_dialogInputFieldActivated": "0xffc5b878",
+              "key_dialogInputFieldActivated": "0xffffc857",
               "key_dialogCheckboxSquareBackground": "0xffb7a85e",
               "key_dialogRadioBackgroundChecked": "0xffb7a85e",
               "key_dialogRoundCheckBox": "0xffb7a85e",
@@ -1437,7 +1437,7 @@ jobs:
               "key_profile_status": "0xffa0a09a",
               "key_profile_tabText": "0xff92928d",
               "key_profile_tabSelectedText": "0xffd2c47d",
-              "key_profile_tabSelectedLine": "0xffb7a85e",
+              "key_profile_tabSelectedLine": "0xffb59aff",
           }
           applied_extended = []
           for key, value in extended_palette.items():
