@@ -1224,6 +1224,23 @@ jobs:
               if launch_count != 1:
                   raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")
               launch.write_text(launch_source, encoding="utf-8")
+          # Apply VGRAM colors before Telegram constructs the phone-number / login screens.
+          # LaunchActivity alone is too late for some login fragments restored during startup.
+          login_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
+          if not login_activity.exists():
+              raise SystemExit("VGRAM patch failed: LoginActivity.java not found in Telegram source")
+          login_source = login_activity.read_text(encoding="utf-8")
+          if "VgramTheme.apply(getParentActivity())" not in login_source:
+              login_source, login_count = re.subn(
+                  r'(?m)^(\\s*)public View createView\\(Context context\\) \\{',
+                  r'\\1public View createView(Context context) {\\n\\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  login_source, count=1
+              )
+              if login_count != 1:
+                  raise SystemExit("VGRAM patch failed: LoginActivity.createView(Context) insertion point not found")
+              login_activity.write_text(login_source, encoding="utf-8")
+          print("Applied VGRAM palette before building the real Telegram login / phone-number UI.")
+
           print("Installed VGRAM Studio, persistent accent settings, developers page and native OTA updater.")
 
           # Apply a real VGRAM dark graphite + muted gold palette to Telegram's actual default UI.
