@@ -181,7 +181,7 @@ jobs:
           features_row = '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));'
           if source.count(ask_row) != 1 or source.count(faq_row) != 1 or source.count(features_row) != 1:
               raise SystemExit("VGRAM help-menu patch failed: upstream help rows changed")
-          source = source.replace(ask_row + "\\n", "", 1)
+          source = source.replace(ask_row, "", 1)
           source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, "Вопросы о VGRAM"));', 1)
           source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, "Возможности VGRAM"));', 1)
           faq_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));'
