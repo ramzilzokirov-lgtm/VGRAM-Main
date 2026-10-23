@@ -1108,63 +1108,76 @@ jobs:
           import android.widget.TextView;
           import org.json.JSONArray;
           import org.json.JSONObject;
+          import java.net.HttpURLConnection;
+          import java.net.URL;
+          import java.io.OutputStream;
+          import java.io.ByteArrayOutputStream;
+          import java.io.InputStream;
+          import java.nio.charset.StandardCharsets;
+          import java.util.ArrayList;
           import java.util.Iterator;
+          import java.util.Locale;
 
           public class VgramBadgesActivity extends VgramBaseActivity {
-              private static final String PREFS = "vgram_badges_local";
-              private static final String[] BADGES = {"TESTER", "OG/OLD", "FRIENDS", "TEAM"};
+              private static final String PREFS = "vgram_badges_server";
+              private static final String API = "https://vgram-31xt.onrender.com";
+              private static final String[] LABELS = {"TESTER", "OG/OLD", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER"};
+              private static final String[] CODES = {"TESTER", "OG", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER"};
               private LinearLayout list;
               private android.content.SharedPreferences prefs;
+              private String adminKey = "";
               private int failedAttempts = 0;
-
-              // Obfuscation only hides the plain text from casual inspection; this is not server-grade security.
-              private static String adminPassword() {
-                  int[] encoded = {95, 76, 87, 68, 65, 31, 29, 28, 30};
-                  StringBuilder value = new StringBuilder();
-                  for (int part : encoded) value.append((char) (part ^ 45));
-                  return value.toString();
-              }
 
               @Override protected void onCreate(Bundle state) {
                   super.onCreate(state);
                   prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-                  setTitle("Панель бейджей VGRAM");
-                  showPasswordGate();
+                  setTitle("Бейджи VGRAM — синхронизация");
+                  showKeyGate();
               }
 
-              private void showPasswordGate() {
+              private void showKeyGate() {
                   LinearLayout root = column();
-                  root.addView(text("Закрытая панель администратора\\nВведите пароль для управления бейджами."));
-                  EditText password = new EditText(this);
-                  password.setSingleLine(true);
-                  password.setHint("Пароль администратора");
-                  password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                  root.addView(password);
-                  addButton(root, "Открыть панель", v -> {
-                      if (adminPassword().equals(password.getText().toString())) {
-                          openAdminPanel();
-                      } else {
-                          failedAttempts++;
-                          password.setText("");
-                          password.setError("Неверный пароль");
-                          if (failedAttempts >= 5) {
-                              new AlertDialog.Builder(this).setTitle("Доступ закрыт")
-                                  .setMessage("Слишком много неверных попыток.")
-                                  .setPositiveButton("Закрыть", (d, w) -> finish()).show();
-                          }
-                      }
+                  root.addView(text("Серверные бейджи. Ключ администратора проверяется сервером и не сохраняется в настройках приложения."));
+                  EditText key = new EditText(this);
+                  key.setSingleLine(true);
+                  key.setHint("VGRAM_ADMIN_KEY");
+                  key.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                  root.addView(key);
+                  addButton(root, "Подключиться", v -> {
+                      String candidate = key.getText().toString().trim();
+                      if (candidate.isEmpty()) { key.setError("Введите ключ администратора"); return; }
+                      adminKey = candidate;
+                      key.setText("");
+                      verifyKey();
                   });
                   addButton(root, "Назад", v -> finish());
                   setContentView(root);
               }
 
+              private void verifyKey() {
+                  new Thread(() -> {
+                      try {
+                          request("GET", "/admin/nfts", null, adminKey);
+                          runOnUiThread(this::openAdminPanel);
+                      } catch (Exception e) {
+                          runOnUiThread(() -> {
+                              adminKey = "";
+                              new AlertDialog.Builder(this).setTitle("Не удалось подключиться")
+                                  .setMessage("Сервер отклонил запрос или временно недоступен. Проверь ключ и попробуй снова.")
+                                  .setPositiveButton("Повторить", (d, w) -> showKeyGate())
+                                  .setNegativeButton("Закрыть", (d, w) -> finish()).show();
+                          });
+                      }
+                  }).start();
+              }
+
               private void openAdminPanel() {
                   setTitle("Бейджи VGRAM");
                   LinearLayout root = column();
-                  TextView intro = text("Назначение бейджа по @username или Telegram ID. Введите юзернейм с @ либо числовой ID, затем выберите бейдж.\\n\\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
-                  root.addView(intro);
-                  addButton(root, "Назначить бейдж", this::grantDialog);
-                  addButton(root, "Отозвать бейдж", this::revokeDialog);
+                  root.addView(text("Выдача и отзыв выполняются на сервере. Введи числовой Telegram ID: username нельзя надёжно сопоставить с ID через Telegram API. Бейджи доступны через API профиля VGRAM."));
+                  addButton(root, "Выдать серверный бейдж", this::grantDialog);
+                  addButton(root, "Отозвать серверный бейдж", this::revokeDialog);
+                  addButton(root, "Обновить список", this::refresh);
                   list = column();
                   root.addView(list);
                   setContentView(root);
@@ -1172,96 +1185,137 @@ jobs:
               }
 
               private void grantDialog() {
-                  EditText id = new EditText(this);
-                  id.setSingleLine(true);
-                  id.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-                  id.setHint("@username или Telegram user ID");
-                  new AlertDialog.Builder(this).setTitle("Кому назначить?")
+                  EditText id = idInput();
+                  new AlertDialog.Builder(this).setTitle("Telegram ID пользователя")
                       .setView(id).setNegativeButton("Отмена", null)
                       .setPositiveButton("Далее", (d, w) -> {
-                          String user = normalizeUserKey(id.getText().toString());
-                          if (user.isEmpty()) { id.setError("Введите @username или числовой ID"); return; }
-                          String[] choices = BADGES;
-                          new AlertDialog.Builder(this).setTitle("Выберите бейдж")
-                              .setItems(choices, (dialog, which) -> {
-                                  try {
-                                      JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
-                                      JSONArray arr = all.optJSONArray(user);
-                                      if (arr == null) arr = new JSONArray();
-                                      boolean exists = false;
-                                      for (int i = 0; i < arr.length(); i++) if (BADGES[which].equals(arr.optString(i))) exists = true;
-                                      if (!exists) arr.put(BADGES[which]);
-                                      all.put(user, arr);
-                                      prefs.edit().putString("assignments", all.toString()).apply();
-                                      refresh();
-                                  } catch (Exception ignored) { }
+                          String telegramId = normalizeId(id.getText().toString());
+                          if (telegramId.isEmpty()) { id.setError("Нужен числовой Telegram ID"); return; }
+                          new AlertDialog.Builder(this).setTitle("Выбери бейдж")
+                              .setItems(LABELS, (dialog, which) -> {
+                                  EditText label = new EditText(this);
+                                  label.setSingleLine(true);
+                                  label.setText(LABELS[which]);
+                                  new AlertDialog.Builder(this).setTitle("Подпись бейджа")
+                                      .setView(label).setNegativeButton("Отмена", null)
+                                      .setPositiveButton("Синхронизировать", (d2, w2) ->
+                                          serverBadge("PUT", telegramId, CODES[which], label.getText().toString().trim()))
+                                      .show();
                               }).show();
                       }).show();
               }
 
               private void revokeDialog() {
-                  EditText id = new EditText(this);
-                  id.setSingleLine(true);
-                  id.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-                  id.setHint("@username или Telegram user ID");
-                  new AlertDialog.Builder(this).setTitle("У кого отозвать?")
+                  EditText id = idInput();
+                  new AlertDialog.Builder(this).setTitle("Telegram ID пользователя")
                       .setView(id).setNegativeButton("Отмена", null)
                       .setPositiveButton("Далее", (d, w) -> {
-                          String user = normalizeUserKey(id.getText().toString());
-                          if (user.isEmpty()) { id.setError("Введите @username или числовой ID"); return; }
-                          try {
-                              JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
-                              JSONArray arr = all.optJSONArray(user);
-                              if (arr == null || arr.length() == 0) return;
-                              String[] choices = new String[arr.length()];
-                              for (int i = 0; i < arr.length(); i++) choices[i] = arr.optString(i);
-                              new AlertDialog.Builder(this).setTitle("Отозвать какой бейдж?")
-                                  .setItems(choices, (dialog, which) -> {
-                                      try {
-                                          JSONArray updated = new JSONArray();
-                                          for (int i = 0; i < arr.length(); i++) if (i != which) updated.put(arr.getString(i));
-                                          if (updated.length() == 0) all.remove(user); else all.put(user, updated);
-                                          prefs.edit().putString("assignments", all.toString()).apply();
-                                          refresh();
-                                      } catch (Exception ignored) { }
-                                  }).show();
-                          } catch (Exception ignored) { }
+                          String telegramId = normalizeId(id.getText().toString());
+                          if (telegramId.isEmpty()) { id.setError("Нужен числовой Telegram ID"); return; }
+                          new AlertDialog.Builder(this).setTitle("Какой бейдж отозвать?")
+                              .setItems(LABELS, (dialog, which) -> serverBadge("DELETE", telegramId, CODES[which], ""))
+                              .show();
                       }).show();
               }
 
-              private String normalizeUserKey(String raw) {
-                  if (raw == null) return "";
-                  String value = raw.trim();
-                  if (value.startsWith("@")) value = value.substring(1);
-                  if (value.matches("[0-9]{3,20}")) return value;
-                  if (value.matches("[A-Za-z0-9_]{5,32}")) return "@" + value.toLowerCase(java.util.Locale.US);
-                  return "";
+              private void serverBadge(String method, String telegramId, String code, String label) {
+                  new Thread(() -> {
+                      try {
+                          JSONObject body = null;
+                          if ("PUT".equals(method)) {
+                              body = new JSONObject();
+                              body.put("label", label.isEmpty() ? code : label);
+                          }
+                          JSONObject result = request(method, "/admin/telegram/" + telegramId + "/badges/" + code, body, adminKey);
+                          if (!result.optBoolean("ok", false)) throw new Exception("Server did not confirm the change");
+                          JSONArray tracked = new JSONArray(prefs.getString("tracked_ids", "[]"));
+                          boolean exists = false;
+                          for (int i = 0; i < tracked.length(); i++) if (telegramId.equals(tracked.optString(i))) exists = true;
+                          if (!exists) tracked.put(telegramId);
+                          prefs.edit().putString("tracked_ids", tracked.toString()).apply();
+                          runOnUiThread(() -> {
+                              android.widget.Toast.makeText(this, "Бейдж синхронизирован с сервером", android.widget.Toast.LENGTH_LONG).show();
+                              refresh();
+                          });
+                      } catch (Exception e) {
+                          runOnUiThread(() -> new AlertDialog.Builder(this).setTitle("Ошибка синхронизации")
+                              .setMessage("Сервер не принял изменение. Проверь доступ к серверу, ключ и Telegram ID.")
+                              .setPositiveButton("OK", null).show());
+                      }
+                  }).start();
               }
 
               private void refresh() {
                   if (list == null) return;
                   list.removeAllViews();
-                  try {
-                      JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
-                      Iterator<String> keys = all.keys();
-                      boolean any = false;
-                      while (keys.hasNext()) {
-                          String id = keys.next();
-                          JSONArray arr = all.optJSONArray(id);
-                          StringBuilder value = new StringBuilder(id.startsWith("@") ? id : "ID " + id).append("  ·  ");
-                          if (arr != null) for (int i = 0; i < arr.length(); i++) {
-                              if (i > 0) value.append("  ");
-                              value.append("◆ ").append(arr.optString(i));
+                  list.addView(text("Загружаю серверные бейджи…"));
+                  new Thread(() -> {
+                      ArrayList<String> rows = new ArrayList<>();
+                      try {
+                          JSONArray tracked = new JSONArray(prefs.getString("tracked_ids", "[]"));
+                          for (int i = 0; i < tracked.length(); i++) {
+                              String id = tracked.optString(i);
+                              JSONObject data = request("GET", "/users/telegram/" + id + "/badges", null, null);
+                              JSONArray badges = data.optJSONArray("badges");
+                              StringBuilder row = new StringBuilder("ID ").append(id).append("  ·  ");
+                              if (badges == null || badges.length() == 0) row.append("нет бейджей");
+                              else for (int b = 0; b < badges.length(); b++) {
+                                  if (b > 0) row.append("  ");
+                                  JSONObject badge = badges.optJSONObject(b);
+                                  row.append("◆ ").append(badge == null ? "" : badge.optString("label"));
+                              }
+                              rows.add(row.toString());
                           }
-                          list.addView(text(value.toString()));
-                          any = true;
+                      } catch (Exception e) {
+                          rows.add("Сервер недоступен. Нажми «Обновить список» позже.");
                       }
-                      if (!any) list.addView(text("Пока нет назначенных бейджей."));
-                  } catch (Exception e) {
-                      list.addView(text("Не удалось прочитать список назначений."));
-                  }
+                      runOnUiThread(() -> {
+                          if (list == null) return;
+                          list.removeAllViews();
+                          if (rows.isEmpty()) list.addView(text("Пока нет отслеживаемых назначений. Выдай первый бейдж."));
+                          else for (String row : rows) list.addView(text(row));
+                      });
+                  }).start();
               }
 
+              private JSONObject request(String method, String path, JSONObject body, String key) throws Exception {
+                  HttpURLConnection c = (HttpURLConnection) new URL(API + path).openConnection();
+                  c.setRequestMethod(method);
+                  c.setConnectTimeout(12000);
+                  c.setReadTimeout(12000);
+                  c.setRequestProperty("Accept", "application/json");
+                  c.setRequestProperty("User-Agent", "VGRAM-Android");
+                  if (key != null && !key.isEmpty()) c.setRequestProperty("X-VGRAM-ADMIN-KEY", key);
+                  if (body != null) {
+                      c.setDoOutput(true);
+                      c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                      try (OutputStream out = c.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
+                  }
+                  try {
+                      int status = c.getResponseCode();
+                      InputStream in = status >= 200 && status < 300 ? c.getInputStream() : c.getErrorStream();
+                      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                      if (in != null) try (InputStream stream = in) {
+                          byte[] buffer = new byte[2048]; int n;
+                          while ((n = stream.read(buffer)) != -1) bytes.write(buffer, 0, n);
+                      }
+                      if (status < 200 || status >= 300) throw new Exception("HTTP " + status);
+                      String raw = bytes.toString("UTF-8");
+                      return raw.isEmpty() ? new JSONObject() : new JSONObject(raw);
+                  } finally { c.disconnect(); }
+              }
+
+              private EditText idInput() {
+                  EditText id = new EditText(this);
+                  id.setSingleLine(true);
+                  id.setInputType(InputType.TYPE_CLASS_NUMBER);
+                  id.setHint("Например, 123456789");
+                  return id;
+              }
+              private String normalizeId(String raw) {
+                  String value = raw == null ? "" : raw.trim();
+                  return value.matches("[0-9]{3,20}") ? value : "";
+              }
               private LinearLayout column() {
                   LinearLayout v = new LinearLayout(this);
                   v.setOrientation(LinearLayout.VERTICAL);
