@@ -1232,8 +1232,8 @@ jobs:
           login_source = login_activity.read_text(encoding="utf-8")
           if "VgramTheme.apply(getParentActivity())" not in login_source:
               login_source, login_count = re.subn(
-                  r'(?m)^(\\s*)public View createView\\(Context context\\) \\{',
-                  r'\\1public View createView(Context context) {\\n\\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  r'(?m)^(\s*)public View createView\(Context context\) \{',
+                  r'\1public View createView(Context context) {\n\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
                   login_source, count=1
               )
               if login_count != 1:
