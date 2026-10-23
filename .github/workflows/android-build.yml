@@ -229,9 +229,10 @@ jobs:
               }
               public static void apply(Context context) {
                   int a = accent(context);
-                  Theme.setColor(Theme.key_windowBackgroundWhite, 0xff111214, false);
-                  Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xfff0f0ec, false);
-                  Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffa0a09a, false);
+                  // Apply a muted brown/amber palette inspired by the requested YouGram references.
+                  Theme.setColor(Theme.key_windowBackgroundWhite, 0xff17100c, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xfff5eee7, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffc8bdb2, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
@@ -252,6 +253,21 @@ jobs:
               }
           }
           ''', encoding="utf-8")
+
+          # Apply VGRAM colors to the actual Telegram application on launch, not only to VGRAM settings pages.
+          launch = root / "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
+          launch_source = launch.read_text(encoding="utf-8")
+          if "VgramTheme.apply(this);" not in launch_source:
+              launch_pattern = r'(protected void onCreate\\s*\\(Bundle\\s+\\w+\\)\\s*\\{\\s*super\\.onCreate\\([^;]*;)' 
+              launch_match = re.search(launch_pattern, launch_source)
+              if not launch_match:
+                  launch_pattern = r'(public void onCreate\\s*\\(Bundle\\s+\\w+\\)\\s*\\{\\s*super\\.onCreate\\([^;]*;)'
+                  launch_match = re.search(launch_pattern, launch_source)
+              if not launch_match:
+                  raise SystemExit("VGRAM patch failed: LaunchActivity onCreate anchor not found")
+              launch_source = launch_source[:launch_match.end(1)] + "\\n        VgramTheme.apply(this);" + launch_source[launch_match.end(1):]
+              launch.write_text(launch_source, encoding="utf-8")
+          print("Applied the VGRAM palette to the real Telegram launch activity.")
 
           (ui_dir / "VgramBaseActivity.java").write_text(r'''package org.telegram.ui;
 
