@@ -1578,6 +1578,88 @@ jobs:
                   applied_extended.append(key)
           theme_colors.write_text(theme_source, encoding="utf-8")
 
+          (ui_dir / "VgramBadgeSync.java").write_text(r'''package org.telegram.ui;
+
+          import android.content.Context;
+          import android.content.SharedPreferences;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.widget.TextView;
+          import org.json.JSONArray;
+          import org.json.JSONObject;
+          import java.io.ByteArrayOutputStream;
+          import java.io.InputStream;
+          import java.net.HttpURLConnection;
+          import java.net.URL;
+          import java.util.WeakHashMap;
+
+          public final class VgramBadgeSync {
+              private static final String API = "https://vgram-31xt.onrender.com";
+              private static final Handler MAIN = new Handler(Looper.getMainLooper());
+              private static final WeakHashMap<TextView, String> SUFFIXES = new WeakHashMap<>();
+              private VgramBadgeSync() {}
+
+              public static void apply(Context context, long telegramId, TextView title) {
+                  if (context == null || title == null || telegramId <= 0) return;
+                  final String id = Long.toString(telegramId);
+                  final Context app = context.getApplicationContext();
+                  final SharedPreferences cache = app.getSharedPreferences("vgram_badge_cache", Context.MODE_PRIVATE);
+                  String cached = cache.getString("badges_" + id, "");
+                  long savedAt = cache.getLong("time_" + id, 0L);
+                  if (!cached.isEmpty()) render(title, cached);
+                  if (System.currentTimeMillis() - savedAt < 300000L) return;
+                  new Thread(() -> {
+                      HttpURLConnection connection = null;
+                      try {
+                          connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/badges").openConnection();
+                          connection.setRequestMethod("GET");
+                          connection.setConnectTimeout(8000);
+                          connection.setReadTimeout(8000);
+                          connection.setRequestProperty("Accept", "application/json");
+                          connection.setRequestProperty("User-Agent", "VGRAM-Android");
+                          int status = connection.getResponseCode();
+                          if (status < 200 || status >= 300) throw new IllegalStateException("HTTP " + status);
+                          String raw;
+                          try (InputStream in = connection.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                              byte[] buffer = new byte[2048]; int count;
+                              while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+                              raw = out.toString("UTF-8");
+                          }
+                          JSONObject response = new JSONObject(raw);
+                          JSONArray badges = response.optJSONArray("badges");
+                          StringBuilder suffix = new StringBuilder();
+                          if (badges != null) for (int i = 0; i < badges.length(); i++) {
+                              JSONObject badge = badges.optJSONObject(i);
+                              String label = badge == null ? "" : badge.optString("label", "");
+                              if (label != null && !label.trim().isEmpty()) {
+                                  if (suffix.length() > 0) suffix.append("  ");
+                                  suffix.append("◆ ").append(label.trim());
+                              }
+                          }
+                          String result = suffix.toString();
+                          cache.edit().putString("badges_" + id, result).putLong("time_" + id, System.currentTimeMillis()).apply();
+                          MAIN.post(() -> render(title, result));
+                      } catch (Exception ignored) {
+                      } finally {
+                          if (connection != null) connection.disconnect();
+                      }
+                  }).start();
+              }
+
+              private static void render(TextView title, String suffix) {
+                  if (title == null) return;
+                  CharSequence currentText = title.getText();
+                  String current = currentText == null ? "" : currentText.toString();
+                  String oldSuffix = SUFFIXES.get(title);
+                  String base = oldSuffix != null && !oldSuffix.isEmpty() && current.endsWith(oldSuffix)
+                      ? current.substring(0, current.length() - oldSuffix.length()).trim() : current;
+                  String append = suffix == null || suffix.isEmpty() ? "" : "  " + suffix;
+                  SUFFIXES.put(title, append);
+                  title.setText(base + append);
+              }
+          }
+          ''', encoding="utf-8")
+
           # Apply the user-selected VGRAM profile banner to the real Telegram profile header.
           # The image remains local to this installation; cross-user banners require a backend.
           profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
@@ -1616,6 +1698,18 @@ jobs:
               print("Profile banner hook already applied.")
           print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
           print("Applied extended VGRAM palette keys: " + str(len(applied_extended)))
+
+          # Fetch public, server-issued VGRAM badges for the opened Telegram profile.
+          profile_source = profile_activity.read_text(encoding="utf-8")
+          badge_name_anchor = "                if (a == 0 && onlineTextOverride != null) {"
+          badge_name_hook = "                if (a == 0 && user != null) { VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a]); }\\n" + badge_name_anchor
+          if "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])" not in profile_source:
+              if badge_name_anchor not in profile_source:
+                  raise SystemExit("VGRAM badge display patch failed: ProfileActivity name anchor not found")
+              profile_source = profile_source.replace(badge_name_anchor, badge_name_hook, 1)
+              profile_activity.write_text(profile_source, encoding="utf-8")
+          print("Connected server-synced VGRAM badges to profile names.")
+
 
           props = root / "gradle.properties"
           text = props.read_text(encoding="utf-8")
