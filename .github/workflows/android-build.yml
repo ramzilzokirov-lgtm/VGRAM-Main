@@ -296,27 +296,27 @@ jobs:
               @Override protected void onCreate(Bundle state) { super.onCreate(state); }
 
               protected void setupScreen(String eyebrow, String title, String subtitle) {
-                  getWindow().setStatusBarColor(0xff101114);
-                  getWindow().setNavigationBarColor(0xff101114);
+                  getWindow().setStatusBarColor(0xff17100c);
+                  getWindow().setNavigationBarColor(0xff17100c);
                   LinearLayout root = new LinearLayout(this);
                   root.setOrientation(LinearLayout.VERTICAL);
                   root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-            new int[] { 0xff17191d, 0xff101114, 0xff141518 }));
+            new int[] { 0xff261a13, 0xff17100c, 0xff21170f }));
                   root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
                   LinearLayout header = new LinearLayout(this);
                   header.setGravity(Gravity.CENTER_VERTICAL);
                   TextView back = label("‹", 31, 0xfff0f0ec, true);
                   back.setGravity(Gravity.CENTER);
-                  back.setBackground(panel(0xff24262a, accent(), 18));
+                  back.setBackground(panel(0xff35241a, accent(), 18));
                   header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(46)));
                   back.setOnClickListener(v -> finish());
 
                   LinearLayout brand = new LinearLayout(this);
                   brand.setOrientation(LinearLayout.VERTICAL);
                   brand.setPadding(dp(13), 0, 0, 0);
-                  brand.addView(label("VGRAM  /  STUDIO", 11, accent(), true));
-                  brand.addView(label(eyebrow, 10, 0xff8d8f94, true));
+                  brand.addView(label("VGRAM", 11, accent(), true));
+                  brand.addView(label(eyebrow, 10, 0xffc8bdb2, true));
                   header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
                   root.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
