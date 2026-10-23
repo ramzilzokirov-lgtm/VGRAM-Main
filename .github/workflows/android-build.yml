@@ -179,7 +179,8 @@ jobs:
           items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "VGRAM — Оформление", "Темы и цвета интерфейса"));
           items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Обновления VGRAM", "Релизы и новые версии"));
           items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Разработчики", "Информация о проекте"));
-          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Плагины VGRAM", "Безопасные темы и пресеты"));'''
+          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Плагины VGRAM", "Безопасные темы и пресеты"));
+          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Бейджи VGRAM", "TESTER · OG · FRIENDS · TEAM"));'''
           if source.count(list_anchor) != 1:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
           source = source.replace(list_anchor, list_patch, 1)
@@ -1043,6 +1044,144 @@ jobs:
               gradle_file.write_text(gradle_text, encoding="utf-8")
           print("Added Material Components dependency for VGRAM's Material 3 screens.")
 
+          (ui_dir / "VgramBadgesActivity.java").write_text(r'''package org.telegram.ui;
+
+          import android.app.AlertDialog;
+          import android.os.Bundle;
+          import android.text.InputType;
+          import android.view.View;
+          import android.widget.EditText;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+          import org.json.JSONArray;
+          import org.json.JSONObject;
+          import java.util.Iterator;
+
+          public class VgramBadgesActivity extends VgramBaseActivity {
+              private static final String PREFS = "vgram_badges_local";
+              private static final String[] BADGES = {"TESTER", "OG/OLD", "FRIENDS", "TEAM"};
+              private LinearLayout list;
+              private android.content.SharedPreferences prefs;
+
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+                  setTitle("Бейджи VGRAM");
+                  LinearLayout root = column();
+                  TextView intro = text("Ручное назначение бейджей по Telegram ID. Выберите пользователя, затем бейдж.\n\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
+                  root.addView(intro);
+                  addButton(root, "Назначить бейдж", this::grantDialog);
+                  addButton(root, "Отозвать бейдж", this::revokeDialog);
+                  list = column();
+                  root.addView(list);
+                  setContentView(root);
+                  refresh();
+              }
+
+              private void grantDialog() {
+                  EditText id = new EditText(this);
+                  id.setSingleLine(true);
+                  id.setInputType(InputType.TYPE_CLASS_NUMBER);
+                  id.setHint("Telegram user ID");
+                  new AlertDialog.Builder(this).setTitle("Кому назначить?")
+                      .setView(id).setNegativeButton("Отмена", null)
+                      .setPositiveButton("Далее", (d, w) -> {
+                          String user = id.getText().toString().trim();
+                          if (user.isEmpty()) return;
+                          String[] choices = BADGES;
+                          new AlertDialog.Builder(this).setTitle("Выберите бейдж")
+                              .setItems(choices, (dialog, which) -> {
+                                  try {
+                                      JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
+                                      JSONArray arr = all.optJSONArray(user);
+                                      if (arr == null) arr = new JSONArray();
+                                      boolean exists = false;
+                                      for (int i = 0; i < arr.length(); i++) if (BADGES[which].equals(arr.optString(i))) exists = true;
+                                      if (!exists) arr.put(BADGES[which]);
+                                      all.put(user, arr);
+                                      prefs.edit().putString("assignments", all.toString()).apply();
+                                      refresh();
+                                  } catch (Exception ignored) { }
+                              }).show();
+                      }).show();
+              }
+
+              private void revokeDialog() {
+                  EditText id = new EditText(this);
+                  id.setSingleLine(true);
+                  id.setInputType(InputType.TYPE_CLASS_NUMBER);
+                  id.setHint("Telegram user ID");
+                  new AlertDialog.Builder(this).setTitle("У кого отозвать?")
+                      .setView(id).setNegativeButton("Отмена", null)
+                      .setPositiveButton("Далее", (d, w) -> {
+                          String user = id.getText().toString().trim();
+                          try {
+                              JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
+                              JSONArray arr = all.optJSONArray(user);
+                              if (arr == null || arr.length() == 0) return;
+                              String[] choices = new String[arr.length()];
+                              for (int i = 0; i < arr.length(); i++) choices[i] = arr.optString(i);
+                              new AlertDialog.Builder(this).setTitle("Отозвать какой бейдж?")
+                                  .setItems(choices, (dialog, which) -> {
+                                      try {
+                                          JSONArray updated = new JSONArray();
+                                          for (int i = 0; i < arr.length(); i++) if (i != which) updated.put(arr.getString(i));
+                                          if (updated.length() == 0) all.remove(user); else all.put(user, updated);
+                                          prefs.edit().putString("assignments", all.toString()).apply();
+                                          refresh();
+                                      } catch (Exception ignored) { }
+                                  }).show();
+                          } catch (Exception ignored) { }
+                      }).show();
+              }
+
+              private void refresh() {
+                  if (list == null) return;
+                  list.removeAllViews();
+                  try {
+                      JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
+                      Iterator<String> keys = all.keys();
+                      boolean any = false;
+                      while (keys.hasNext()) {
+                          String id = keys.next();
+                          JSONArray arr = all.optJSONArray(id);
+                          StringBuilder value = new StringBuilder("ID ").append(id).append("  ·  ");
+                          if (arr != null) for (int i = 0; i < arr.length(); i++) {
+                              if (i > 0) value.append("  ");
+                              value.append("◆ ").append(arr.optString(i));
+                          }
+                          list.addView(text(value.toString()));
+                          any = true;
+                      }
+                      if (!any) list.addView(text("Пока нет назначенных бейджей."));
+                  } catch (Exception e) {
+                      list.addView(text("Не удалось прочитать список назначений."));
+                  }
+              }
+
+              private LinearLayout column() {
+                  LinearLayout v = new LinearLayout(this);
+                  v.setOrientation(LinearLayout.VERTICAL);
+                  v.setPadding(20, 18, 20, 24);
+                  return v;
+              }
+              private TextView text(String value) {
+                  TextView t = new TextView(this);
+                  t.setText(value);
+                  t.setTextColor(0xffeeeeea);
+                  t.setTextSize(15);
+                  t.setPadding(12, 12, 12, 12);
+                  return t;
+              }
+              private void addButton(LinearLayout parent, String label, View.OnClickListener click) {
+                  android.widget.Button b = new android.widget.Button(this);
+                  b.setText(label);
+                  b.setOnClickListener(click);
+                  parent.addView(b);
+              }
+          }
+          ''', encoding="utf-8")
+
           # Register internal screens. Upstream already provides FileProvider and REQUEST_INSTALL_PACKAGES.
           manifest = root / "TMessagesProj/src/main/AndroidManifest.xml"
           manifest_text = manifest.read_text(encoding="utf-8")
@@ -1051,9 +1190,10 @@ jobs:
           <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           """
           manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
-          if "org.telegram.ui.VgramUpdateActivity" not in manifest_text:
+          if "org.telegram.ui.VgramBadgesActivity" not in manifest_text:
               if manifest_text.count(app_end) != 1:
                   raise SystemExit("VGRAM patch failed: AndroidManifest application closing tag changed")
               manifest_text = manifest_text.replace(app_end, screen_declarations + app_end, 1)
