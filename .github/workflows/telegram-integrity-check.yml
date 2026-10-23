@@ -68,9 +68,10 @@ jobs:
           print("TG_API_ID secret: " + ("configured" if configured_id else "MISSING"))
           print("TG_API_HASH secret: " + ("configured" if configured_hash else "MISSING"))
           if not configured_id or not configured_hash:
-              print("RESULT: INCOMPLETE — add TG_API_ID and TG_API_HASH in GitHub Actions secrets.")
+              print("::warning::RESULT INCOMPLETE — add TG_API_ID and TG_API_HASH in GitHub Actions secrets to compare your custom API credentials.")
+              print("Build validation can continue, but this check cannot verify custom credentials until both secrets are configured.")
               print("Do not paste credentials into workflow files or logs.")
-              sys.exit(1)
+              sys.exit(0)
 
           print("API ID matches upstream source: " + ("YES" if configured_id == upstream_id else "NO"))
           print("API Hash matches upstream source: " + ("YES" if configured_hash == upstream_hash else "NO"))
