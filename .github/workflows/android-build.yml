@@ -1072,7 +1072,7 @@ jobs:
                   prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
                   setTitle("Бейджи VGRAM");
                   LinearLayout root = column();
-                  TextView intro = text("Ручное назначение бейджей по Telegram ID. Выберите пользователя, затем бейдж.\n\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
+                  TextView intro = text("Назначение бейджа по @username или Telegram ID. Введите юзернейм с @ либо числовой ID, затем выберите бейдж.\n\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
                   root.addView(intro);
                   addButton(root, "Назначить бейдж", this::grantDialog);
                   addButton(root, "Отозвать бейдж", this::revokeDialog);
@@ -1139,6 +1139,15 @@ jobs:
                       }).show();
               }
 
+              private String normalizeUserKey(String raw) {
+                  if (raw == null) return "";
+                  String value = raw.trim();
+                  if (value.startsWith("@")) value = value.substring(1);
+                  if (value.matches("[0-9]{3,20}")) return value;
+                  if (value.matches("[A-Za-z0-9_]{5,32}")) return "@" + value.toLowerCase(java.util.Locale.US);
+                  return "";
+              }
+
               private void refresh() {
                   if (list == null) return;
                   list.removeAllViews();
@@ -1149,7 +1158,7 @@ jobs:
                       while (keys.hasNext()) {
                           String id = keys.next();
                           JSONArray arr = all.optJSONArray(id);
-                          StringBuilder value = new StringBuilder("ID ").append(id).append("  ·  ");
+                          StringBuilder value = new StringBuilder(id.startsWith("@") ? id : "ID " + id).append("  ·  ");
                           if (arr != null) for (int i = 0; i < arr.length(); i++) {
                               if (i > 0) value.append("  ");
                               value.append("◆ ").append(arr.optString(i));
@@ -1352,7 +1361,7 @@ jobs:
           import re
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['VGRAM — Оформление', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'case 27:', 'case 28:', 'case 29:', 'case 30:']
+          required = ['VGRAM — Оформление', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
               raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
