@@ -1616,13 +1616,65 @@ jobs:
 
       - name: Collect APK and build metadata
         if: always()
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p output
-          find upstream/TMessagesProj_App/build/outputs/apk -type f -name "*.apk" -exec cp {} output/VGRAM-debug.apk \; 2>/dev/null || true
+          mapfile -t apks < <(find upstream/TMessagesProj_App/build/outputs/apk -type f -name "*.apk" 2>/dev/null | sort)
+          if [ "${#apks[@]}" -eq 0 ]; then
+            echo "ERROR: Gradle produced no APK files."
+            exit 1
+          fi
+          if [ "${#apks[@]}" -gt 1 ]; then
+            mapfile -t fat_apks < <(printf '%s\n' "${apks[@]}" | grep -E '/afat/debug/.*\.apk
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VGRAM-debug-apk
+          path: output/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK for in-app OTA
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
+          TAG="v${VERSION}"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
+          gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
+ || true)
+            if [ "${#fat_apks[@]}" -ne 1 ]; then
+              printf 'ERROR: Expected exactly one fat debug APK, found %s APKs:\n' "${#apks[@]}"
+              printf '  %s\n' "${apks[@]}"
+              exit 1
+            fi
+            selected="${fat_apks[0]}"
+          else
+            selected="${apks[0]}"
+          fi
+          echo "Selected APK: $selected"
+          cp "$selected" output/VGRAM-debug.apk
           cp upstream-telegram-commit.txt output/ 2>/dev/null || true
           VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
-          if [ -f output/VGRAM-debug.apk ]; then (cd output && sha256sum VGRAM-debug.apk > VGRAM-debug.apk.sha256); fi
-          printf 'VGRAM version: %s\nBuild run: %s\n' "$VERSION" "${GITHUB_RUN_NUMBER}" > output/build-info.txt
+          (cd output && sha256sum VGRAM-debug.apk > VGRAM-debug.apk.sha256)
+          printf 'VGRAM version: %s\nBuild run: %s\nSource APK: %s\n' "$VERSION" "${GITHUB_RUN_NUMBER}" "$selected" > output/build-info.txt
+
+      - name: Validate APK before publishing
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="output/VGRAM-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -x "$BUILD_TOOLS/apksigner"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | tee output/apk-badging.txt
+          grep -q "^package: name='org.vgram.messenger'" output/apk-badging.txt
+          echo "APK archive, Android package metadata, and signing verification passed."
 
       - name: Upload APK artifact
         if: success()
