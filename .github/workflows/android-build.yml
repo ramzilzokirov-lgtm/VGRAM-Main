@@ -1082,13 +1082,53 @@ jobs:
               private static final String[] BADGES = {"TESTER", "OG/OLD", "FRIENDS", "TEAM"};
               private LinearLayout list;
               private android.content.SharedPreferences prefs;
+              private int failedAttempts = 0;
+
+              // Obfuscation only hides the plain text from casual inspection; this is not server-grade security.
+              private static String adminPassword() {
+                  int[] encoded = {123, 12, 120, 87, 68, 0, 26, 30, 28, 20};
+                  StringBuilder value = new StringBuilder();
+                  for (int part : encoded) value.append((char) (part ^ 45));
+                  return value.toString();
+              }
 
               @Override protected void onCreate(Bundle state) {
                   super.onCreate(state);
                   prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+                  setTitle("Панель бейджей VGRAM");
+                  showPasswordGate();
+              }
+
+              private void showPasswordGate() {
+                  LinearLayout root = column();
+                  root.addView(text("Закрытая панель администратора\\nВведите пароль для управления бейджами."));
+                  EditText password = new EditText(this);
+                  password.setSingleLine(true);
+                  password.setHint("Пароль администратора");
+                  password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                  root.addView(password);
+                  addButton(root, "Открыть панель", v -> {
+                      if (adminPassword().equals(password.getText().toString())) {
+                          openAdminPanel();
+                      } else {
+                          failedAttempts++;
+                          password.setText("");
+                          password.setError("Неверный пароль");
+                          if (failedAttempts >= 5) {
+                              new AlertDialog.Builder(this).setTitle("Доступ закрыт")
+                                  .setMessage("Слишком много неверных попыток.")
+                                  .setPositiveButton("Закрыть", (d, w) -> finish()).show();
+                          }
+                      }
+                  });
+                  addButton(root, "Назад", v -> finish());
+                  setContentView(root);
+              }
+
+              private void openAdminPanel() {
                   setTitle("Бейджи VGRAM");
                   LinearLayout root = column();
-                  TextView intro = text("Назначение бейджа по @username или Telegram ID. Введите юзернейм с @ либо числовой ID, затем выберите бейдж.\n\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
+                  TextView intro = text("Назначение бейджа по @username или Telegram ID. Введите юзернейм с @ либо числовой ID, затем выберите бейдж.\\n\\nВажно: сейчас назначения хранятся только на этом устройстве. Это не серверная проверка и не защищает бейджи от подделки; другим пользователям они не синхронизируются.");
                   root.addView(intro);
                   addButton(root, "Назначить бейдж", this::grantDialog);
                   addButton(root, "Отозвать бейдж", this::revokeDialog);
