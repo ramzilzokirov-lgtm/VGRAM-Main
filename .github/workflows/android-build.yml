@@ -391,14 +391,21 @@ jobs:
 
           (ui_dir / "VgramSettingsActivity.java").write_text(r'''package org.telegram.ui;
 
+          import android.content.Intent;
           import android.graphics.Color;
+          import android.graphics.BitmapFactory;
           import android.graphics.drawable.GradientDrawable;
+          import android.net.Uri;
           import android.os.Bundle;
           import android.view.Gravity;
+          import android.widget.ImageView;
           import android.widget.LinearLayout;
           import android.widget.TextView;
+          import android.widget.Toast;
+          import java.io.InputStream;
 
           public class VgramSettingsActivity extends VgramBaseActivity {
+              private static final int PICK_PROFILE_BACKGROUND = 741;
               private final int[] colors = { 0xffc5b878, 0xffa78bfa, 0xff72d6ce, 0xffe58b9a };
               private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
@@ -437,6 +444,33 @@ jobs:
                   addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
                   addToggle("Мягкие анимации", "Небольшие анимации на элементах VGRAM.", "animations", true);
 
+                  LinearLayout profileBackground = card("Фон профиля VGRAM", "Выбери изображение с устройства. Выбор сохраняется в настройках VGRAM, доступ к файлу ограничен выбранным изображением.");
+                  ImageView preview = new ImageView(this);
+                  preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                  preview.setBackground(panel(0xff25272b, 0xff45474c, 18));
+                  String savedUri = getSharedPreferences("vgram_ui", MODE_PRIVATE).getString("profile_background_uri", "");
+                  if (!savedUri.isEmpty()) {
+                      try {
+                          preview.setImageURI(Uri.parse(savedUri));
+                          preview.setVisibility(android.view.View.VISIBLE);
+                      } catch (Exception ignored) { preview.setVisibility(android.view.View.GONE); }
+                  } else {
+                      preview.setVisibility(android.view.View.GONE);
+                  }
+                  profileBackground.addView(preview, new LinearLayout.LayoutParams(-1, dp(150)));
+                  addButton(profileBackground, "Выбрать изображение", () -> {
+                      Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                      pick.addCategory(Intent.CATEGORY_OPENABLE);
+                      pick.setType("image/*");
+                      pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                      try { startActivityForResult(pick, PICK_PROFILE_BACKGROUND); }
+                      catch (Exception error) { Toast.makeText(this, "Не удалось открыть галерею", Toast.LENGTH_LONG).show(); }
+                  });
+                  addButton(profileBackground, "Удалить фон", () -> {
+                      getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().remove("profile_background_uri").apply();
+                      recreate();
+                  });
+
                   LinearLayout reset = card("Сбросить оформление", "Вернуть приглушённый золотой акцент и эффекты по умолчанию.");
                   addButton(reset, "Сбросить настройки", () -> {
             getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().clear().apply();
@@ -451,6 +485,21 @@ jobs:
                     android.net.Uri.parse("https://github.com/ramzilzokirov-lgtm/VGRAM-Main/blob/main/PLUGIN_API.md")));
             } catch (Exception ignored) { }
                   });
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+                  super.onActivityResult(requestCode, resultCode, data);
+                  if (requestCode != PICK_PROFILE_BACKGROUND || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+                  Uri uri = data.getData();
+                  try {
+                      getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putString("profile_background_uri", uri.toString()).apply();
+                      Toast.makeText(this, "Изображение сохранено для VGRAM", Toast.LENGTH_SHORT).show();
+                      recreate();
+                  } catch (Exception error) {
+                      Toast.makeText(this, "Не удалось сохранить доступ к изображению", Toast.LENGTH_LONG).show();
+                  }
               }
 
               private void addToggle(String title, String description, String key, boolean fallback) {
