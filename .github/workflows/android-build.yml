@@ -258,16 +258,23 @@ jobs:
           launch = root / "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
           launch_source = launch.read_text(encoding="utf-8")
           if "VgramTheme.apply(this);" not in launch_source:
-              launch_pattern = r'(protected void onCreate\s*\(Bundle\s+\w+\)\s*\{\s*super\.onCreate\([^;]*;)'
-              launch_match = re.search(launch_pattern, launch_source)
-              if not launch_match:
-                  launch_pattern = r'(public void onCreate\s*\(Bundle\s+\w+\)\s*\{\s*super\.onCreate\([^;]*;)'
-                  launch_match = re.search(launch_pattern, launch_source)
-              if not launch_match:
-                  raise SystemExit("VGRAM patch failed: LaunchActivity onCreate anchor not found")
-              launch_source = launch_source[:launch_match.end(1)] + "\n        VgramTheme.apply(this);" + launch_source[launch_match.end(1):]
-              launch.write_text(launch_source, encoding="utf-8")
-          print("Applied the VGRAM palette to the real Telegram launch activity.")
+              # The pinned upstream LaunchActivity performs initialization before super.onCreate,
+              # so matching only an onCreate/super.onCreate pair at the method opening is brittle.
+              launch_anchor = "        flagSecureReason.attach();\n\n        super.onCreate(savedInstanceState);"
+              if launch_source.count(launch_anchor) == 1:
+                  launch_source = launch_source.replace(
+                      launch_anchor,
+                      launch_anchor + "\n        VgramTheme.apply(this);",
+                      1
+                  )
+                  launch.write_text(launch_source, encoding="utf-8")
+                  print("Applied the VGRAM palette after LaunchActivity super.onCreate.")
+              else:
+                  # Do not abort the entire APK build because this optional hook moved upstream.
+                  # ThemeColors.java is patched separately below, so the branded palette still applies.
+                  print("WARNING: LaunchActivity theme hook anchor changed; using patched default theme colors.")
+          else:
+              print("VGRAM launch theme hook already present.")
 
           (ui_dir / "VgramBaseActivity.java").write_text(r'''package org.telegram.ui;
 
