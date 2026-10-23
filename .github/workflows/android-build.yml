@@ -465,7 +465,7 @@ jobs:
                   addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
                   addToggle("Мягкие анимации", "Небольшие анимации на элементах VGRAM.", "animations", true);
 
-                  LinearLayout profileBackground = card("Фон профиля VGRAM", "Выбери изображение с устройства. Выбор сохраняется в настройках VGRAM, доступ к файлу ограничен выбранным изображением.");
+                  LinearLayout profileBackground = card("Баннер профиля", "Выбери изображение для верхней области своего профиля. Баннер сохраняется локально на этом устройстве.");
                   ImageView preview = new ImageView(this);
                   preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
                   preview.setBackground(panel(0xff25272b, 0xff45474c, 18));
@@ -1446,6 +1446,40 @@ jobs:
               if count:
                   applied_extended.append(key)
           theme_colors.write_text(theme_source, encoding="utf-8")
+
+          # Apply the user-selected VGRAM profile banner to the real Telegram profile header.
+          # The image remains local to this installation; cross-user banners require a backend.
+          profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+          profile_source = profile_activity.read_text(encoding="utf-8")
+          profile_anchor = "        topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));"
+          profile_banner_code = """        topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
+                  if (userId == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                      try {
+                          String vgramBannerUri = getParentActivity().getSharedPreferences("vgram_ui", Activity.MODE_PRIVATE)
+                              .getString("profile_background_uri", "");
+                          if (vgramBannerUri != null && !vgramBannerUri.isEmpty()) {
+                              try (java.io.InputStream vgramBannerStream = getParentActivity().getContentResolver()
+                                      .openInputStream(Uri.parse(vgramBannerUri))) {
+                                  if (vgramBannerStream != null) {
+                                      android.graphics.Bitmap vgramBannerBitmap = android.graphics.BitmapFactory.decodeStream(vgramBannerStream);
+                                      if (vgramBannerBitmap != null) {
+                                          BitmapDrawable vgramBannerDrawable = new BitmapDrawable(getParentActivity().getResources(), vgramBannerBitmap);
+                                          vgramBannerDrawable.setAlpha(205);
+                                          topView.setBackground(vgramBannerDrawable);
+                                      }
+                                  }
+                              }
+                          }
+                      } catch (Exception vgramBannerError) {
+                          android.util.Log.w("VGRAM", "Could not load local profile banner", vgramBannerError);
+                      }
+                  }"""
+          if "Could not load local profile banner" not in profile_source:
+              if profile_source.count(profile_anchor) != 1:
+                  raise SystemExit("VGRAM profile banner patch failed: ProfileActivity header anchor not found uniquely")
+              profile_source = profile_source.replace(profile_anchor, profile_banner_code, 1)
+              profile_activity.write_text(profile_source, encoding="utf-8")
+          print("Connected the saved VGRAM profile banner to the real self-profile header.")
           print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
           print("Applied extended VGRAM palette keys: " + str(len(applied_extended)))
 
