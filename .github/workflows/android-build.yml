@@ -1564,7 +1564,7 @@ jobs:
           import re
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['VGRAM — Оформление', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
+          required = ['Оформление VGRAM', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
               raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
