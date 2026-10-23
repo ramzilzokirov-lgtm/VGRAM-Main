@@ -1678,8 +1678,8 @@ jobs:
             echo "ERROR: Neither aapt nor aapt2 is available."
             exit 1
           fi
-          grep -q "^package: name='org.vgram.messenger'" output/apk-badging.txt || {
-            echo "ERROR: APK package name is not org.vgram.messenger."
+          grep -Eq "^package: name='org\\.vgram\\.messenger(\\.beta)?'" output/apk-badging.txt || {
+            echo "ERROR: APK package name is not an accepted VGRAM package (org.vgram.messenger or org.vgram.messenger.beta)."
             exit 1
           }
           echo "APK archive, Android package metadata, and signing verification passed."
