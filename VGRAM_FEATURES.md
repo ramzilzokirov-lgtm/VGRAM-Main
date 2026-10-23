@@ -25,10 +25,10 @@ This document tracks the requested product scope. A feature is not complete mere
 - [ ] Document update behavior and permissions in the app.
 
 ## Badges
-- [ ] VGRAM-only profile badges: TESTER, OG/OLD, FRIENDS, TEAM (labels can be revised).
-- [ ] Only the project owner can grant or revoke badges.
-- [ ] Do not represent a client-side badge as a Telegram-verified identity.
-- [ ] Store grants server-side if badges must be tamper-resistant; a client-only implementation can be modified by the user.
+- [x] Local badge manager UI: TESTER, OG/OLD, FRIENDS, TEAM can be manually assigned/revoked by Telegram user ID on this device.
+- [ ] Secure owner-only grants: not complete until backed by a server that authenticates the project owner.
+- [x] The badge manager warns that local badges are not Telegram-verified and are not tamper-resistant.
+- [ ] Server-side badge storage and profile/name rendering: not implemented; local grants do not sync to other users or devices.
 
 ## Plugin system
 - [ ] Versioned, permissioned plugin API.
@@ -36,5 +36,5 @@ This document tracks the requested product scope. A feature is not complete mere
 - [ ] Plugin compatibility checks, explicit consent, disable/uninstall controls and documentation.
 - [ ] See [PLUGIN_API.md](PLUGIN_API.md).
 
-## Definition of done
+## Current status note\nThe badge manager is an initial local tool, not a completed public badge system. Profile background selection currently previews the selected image in VGRAM settings; applying it to Telegram's actual profile screen still needs integration. The Liquid Glass and reduced-motion controls are not yet verified to affect every Telegram screen.\n\n## Definition of done
 A feature is done only when its source patch is committed, the CI build succeeds, and the relevant behavior is checked on a device. This repository's bootstrap build does not yet mean the full feature list is implemented.
