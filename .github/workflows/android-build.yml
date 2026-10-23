@@ -174,6 +174,35 @@ jobs:
           # Integrate VGRAM entries into the real upstream SettingsActivity.
           settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
           source = settings.read_text(encoding="utf-8")
+
+          # Replace Telegram-branded help links with VGRAM-owned screens and remove "Ask a Question".
+          ask_row = '        items.add(SettingCell.Factory.of(17, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_ask, getString(R.string.AskAQuestion)));'
+          faq_row = '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.TelegramFAQ)));'
+          features_row = '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));'
+          if source.count(ask_row) != 1 or source.count(faq_row) != 1 or source.count(features_row) != 1:
+              raise SystemExit("VGRAM help-menu patch failed: upstream help rows changed")
+          source = source.replace(ask_row + "\\n", "", 1)
+          source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, "Вопросы о VGRAM"));', 1)
+          source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, "Возможности VGRAM"));', 1)
+          faq_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));'
+          if source.count(faq_handler) != 1:
+              raise SystemExit("VGRAM help-menu patch failed: FAQ handler changed")
+          source = source.replace(faq_handler, '                getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));', 1)
+          feature_handler = '''            case 23: {
+                if (MessagesController.getInstance(currentAccount).isFrozen()) {
+                    AccountFrozenAlert.show(currentAccount);
+                } else {
+                    Browser.openUrl(getContext(), LocaleController.getString(R.string.TelegramFeaturesUrl));
+                }
+                break;
+            }'''
+          if source.count(feature_handler) != 1:
+              raise SystemExit("VGRAM help-menu patch failed: features handler changed")
+          source = source.replace(feature_handler, '''            case 23: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
+                break;
+            }''', 1)
+
           list_anchor = '        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));'
           list_patch = list_anchor + '''
           items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "Оформление VGRAM", "Темы, цвета и внешний вид"));
@@ -1256,6 +1285,48 @@ jobs:
           }
           ''', encoding="utf-8")
 
+          # VGRAM-owned help and capabilities screens (no Telegram-branded FAQ link).
+          (ui_dir / "VgramQuestionsActivity.java").write_text(r'''package org.telegram.ui;
+
+          import android.os.Bundle;
+          import android.widget.LinearLayout;
+
+          public class VgramQuestionsActivity extends VgramBaseActivity {
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  setupScreen("HELP CENTER", "Вопросы о VGRAM", "Ответы о возможностях и работе именно VGRAM.");
+                  card("Что такое VGRAM?", "VGRAM — сторонний Android-клиент на основе исходного кода Telegram. Он подключается к инфраструктуре Telegram и не является официальным приложением Telegram.");
+                  card("Как войти в аккаунт?", "Используйте свой номер телефона и вводите код подтверждения, полученный от Telegram. Никому не передавайте код входа или пароль двухэтапной проверки.");
+                  card("Где менять оформление?", "Откройте Настройки и выберите «Оформление VGRAM». Доступные параметры зависят от версии приложения.");
+                  card("Как обновить приложение?", "Откройте «Обновления VGRAM» и проверьте доступную версию. Устанавливайте APK только из доверенного источника.");
+                  card("Как работают бейджи?", "Менеджер бейджей в текущей версии хранит назначения локально на устройстве. Они не подтверждаются серверами Telegram и пока не синхронизируются с другими пользователями.");
+                  card("Как сообщить об ошибке?", "Откройте репозиторий VGRAM-Main на GitHub и опишите шаги воспроизведения, модель устройства и версию приложения. Не публикуйте коды входа, пароли или личные переписки.");
+                  LinearLayout end = card("Важно", "VGRAM — независимый проект. Функции, помеченные как экспериментальные или ещё не реализованные, могут работать не полностью.");
+              }
+          }
+          ''', encoding="utf-8")
+
+          (ui_dir / "VgramFeaturesActivity.java").write_text(r'''package org.telegram.ui;
+
+          import android.os.Bundle;
+
+          public class VgramFeaturesActivity extends VgramBaseActivity {
+              @Override protected void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  setupScreen("APP CAPABILITIES", "Возможности VGRAM", "Что доступно в VGRAM сейчас — стандартные возможности Telegram и собственные настройки клиента.");
+                  card("Сообщения и чаты", "Переписка с контактами, отправка и получение сообщений, обмен фотографиями, видео, файлами, голосовыми сообщениями и документами через инфраструктуру Telegram.");
+                  card("Группы и каналы", "Просмотр и участие в группах и каналах Telegram в рамках возможностей аккаунта и самого Telegram.");
+                  card("Звонки", "Звонки и другие поддерживаемые Telegram функции связи, если они доступны для аккаунта, устройства и региона.");
+                  card("Настройки VGRAM", "Отдельные страницы VGRAM для оформления, обновлений, информации о разработчиках, плагинов и бейджей.");
+                  card("Цвета и оформление", "Экран оформления содержит параметры акцентного цвета и визуальных эффектов. Действие каждого параметра зависит от того, какие экраны уже подключены к настройкам.");
+                  card("Плагины", "Менеджер предназначен для просмотра и управления поддерживаемыми описательными плагинами. Не устанавливайте неизвестные файлы и не выдавайте расширениям лишние разрешения.");
+                  card("Бейджи", "Можно управлять локальными метками TESTER, OG/OLD, FRIENDS и TEAM на этом устройстве. Пока они не являются серверными значками VGRAM, не подтверждаются Telegram и не отображаются автоматически у всех пользователей.");
+                  card("Обновления", "Страница обновлений VGRAM проверяет релизы проекта. Перед установкой проверяйте источник APK; доступность и проверка обновлений зависят от текущей сборки.");
+                  card("Чего не обещаем", "VGRAM не меняет серверные возможности Telegram и не может гарантировать функции, которые ещё не реализованы или не проверены на устройстве.");
+              }
+          }
+          ''', encoding="utf-8")
+
           # Register internal screens. Upstream already provides FileProvider and REQUEST_INSTALL_PACKAGES.
           manifest = root / "TMessagesProj/src/main/AndroidManifest.xml"
           manifest_text = manifest.read_text(encoding="utf-8")
@@ -1265,6 +1336,8 @@ jobs:
           <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           """
           manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
           if "org.telegram.ui.VgramBadgesActivity" not in manifest_text:
@@ -1558,7 +1631,7 @@ jobs:
           import re
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['Оформление VGRAM', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
+          required = ['Оформление VGRAM', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'Вопросы о VGRAM', 'Возможности VGRAM', 'VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
               raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
@@ -1569,11 +1642,11 @@ jobs:
           if missing_drawables:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
-          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java"]:
+          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
               if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
                   raise SystemExit("VGRAM screen source missing: " + source_name)
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
-          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "vgram_launcher_icon"]):
+          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
               raise SystemExit("VGRAM Android manifest integration incomplete")
           api_diagnostics = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java")
           if not api_diagnostics.is_file():
