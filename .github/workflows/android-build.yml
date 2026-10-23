@@ -1085,13 +1085,13 @@ jobs:
               private void grantDialog() {
                   EditText id = new EditText(this);
                   id.setSingleLine(true);
-                  id.setInputType(InputType.TYPE_CLASS_NUMBER);
-                  id.setHint("Telegram user ID");
+                  id.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                  id.setHint("@username или Telegram user ID");
                   new AlertDialog.Builder(this).setTitle("Кому назначить?")
                       .setView(id).setNegativeButton("Отмена", null)
                       .setPositiveButton("Далее", (d, w) -> {
-                          String user = id.getText().toString().trim();
-                          if (user.isEmpty()) return;
+                          String user = normalizeUserKey(id.getText().toString());
+                          if (user.isEmpty()) { id.setError("Введите @username или числовой ID"); return; }
                           String[] choices = BADGES;
                           new AlertDialog.Builder(this).setTitle("Выберите бейдж")
                               .setItems(choices, (dialog, which) -> {
@@ -1113,12 +1113,13 @@ jobs:
               private void revokeDialog() {
                   EditText id = new EditText(this);
                   id.setSingleLine(true);
-                  id.setInputType(InputType.TYPE_CLASS_NUMBER);
-                  id.setHint("Telegram user ID");
+                  id.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                  id.setHint("@username или Telegram user ID");
                   new AlertDialog.Builder(this).setTitle("У кого отозвать?")
                       .setView(id).setNegativeButton("Отмена", null)
                       .setPositiveButton("Далее", (d, w) -> {
-                          String user = id.getText().toString().trim();
+                          String user = normalizeUserKey(id.getText().toString());
+                          if (user.isEmpty()) { id.setError("Введите @username или числовой ID"); return; }
                           try {
                               JSONObject all = new JSONObject(prefs.getString("assignments", "{}"));
                               JSONArray arr = all.optJSONArray(user);
