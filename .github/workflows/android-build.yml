@@ -374,8 +374,8 @@ jobs:
           profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
           profile_source = profile_activity.read_text(encoding="utf-8")
           required_banner_code = [
-              "VGRAM profile banners are local-only",
-              "Could not load local profile banner",
+              "Prefer the owner's local image",
+              "/users/telegram/",
               "vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP)",
               "canvas.clipRect(0, 0, getWidth(), Math.max(0, Math.min(getHeight(), headerBottom)))",
           ]
