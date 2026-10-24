@@ -81,6 +81,7 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java
@@ -489,11 +490,11 @@ jobs:
           if missing_drawables:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
-          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramBadgeSync.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
+          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSupportActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramBadgeSync.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
               if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
                   raise SystemExit("VGRAM screen source missing: " + source_name)
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
-          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
+          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
               raise SystemExit("VGRAM Android manifest integration incomplete")
           api_diagnostics = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java")
           if not api_diagnostics.is_file():
