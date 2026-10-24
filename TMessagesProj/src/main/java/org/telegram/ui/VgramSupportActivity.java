@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import org.telegram.messenger.R;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;

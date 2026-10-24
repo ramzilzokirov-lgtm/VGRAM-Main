@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import org.telegram.messenger.R;
+
 import android.os.Bundle;
 
 public class VgramFeaturesActivity extends VgramBaseActivity {
