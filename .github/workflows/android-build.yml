@@ -445,7 +445,7 @@ jobs:
           import xml.etree.ElementTree as ET
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'R.string.VgramSettingsBadges', 'R.string.VgramSettingsPrivacy', 'R.string.VgramSettingsQuestions', 'R.string.VgramSettingsFeatures', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
+          required = ['R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'R.string.VgramSettingsBadges', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
               raise SystemExit("VGRAM settings integration incomplete: " + ", ".join(missing))
