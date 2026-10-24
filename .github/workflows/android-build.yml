@@ -12,6 +12,8 @@ on:
       - "PLUGIN_API.md"
       - "VGRAM_ICON.png"
       - "TELEGRAM_UPSTREAM_COMMIT.txt"
+      - "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+      - "TMessagesProj/src/main/res/values/strings.xml"
 
 permissions:
   contents: write
@@ -57,6 +59,11 @@ jobs:
           git -C upstream submodule update --init --recursive --depth 1
           git -C upstream rev-parse HEAD | tee upstream-telegram-commit.txt
 
+      - name: Overlay committed VGRAM profile and resource sources
+        run: |
+          install -D TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+          install -D TMessagesProj/src/main/res/values/strings.xml upstream/TMessagesProj/src/main/res/values/strings.xml
+
       - name: Apply VGRAM bootstrap branding
         env:
           TG_API_ID: ${{ secrets.TG_API_ID }}
@@ -68,30 +75,22 @@ jobs:
 
           root = Path("upstream")
           strings = root / "TMessagesProj/src/main/res/values/strings.xml"
-          text = strings.read_text(encoding="utf-8")
-          text = re.sub(r'(<string\s+name="AppName">).*?(</string>)', r'\1VGRAM\2', text, count=1)
-          text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
-          # VGRAM settings labels are defined as Android resources and validated from strings.xml.
           import xml.etree.ElementTree as ET
-          strings_root = ET.fromstring(text)
-          vgram_strings = {
+          strings_root = ET.parse(strings).getroot()
+          required_strings = {
+              "AppName": "VGRAM",
+              "AppNameBeta": "VGRAM Beta",
               "VgramSettingsAppearance": "Оформление VGRAM",
-              "VgramSettingsAppearanceInfo": "Темы, цвета и внешний вид",
               "VgramSettingsUpdates": "Обновления VGRAM",
-              "VgramSettingsUpdatesInfo": "Релизы и новые версии",
               "VgramSettingsDevelopers": "Разработчики",
-              "VgramSettingsDevelopersInfo": "Информация о проекте",
               "VgramSettingsPlugins": "Плагины VGRAM",
-              "VgramSettingsPluginsInfo": "Управление установленными расширениями",
               "VgramSettingsBadges": "Бейджи VGRAM",
-              "VgramSettingsBadgesInfo": "TESTER · OG · FRIENDS · TEAM",
           }
-          for resource_name, value in vgram_strings.items():
-              node = strings_root.find("./string[@name='" + resource_name + "']")
-              if node is None:
-                  node = ET.SubElement(strings_root, "string", {"name": resource_name})
-              node.text = value
-          strings.write_text(ET.tostring(strings_root, encoding="unicode"), encoding="utf-8")
+          actual_strings = {node.attrib.get("name"): "".join(node.itertext()) for node in strings_root.findall("string")}
+          invalid_strings = [name for name, value in required_strings.items() if actual_strings.get(name) != value]
+          if invalid_strings:
+              raise SystemExit("Committed VGRAM string resources are missing or incorrect: " + ", ".join(invalid_strings))
+          print("Validated committed VGRAM app name and settings string resources.")
 
           # Generate four transparent VGRAM character-style badge assets in the build tree.
           # SVG vector art is kept inside this single workflow file; no extra repository files needed.
