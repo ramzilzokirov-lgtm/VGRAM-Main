@@ -1,18 +1,26 @@
 package org.telegram.ui;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.LinearLayout;
 
 public class VgramQuestionsActivity extends VgramBaseActivity {
+    private void faq(String question, String answer) {
+        LinearLayout item = card(question, answer);
+        View answerView = item.getChildAt(1);
+        answerView.setVisibility(View.GONE);
+        item.setClickable(true);
+        item.setFocusable(true);
+        item.setOnClickListener(v -> answerView.setVisibility(answerView.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
+    }
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen("HELP CENTER", "Вопросы о VGRAM", "Ответы о возможностях и работе именно VGRAM.");
-        card("Что такое VGRAM?", "VGRAM — сторонний Android-клиент на основе исходного кода Telegram. Он подключается к инфраструктуре Telegram и не является официальным приложением Telegram.");
-        card("Как войти в аккаунт?", "Используйте свой номер телефона и вводите код подтверждения, полученный от Telegram. Никому не передавайте код входа или пароль двухэтапной проверки.");
-        card("Где менять оформление?", "Откройте Настройки и выберите «Оформление VGRAM». Доступные параметры зависят от версии приложения.");
-        card("Как обновить приложение?", "Откройте «Обновления VGRAM» и проверьте доступную версию. Устанавливайте APK только из доверенного источника.");
-        card("Как работают бейджи?", "Менеджер бейджей в текущей версии хранит назначения локально на устройстве. Они не подтверждаются серверами Telegram и пока не синхронизируются с другими пользователями.");
-        card("Как сообщить об ошибке?", "Откройте репозиторий VGRAM-Main на GitHub и опишите шаги воспроизведения, модель устройства и версию приложения. Не публикуйте коды входа, пароли или личные переписки.");
-        LinearLayout end = card("Важно", "VGRAM — независимый проект. Функции, помеченные как экспериментальные или ещё не реализованные, могут работать не полностью.");
+        setupScreen("HELP CENTER", "Вопросы о VGRAM", "Нажмите на вопрос, чтобы раскрыть ответ.");
+        faq("Как войти в аккаунт?", "Используйте номер телефона и код подтверждения Telegram. Никому не передавайте код или пароль двухэтапной проверки.");
+        faq("Как работают бейджи?", "TESTER, OG, FRIENDS и TEAM — метки проекта VGRAM. Они не являются значками Telegram; наличие зависит от назначений и поддержки серверной системы.");
+        faq("Как обновить приложение?", "Откройте «Обновления VGRAM». Устанавливайте APK только из доверенного источника.");
+        faq("Что такое плагины?", "Раздел предназначен для поддерживаемых описаний и пресетов. Не устанавливайте файлы, исполняющие неизвестный код.");
+        faq("Что такое VGRAM Premium?", "Это дополнительные функции клиента VGRAM, не связанные с Telegram Premium. Доступность зависит от реализации проекта.");
+        faq("Как сообщить об ошибке?", "Создайте Issue в репозитории VGRAM-Main на GitHub. Не публикуйте коды входа, пароли и личные переписки.");
     }
 }
