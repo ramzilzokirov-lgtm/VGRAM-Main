@@ -18,19 +18,19 @@ abstract class VgramBaseActivity extends Activity {
     @Override protected void onCreate(Bundle state) { super.onCreate(state); }
 
     protected void setupScreen(String eyebrow, String title, String subtitle) {
-        getWindow().setStatusBarColor(0xff17100c);
+        getWindow().setStatusBarColor(0xff17191d);
         getWindow().setNavigationBarColor(0xff17100c);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-  new int[] { 0xff261a13, 0xff17100c, 0xff21170f }));
+  new int[] { 0xff292c31, 0xff17191d, 0xff202328 }));
         root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView back = label("‹", 31, 0xfff0f0ec, true);
         back.setGravity(Gravity.CENTER);
-        back.setBackground(panel(0xff35241a, accent(), 18));
+        back.setBackground(panel(0xff2b2e33, accent(), 18));
         header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(46)));
         back.setOnClickListener(v -> finish());
 
@@ -38,7 +38,7 @@ abstract class VgramBaseActivity extends Activity {
         brand.setOrientation(LinearLayout.VERTICAL);
         brand.setPadding(dp(13), 0, 0, 0);
         brand.addView(label("VGRAM", 11, accent(), true));
-        brand.addView(label(eyebrow, 10, 0xffc8bdb2, true));
+        brand.addView(label(eyebrow, 10, 0xffb5b5b0, true));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         root.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
@@ -50,12 +50,12 @@ abstract class VgramBaseActivity extends Activity {
         body.setOrientation(LinearLayout.VERTICAL);
         TextView heading = label(title, 29, 0xfff2f1ec, true);
         body.addView(heading, margin(0, 0, 0, 7));
-        TextView description = label(subtitle, 14, 0xffa4a49f, false);
+        TextView description = label(subtitle, 14, 0xffa0a3a8, false);
         description.setLineSpacing(dp(3), 1f);
         body.addView(description, margin(0, 0, 0, 19));
         scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView footer = label("VGRAM  •  TELEGRAM NETWORK", 10, 0xff67696d, true);
+        TextView footer = label("VGRAM  •  TELEGRAM NETWORK", 10, 0xff72767d, true);
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, margin(0, dp(5), 0, 0));
         setContentView(root);
@@ -63,7 +63,7 @@ abstract class VgramBaseActivity extends Activity {
 
     protected LinearLayout card(String title, String description) {
         boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
-        int fill = glass ? 0xe51e2024 : 0xff1e2024;
+        int fill = glass ? 0xe51e2024 : 0xff22252a;
         int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
         com.google.android.material.card.MaterialCardView surface = new com.google.android.material.card.MaterialCardView(this);
         surface.setCardBackgroundColor(fill);

@@ -15,7 +15,7 @@ import java.io.InputStream;
 
 public class VgramSettingsActivity extends VgramBaseActivity {
     private static final int PICK_PROFILE_BACKGROUND = 741;
-    private final int[] colors = { 0xffc5b878, 0xffa78bfa, 0xff72d6ce, 0xffe58b9a };
+    private final int[] colors = { 0xffc5b878, 0xffa8a0c7, 0xff7eaaa5, 0xffbd858d };
     private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
     @Override protected void onCreate(Bundle state) {
@@ -39,7 +39,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
   swatch.setGravity(Gravity.CENTER);
   swatch.setLineSpacing(dp(4), 1f);
   swatch.setPadding(dp(4), dp(10), dp(4), dp(10));
-  swatch.setBackground(panel(0xff25272b, color == active ? color : 0xff414348, 15));
+  swatch.setBackground(panel(0xff22252a, color == active ? color : 0xff414348, 15));
   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(70), 1);
   lp.setMargins(dp(3), 0, dp(3), 0);
   swatches.addView(swatch, lp);
@@ -56,7 +56,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         LinearLayout profileBackground = card("Баннер профиля", "Выбери изображение для верхней области своего профиля. Баннер сохраняется локально на этом устройстве.");
         ImageView preview = new ImageView(this);
         preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        preview.setBackground(panel(0xff25272b, 0xff45474c, 18));
+        preview.setBackground(panel(0xff25272b, 0xff42464d, 18));
         String savedUri = getSharedPreferences("vgram_ui", MODE_PRIVATE).getString("profile_background_uri", "");
         if (!savedUri.isEmpty()) {
             try {
@@ -117,7 +117,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         TextView state = label(enabled ? "ВКЛ  ●" : "ВЫКЛ  ○", 12, accent(), true);
         state.setGravity(Gravity.CENTER);
         state.setPadding(dp(12), dp(10), dp(12), dp(10));
-        state.setBackground(panel(0xff27292d, Color.argb(100, Color.red(accent()), Color.green(accent()), Color.blue(accent())), 14));
+        state.setBackground(panel(0xff292c31, Color.argb(100, Color.red(accent()), Color.green(accent()), Color.blue(accent())), 14));
         item.addView(state, margin(0, dp(13), 0, 0));
         item.setClickable(true);
         item.setOnClickListener(v -> {
