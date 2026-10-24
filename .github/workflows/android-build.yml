@@ -1578,7 +1578,7 @@ jobs:
           import android.content.SharedPreferences;
           import android.os.Handler;
           import android.os.Looper;
-          import org.telegram.ui.Components.SimpleTextView;
+          import java.lang.reflect.Method;
           import org.json.JSONArray;
           import org.json.JSONObject;
           import java.io.ByteArrayOutputStream;
@@ -1590,10 +1590,10 @@ jobs:
           public final class VgramBadgeSync {
               private static final String API = "https://vgram-31xt.onrender.com";
               private static final Handler MAIN = new Handler(Looper.getMainLooper());
-              private static final WeakHashMap<SimpleTextView, String> SUFFIXES = new WeakHashMap<>();
+              private static final WeakHashMap<Object, String> SUFFIXES = new WeakHashMap<>();
               private VgramBadgeSync() {}
 
-              public static void apply(Context context, long telegramId, SimpleTextView title) {
+              public static void apply(Context context, long telegramId, Object title) {
                   if (context == null || title == null || telegramId <= 0) return;
                   final String id = Long.toString(telegramId);
                   final Context app = context.getApplicationContext();
@@ -1640,16 +1640,21 @@ jobs:
                   }).start();
               }
 
-              private static void render(SimpleTextView title, String suffix) {
+              private static void render(Object title, String suffix) {
                   if (title == null) return;
-                  CharSequence currentText = title.getText();
-                  String current = currentText == null ? "" : currentText.toString();
-                  String oldSuffix = SUFFIXES.get(title);
-                  String base = oldSuffix != null && !oldSuffix.isEmpty() && current.endsWith(oldSuffix)
-                      ? current.substring(0, current.length() - oldSuffix.length()).trim() : current;
-                  String append = suffix == null || suffix.isEmpty() ? "" : "  " + suffix;
-                  SUFFIXES.put(title, append);
-                  title.setText(base + append);
+                  try {
+                      Method getText = title.getClass().getMethod("getText");
+                      Method setText = title.getClass().getMethod("setText", CharSequence.class);
+                      Object value = getText.invoke(title);
+                      String current = value == null ? "" : value.toString();
+                      String oldSuffix = SUFFIXES.get(title);
+                      String base = oldSuffix != null && !oldSuffix.isEmpty() && current.endsWith(oldSuffix)
+                          ? current.substring(0, current.length() - oldSuffix.length()).trim() : current;
+                      String append = suffix == null || suffix.isEmpty() ? "" : "  " + suffix;
+                      SUFFIXES.put(title, append);
+                      setText.invoke(title, base + append);
+                  } catch (Exception ignored) {
+                  }
               }
           }
           ''', encoding="utf-8")
