@@ -5282,8 +5282,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             if (useRemoteBanner) {
                                 java.net.HttpURLConnection connection = (java.net.HttpURLConnection)
                                         new java.net.URL(vgramBannerSource).openConnection();
-                                connection.setConnectTimeout(8000);
-                                connection.setReadTimeout(10000);
+                                connection.setConnectTimeout(15000);
+                                connection.setReadTimeout(30000);
                                 connection.setInstanceFollowRedirects(false);
                                 connection.setRequestProperty("Accept", "image/png, image/jpeg, image/webp");
                                 connection.setRequestProperty("User-Agent", "VGRAM-Android");
