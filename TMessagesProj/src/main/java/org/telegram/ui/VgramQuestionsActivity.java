@@ -1,18 +1,18 @@
 package org.telegram.ui;
 
 import android.os.Bundle;
-import android.widget.LinearLayout;
 
 public class VgramQuestionsActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen("HELP CENTER", "Вопросы о VGRAM", "Ответы о возможностях и работе именно VGRAM.");
-        card("Что такое VGRAM?", "VGRAM — сторонний Android-клиент на основе исходного кода Telegram. Он подключается к инфраструктуре Telegram и не является официальным приложением Telegram.");
-        card("Как войти в аккаунт?", "Используйте свой номер телефона и вводите код подтверждения, полученный от Telegram. Никому не передавайте код входа или пароль двухэтапной проверки.");
-        card("Где менять оформление?", "Откройте Настройки и выберите «Оформление VGRAM». Доступные параметры зависят от версии приложения.");
-        card("Как обновить приложение?", "Откройте «Обновления VGRAM» и проверьте доступную версию. Устанавливайте APK только из доверенного источника.");
-        card("Как работают бейджи?", "Менеджер бейджей в текущей версии хранит назначения локально на устройстве. Они не подтверждаются серверами Telegram и пока не синхронизируются с другими пользователями.");
-        card("Как сообщить об ошибке?", "Откройте репозиторий VGRAM-Main на GitHub и опишите шаги воспроизведения, модель устройства и версию приложения. Не публикуйте коды входа, пароли или личные переписки.");
-        LinearLayout end = card("Важно", "VGRAM — независимый проект. Функции, помеченные как экспериментальные или ещё не реализованные, могут работать не полностью.");
+        setupScreen(getString(R.string.VgramQuestionsEyebrow), getString(R.string.TelegramFAQ),
+                getString(R.string.VgramQuestionsSubtitle));
+        expandableCard(getString(R.string.VgramFaqLoginTitle), getString(R.string.VgramFaqLoginText));
+        expandableCard(getString(R.string.VgramFaqBadgesTitle), getString(R.string.VgramFaqBadgesText));
+        expandableCard(getString(R.string.VgramFaqUpdatesTitle), getString(R.string.VgramFaqUpdatesText));
+        expandableCard(getString(R.string.VgramFaqPluginsTitle), getString(R.string.VgramFaqPluginsText));
+        expandableCard(getString(R.string.VgramFaqPremiumTitle), getString(R.string.VgramFaqPremiumText));
+        expandableCard(getString(R.string.VgramFaqThemesTitle), getString(R.string.VgramFaqThemesText));
+        expandableCard(getString(R.string.VgramFaqSupportTitle), getString(R.string.VgramFaqSupportText));
     }
 }
