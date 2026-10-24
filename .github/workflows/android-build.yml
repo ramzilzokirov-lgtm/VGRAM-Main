@@ -96,6 +96,14 @@ jobs:
             install -D "TMessagesProj/src/main/res/drawable/$resource.xml" "upstream/TMessagesProj/src/main/res/drawable/$resource.xml"
           done
 
+          # Copy every committed launcher-icon resource into the clean upstream tree.
+          # AndroidManifest references @mipmap/vgram_icon_01..10; without this overlay,
+          # resource linking fails because the upstream checkout does not contain them.
+          while IFS= read -r -d "" resource; do
+            relative="${resource#TMessagesProj/src/main/res/}"
+            install -D "$resource" "upstream/TMessagesProj/src/main/res/$relative"
+          done < <(find TMessagesProj/src/main/res -type f \\\n            \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
+
       - name: Apply VGRAM bootstrap branding
         env:
           TG_API_ID: ${{ secrets.TG_API_ID }}
