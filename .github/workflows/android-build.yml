@@ -68,6 +68,7 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
+          install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
@@ -420,22 +421,8 @@ jobs:
 
           buildvars = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
           text = buildvars.read_text(encoding="utf-8")
-          # Capture the actual upstream API constants before optional VGRAM credentials replace them.
-          import hashlib
-          original_id_match = re.search(r'public static int APP_ID = (\d+);', text)
-          original_hash_match = re.search(r'public static String APP_HASH = "([^"]*)";', text)
-          if not original_id_match or not original_hash_match:
-              raise SystemExit("VGRAM API diagnostics failed: upstream BuildVars constants not found")
-          original_api_id = original_id_match.group(1)
-          original_api_hash_sha256 = hashlib.sha256(original_hash_match.group(1).encode("utf-8")).hexdigest()
-          diagnostics = root / "TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java"
-          diagnostics.write_text(
-              "package org.telegram.messenger;" + chr(10) + chr(10) +
-              "public final class VgramApiDiagnostics {" + chr(10) +
-              "    public static final int UPSTREAM_APP_ID = " + original_api_id + ";" + chr(10) +
-              '    public static final String UPSTREAM_APP_HASH_SHA256 = "' + original_api_hash_sha256 + '";' + chr(10) +
-              "    private VgramApiDiagnostics() {}" + chr(10) +
-              "}" + chr(10), encoding="utf-8")
+          # VgramApiDiagnostics.java is committed; only per-build credentials are injected into BuildVars.
+
           text = re.sub(r'public static boolean CHECK_UPDATES = true;', 'public static boolean CHECK_UPDATES = false;', text, count=1)
           api_id = os.environ.get("TG_API_ID", "").strip()
           api_hash = os.environ.get("TG_API_HASH", "").strip()
