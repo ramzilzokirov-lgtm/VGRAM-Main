@@ -71,7 +71,27 @@ jobs:
           text = strings.read_text(encoding="utf-8")
           text = re.sub(r'(<string\s+name="AppName">).*?(</string>)', r'\1VGRAM\2', text, count=1)
           text = re.sub(r'(<string\s+name="AppNameBeta">).*?(</string>)', r'\1VGRAM Beta\2', text, count=1)
-          strings.write_text(text, encoding="utf-8")
+          # VGRAM settings labels are defined as Android resources and validated from strings.xml.
+          import xml.etree.ElementTree as ET
+          strings_root = ET.fromstring(text)
+          vgram_strings = {
+              "VgramSettingsAppearance": "Оформление VGRAM",
+              "VgramSettingsAppearanceInfo": "Темы, цвета и внешний вид",
+              "VgramSettingsUpdates": "Обновления VGRAM",
+              "VgramSettingsUpdatesInfo": "Релизы и новые версии",
+              "VgramSettingsDevelopers": "Разработчики",
+              "VgramSettingsDevelopersInfo": "Информация о проекте",
+              "VgramSettingsPlugins": "Плагины VGRAM",
+              "VgramSettingsPluginsInfo": "Управление установленными расширениями",
+              "VgramSettingsBadges": "Бейджи VGRAM",
+              "VgramSettingsBadgesInfo": "TESTER · OG · FRIENDS · TEAM",
+          }
+          for resource_name, value in vgram_strings.items():
+              node = strings_root.find("./string[@name='" + resource_name + "']")
+              if node is None:
+                  node = ET.SubElement(strings_root, "string", {"name": resource_name})
+              node.text = value
+          strings.write_text(ET.tostring(strings_root, encoding="unicode"), encoding="utf-8")
 
           # Generate four transparent VGRAM character-style badge assets in the build tree.
           # SVG vector art is kept inside this single workflow file; no extra repository files needed.
@@ -221,11 +241,11 @@ jobs:
 
           list_anchor = '        items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));'
           list_patch = list_anchor + '''
-          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, "Оформление VGRAM", "Темы, цвета и внешний вид"));
-          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, "Обновления VGRAM", "Релизы и новые версии"));
-          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, "Разработчики", "Информация о проекте"));
-          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, "Плагины VGRAM", "Управление установленными расширениями"));
-          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, "Бейджи VGRAM", "TESTER · OG · FRIENDS · TEAM"));'''
+          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, getString(R.string.VgramSettingsAppearance), getString(R.string.VgramSettingsAppearanceInfo)));
+          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
+          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
+          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, getString(R.string.VgramSettingsPlugins), getString(R.string.VgramSettingsPluginsInfo)));
+          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, getString(R.string.VgramSettingsBadges), getString(R.string.VgramSettingsBadgesInfo)));'''
           if source.count(list_anchor) != 1:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
           source = source.replace(list_anchor, list_patch, 1)
@@ -1936,13 +1956,26 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
+          import xml.etree.ElementTree as ET
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['Оформление VGRAM', 'Политика конфиденциальности VGRAM', 'Обновления VGRAM', 'Разработчики', 'Плагины VGRAM', 'Бейджи VGRAM', 'Вопросы о VGRAM', 'Возможности VGRAM', 'VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
+          required = ['Политика конфиденциальности VGRAM', 'Вопросы о VGRAM', 'Возможности VGRAM', 'VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'R.string.VgramSettingsBadges', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
-              raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
-          print("VGRAM settings entries and handlers are present.")
+              raise SystemExit("VGRAM settings integration incomplete: " + ", ".join(missing))
+          resource_root = ET.parse("TMessagesProj/src/main/res/values/strings.xml").getroot()
+          expected = {
+              "VgramSettingsAppearance": "Оформление VGRAM",
+              "VgramSettingsUpdates": "Обновления VGRAM",
+              "VgramSettingsDevelopers": "Разработчики",
+              "VgramSettingsPlugins": "Плагины VGRAM",
+              "VgramSettingsBadges": "Бейджи VGRAM",
+          }
+          actual = {node.attrib.get("name"): "".join(node.itertext()) for node in resource_root.findall("string")}
+          wrong = [name for name, value in expected.items() if actual.get(name) != value]
+          if wrong:
+              raise SystemExit("VGRAM settings string resources missing or mismatched: " + ", ".join(wrong))
+          print("VGRAM settings entries reference validated Android string resources.")
           required_drawables = ["preview_smile", "preview_back", "preview_mic", "dino_pic", "wallet_action_card_gradient", "wallet_card_diamond", "vgram_settings_appearance", "vgram_settings_updates", "vgram_settings_developers", "vgram_settings_plugins", "vgram_settings_badges", "vgram_settings_privacy"]
           drawable_dir = Path("TMessagesProj/src/main/res/drawable")
           missing_drawables = [name for name in required_drawables if not (drawable_dir / (name + ".xml")).is_file()]
@@ -1995,7 +2028,7 @@ jobs:
           ./gradlew :TMessagesProj_App:assembleAfatDebug --no-daemon --stacktrace
 
       - name: Collect APK and build metadata
-        if: always()
+        if: success()
         shell: bash
         run: |
           set -euo pipefail
