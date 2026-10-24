@@ -12,11 +12,28 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public final class VgramBadgeSync {
     private static final String API = "https://vgram-31xt.onrender.com";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final WeakHashMap<Object, String> SUFFIXES = new WeakHashMap<>();
+    private static final ConcurrentHashMap<String, Boolean> IN_FLIGHT = new ConcurrentHashMap<>();
+    // Profile rows can call apply() many times while RecyclerViews bind and recycle items.
+    // Cap concurrent work and queued IDs so a slow API cannot create unbounded threads.
+    private static final ThreadPoolExecutor REQUESTS = new ThreadPoolExecutor(
+            2, 2, 0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>(256),
+            runnable -> {
+                Thread thread = new Thread(runnable, "VGRAM-BadgeSync");
+                thread.setDaemon(true);
+                return thread;
+            },
+            new ThreadPoolExecutor.AbortPolicy());
     private VgramBadgeSync() {}
 
     public static void apply(Context context, long telegramId, Object title) {
@@ -26,9 +43,14 @@ public final class VgramBadgeSync {
         final SharedPreferences cache = app.getSharedPreferences("vgram_badge_cache", Context.MODE_PRIVATE);
         String cached = cache.getString("badges_" + id, "");
         long savedAt = cache.getLong("time_" + id, 0L);
-        if (!cached.isEmpty()) render(title, cached);
-        if (System.currentTimeMillis() - savedAt < 300000L) return;
-        new Thread(() -> {
+        long now = System.currentTimeMillis();
+        boolean cacheFresh = savedAt > 0 && now - savedAt < 300000L;
+        // Render an empty, fresh cache too, so a previously displayed badge can be removed.
+        if (!cached.isEmpty() || cacheFresh) render(title, cached);
+        if (cacheFresh) return;
+        if (IN_FLIGHT.putIfAbsent(id, Boolean.TRUE) != null) return;
+        try {
+            REQUESTS.execute(() -> {
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/badges").openConnection();
@@ -96,9 +118,14 @@ public final class VgramBadgeSync {
                 // Avoid hammering a sleeping/free-tier service; retry on the next profile visit after ~60 seconds.
                 cache.edit().putLong("time_" + id, System.currentTimeMillis() - 240000L).apply();
             } finally {
+                IN_FLIGHT.remove(id);
                 if (connection != null) connection.disconnect();
             }
-        }).start();
+            });
+        } catch (RejectedExecutionException queueFull) {
+            IN_FLIGHT.remove(id);
+            // This refresh is intentionally dropped under pressure; a later bind can retry it.
+        }
     }
 
     private static void render(Object title, String suffix) {

@@ -113,9 +113,11 @@ public class VgramBadgesActivity extends VgramBaseActivity {
                 } else if (e instanceof java.net.UnknownHostException || e instanceof java.net.ConnectException) {
                     reason = "Не удалось установить соединение. Проверь сеть и доступность сервера VGRAM.";
                 } else if (e.getMessage() != null && e.getMessage().contains("HTTP 401")) {
-                    reason = "Ключ администратора неверный или сервер не принял его (HTTP 401).";
+                    reason = e.getMessage() + "\nПроверь введённый ключ и переменную VGRAM_ADMIN_KEY на сервере. Ключ не хранится в APK.";
                 } else if (e.getMessage() != null && e.getMessage().contains("HTTP 403")) {
-                    reason = "Сервер запретил операцию (HTTP 403). Проверь права ключа.";
+                    reason = e.getMessage();
+                } else if (e.getMessage() != null && e.getMessage().contains("HTTP 503")) {
+                    reason = e.getMessage() + "\nПроверь, что VGRAM_ADMIN_KEY настроен в окружении сервера.";
                 } else {
                     reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 }
@@ -355,10 +357,15 @@ public class VgramBadgesActivity extends VgramBaseActivity {
                 byte[] buffer = new byte[2048]; int n;
                 while ((n = stream.read(buffer)) != -1) bytes.write(buffer, 0, n);
             }
-            if (status == 401) throw new Exception("HTTP 401: ключ администратора отклонён сервером.");
-            if (status == 403) throw new Exception("HTTP 403: у ключа нет прав администратора.");
+            if (status == 401 || status == 403 || status == 503) {
+                String detail = safeServerError(bytes.toByteArray(), key);
+                String fallback = status == 401 ? "сервер отклонил ключ администратора."
+                        : status == 403 ? "сервер запретил операцию."
+                        : "сервер не готов обработать запрос.";
+                throw new Exception("HTTP " + status + ": " + (detail.isEmpty() ? fallback : detail));
+            }
             if (status >= 300 && status < 400) throw new Exception("HTTP " + status + ": сервер перенаправил запрос; проверь HTTPS и адрес API.");
-            if (status < 200 || status >= 300) throw new Exception("HTTP " + status + (bytes.size() > 0 ? ": " + bytes.toString("UTF-8").trim() : ""));
+            if (status < 200 || status >= 300) throw new Exception("HTTP " + status + (bytes.size() > 0 ? ": " + safeServerError(bytes.toByteArray(), key) : ""));
             String raw = bytes.toString("UTF-8").trim();
             if (raw.isEmpty()) return new JSONObject();
             if (raw.startsWith("{")) return new JSONObject(raw);
@@ -371,6 +378,43 @@ public class VgramBadgesActivity extends VgramBaseActivity {
             wrapped.put("message", raw.length() > 300 ? raw.substring(0, 300) : raw);
             return wrapped;
         } finally { c.disconnect(); }
+    }
+
+    private String safeServerError(byte[] payload, String candidateKey) {
+        if (payload == null || payload.length == 0) return "";
+        String raw = new String(payload, StandardCharsets.UTF_8).trim();
+        String message = "";
+        if (raw.startsWith("{")) {
+            try {
+                JSONObject response = new JSONObject(raw);
+                String[] fields = {"detail", "message", "error", "reason"};
+                for (String field : fields) {
+                    Object value = response.opt(field);
+                    if (value instanceof String && !((String) value).trim().isEmpty()) {
+                        message = ((String) value).trim();
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {
+                // Do not display malformed server payloads verbatim.
+            }
+        } else if (!raw.startsWith("<") && !raw.toLowerCase(Locale.US).contains("<html")
+                && !raw.toLowerCase(Locale.US).contains("<!doctype")) {
+            message = raw;
+        }
+        if (candidateKey != null && !candidateKey.isEmpty()) {
+            message = message.replace(candidateKey, "[скрыто]");
+        }
+        StringBuilder clean = new StringBuilder();
+        for (int i = 0; i < message.length() && clean.length() < 180; i++) {
+            char ch = message.charAt(i);
+            if (Character.isISOControl(ch)) {
+                if (ch == '\n' || ch == '\t' || ch == '\r') clean.append(' ');
+            } else {
+                clean.append(ch);
+            }
+        }
+        return clean.toString().trim();
     }
 
     private EditText idInput() {
