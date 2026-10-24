@@ -118,7 +118,8 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         addButton(reset, "Сбросить настройки", () -> {
   getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().clear().apply();
   VgramTheme.apply(this);
-  recreate();
+  // Keep the persisted selection and Android launcher component in sync after reset.
+  applyLauncherIcon(1);
         });
         LinearLayout plugins = card("Плагины VGRAM", "Подключай безопасные JSON-манифесты тем и пресетов. Исполняемый код плагинов не загружается.");
         addButton(plugins, "Открыть менеджер плагинов", () -> startActivity(new android.content.Intent(this, VgramPluginsActivity.class)));
