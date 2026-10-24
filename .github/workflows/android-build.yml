@@ -1154,27 +1154,56 @@ jobs:
                   key.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                   styleInput(key);
                   root.addView(key);
-                  addButton(root, "Подключиться", v -> {
-                      String candidate = key.getText().toString().trim();
-                      if (candidate.isEmpty()) { key.setError("Введите ключ администратора"); return; }
-                      adminKey = candidate;
-                      key.setText("");
-                      verifyKey();
+                  addButton(root, "Подключиться", v -> connectWithKey(key));
+                  key.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+                  key.setOnEditorActionListener((v, actionId, event) -> {
+                      if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+                          (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER &&
+                           event.getAction() == android.view.KeyEvent.ACTION_UP)) {
+                          connectWithKey(key);
+                          return true;
+                      }
+                      return false;
                   });
                   addButton(root, "Назад", v -> finish());
-                  setContentView(root);
+                  android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+                  scroll.setFillViewport(true);
+                  scroll.setBackgroundColor(0xff17100c);
+                  scroll.addView(root);
+                  setContentView(scroll);
+              }
+
+              private void connectWithKey(EditText key) {
+                  String candidate = key.getText().toString().trim();
+                  if (candidate.isEmpty()) { key.setError("Введи ключ администратора"); key.requestFocus(); return; }
+                  adminKey = candidate;
+                  key.setText("");
+                  key.clearFocus();
+                  verifyKey();
               }
 
               private void verifyKey() {
+                  android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+                  progress.setMessage("Проверяю ключ на сервере…");
+                  progress.setCancelable(false);
+                  progress.show();
                   new Thread(() -> {
                       try {
                           request("GET", "/admin/nfts", null, adminKey);
-                          runOnUiThread(this::openAdminPanel);
-                      } catch (Exception e) {
                           runOnUiThread(() -> {
+                              if (isFinishing()) return;
+                              progress.dismiss();
+                              android.widget.Toast.makeText(this, "Ключ принят", android.widget.Toast.LENGTH_SHORT).show();
+                              openAdminPanel();
+                          });
+                      } catch (Exception e) {
+                          String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                          runOnUiThread(() -> {
+                              if (isFinishing()) return;
+                              progress.dismiss();
                               adminKey = "";
                               new AlertDialog.Builder(this).setTitle("Не удалось подключиться")
-                                  .setMessage("Сервер отклонил запрос или временно недоступен. Проверь ключ и попробуй снова.")
+                                  .setMessage("Проверка ключа не прошла. Ответ сервера: " + reason)
                                   .setPositiveButton("Повторить", (d, w) -> showKeyGate())
                                   .setNegativeButton("Закрыть", (d, w) -> finish()).show();
                           });
@@ -1312,8 +1341,17 @@ jobs:
                           while ((n = stream.read(buffer)) != -1) bytes.write(buffer, 0, n);
                       }
                       if (status < 200 || status >= 300) throw new Exception("HTTP " + status);
-                      String raw = bytes.toString("UTF-8");
-                      return raw.isEmpty() ? new JSONObject() : new JSONObject(raw);
+                      String raw = bytes.toString("UTF-8").trim();
+                      if (raw.isEmpty()) return new JSONObject();
+                      if (raw.startsWith("{")) return new JSONObject(raw);
+                      if (raw.startsWith("[")) {
+                          JSONObject wrapped = new JSONObject();
+                          wrapped.put("data", new JSONArray(raw));
+                          return wrapped;
+                      }
+                      JSONObject wrapped = new JSONObject();
+                      wrapped.put("message", raw.length() > 300 ? raw.substring(0, 300) : raw);
+                      return wrapped;
                   } finally { c.disconnect(); }
               }
 
