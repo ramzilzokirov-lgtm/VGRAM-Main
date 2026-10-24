@@ -102,7 +102,7 @@ jobs:
           while IFS= read -r -d "" resource; do
             relative="${resource#TMessagesProj/src/main/res/}"
             install -D "$resource" "upstream/TMessagesProj/src/main/res/$relative"
-          done < <(find TMessagesProj/src/main/res -type f \\\n            \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
+          done < <(find TMessagesProj/src/main/res -type f \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
 
       - name: Apply VGRAM bootstrap branding
         env:
