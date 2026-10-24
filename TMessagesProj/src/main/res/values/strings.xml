@@ -2343,7 +2343,7 @@
     <string name="ResetCustomNotificationsAlertTitle">Reset notifications</string>
     <string name="ResetCustomNotificationsAlert">Are you sure you want to reset notification settings to default?</string>
     <string name="TextSizeHeader">Message text size</string>
-    <string name="AskAQuestion">Ask a Question</string>
+    <string name="AskAQuestion">Поддержка VGRAM</string>
     <string name="QuizExplanationTitle">Explanation</string>
     <string name="AddAnExplanationHeader">Explanation</string>
     <string name="AddAnExplanation">Add an explanation</string>
@@ -2351,7 +2351,7 @@
     <string name="EnableAnimations">Enable Animations</string>
     <string name="ChatSettings">Chat Settings</string>
     <string name="Devices">Devices</string>
-    <string name="SettingsHelp">Help</string>
+    <string name="SettingsHelp">Помощь VGRAM</string>
     <string name="SettingsDebug">Debug</string>
     <string name="Account">Account</string>
     <string name="Unblock">Unblock</string>
@@ -2479,15 +2479,15 @@
     <string name="LanguageUnknownCustomAlert">Unfortunately, this custom language pack (**%1$s**) doesn\'t contain data for Telegram Android.</string>
     <string name="AskAQuestionInfo">Please note that Telegram Support is done by volunteers. We try to respond as quickly as possible, but it may take a while.\n\nPlease take a look at the <![CDATA[<a href=\"https://telegram.org/faq#general-questions\">Telegram FAQ</a>]]>: it has answers to most questions and important tips for <![CDATA[<a href=\"https://telegram.org/faq#troubleshooting\">troubleshooting</a>]]>.</string>
     <string name="AskButton">Ask a volunteer</string>
-    <string name="TelegramFAQ">Telegram FAQ</string>
+    <string name="TelegramFAQ">Вопросы о VGRAM</string>
     <string name="TelegramFaq">Telegram FAQ</string>
-    <string name="TelegramFeatures">Telegram Features</string>
+    <string name="TelegramFeatures">Возможности VGRAM</string>
     <string name="TelegramFeaturesUrl">https://t.me/TelegramTips</string>
     <string name="AddAccount">Add Account</string>
     <string name="SwitchAccountHint">"Long tap to switch accounts"</string>
     <string name="SelectAccount">Select Account</string>
     <string name="TelegramFaqUrl">https://telegram.org/faq</string>
-    <string name="PrivacyPolicy">Privacy Policy</string>
+    <string name="PrivacyPolicy">Политика конфиденциальности VGRAM</string>
     <string name="TermsOfService">Terms of Service</string>
     <string name="TermsOfServiceLogin">By signing up,\nyou agree to the *Terms of Service*.</string>
     <string name="PrivacyPolicyUrl">https://telegram.org/privacy</string>
