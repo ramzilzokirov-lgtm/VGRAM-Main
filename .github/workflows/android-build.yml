@@ -587,16 +587,8 @@ jobs:
           print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
           print("Applied extended VGRAM palette keys: " + str(len(applied_extended)))
 
-          # Fetch public, server-issued VGRAM badges for the opened Telegram profile.
-          profile_source = profile_activity.read_text(encoding="utf-8")
-          badge_name_anchor = "                if (a == 0 && onlineTextOverride != null) {"
-          badge_name_hook = "                if (a == 0 && user != null) { VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a]); }\n" + badge_name_anchor
-          if "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])" not in profile_source:
-              if badge_name_anchor not in profile_source:
-                  raise SystemExit("VGRAM badge display patch failed: ProfileActivity name anchor not found")
-              profile_source = profile_source.replace(badge_name_anchor, badge_name_hook, 1)
-              profile_activity.write_text(profile_source, encoding="utf-8")
-          print("Connected server-synced VGRAM badges to profile names.")
+          # Server badge rendering is committed in ProfileActivity.java; do not patch source here.
+
 
 
           props = root / "gradle.properties"
