@@ -744,10 +744,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
 
         items.add(UItem.asHeader(getString(R.string.SettingsHelp)));
-
-        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.VgramSettingsQuestions)));
-        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.VgramSettingsFeatures)));
-        items.add(SettingCell.Factory.of(19, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_privacy, getString(R.string.VgramSettingsPrivacy)));
+        items.add(SettingCell.Factory.of(17, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_ask, getString(R.string.AskAQuestion)));
+        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.TelegramFAQ)));
+        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));
+        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));
 
         if (SharedSettings.experimentalSettingsAllowed.get()) {
             items.add(UItem.asShadow(null));
@@ -874,10 +874,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 showDialog(AlertsCreator.createSupportAlert(this, resourceProvider));
                 break;
             case 18:
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));
+                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));
                 break;
             case 19:
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPrivacyActivity.class));
+                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.PrivacyPolicyUrl));
                 break;
 
             case 20:
@@ -890,7 +890,11 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 FileLog.cleanupLogs();
                 break;
             case 23: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
+                if (MessagesController.getInstance(currentAccount).isFrozen()) {
+                    AccountFrozenAlert.show(currentAccount);
+                } else {
+                    Browser.openUrl(getContext(), LocaleController.getString(R.string.TelegramFeaturesUrl));
+                }
                 break;
             }
             case 24: {
@@ -901,11 +905,26 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentFragment(new AudioRecorderSettingsActivity());
                 break;
             }
-            case 27: { getParentActivity().startActivity(new Intent(getParentActivity(), VgramSettingsActivity.class)); break; }
-            case 28: { getParentActivity().startActivity(new Intent(getParentActivity(), VgramUpdateActivity.class)); break; }
-            case 29: { getParentActivity().startActivity(new Intent(getParentActivity(), VgramDevelopersActivity.class)); break; }
-            case 30: { getParentActivity().startActivity(new Intent(getParentActivity(), VgramPluginsActivity.class)); break; }
-            case 31: { getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class)); break; }
+            case 27: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramSettingsActivity.class));
+                break;
+            }
+            case 28: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramUpdateActivity.class));
+                break;
+            }
+            case 29: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramDevelopersActivity.class));
+                break;
+            }
+            case 30: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPluginsActivity.class));
+                break;
+            }
+            case 31: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class));
+                break;
+            }
         }
     }
 
