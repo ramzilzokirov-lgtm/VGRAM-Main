@@ -288,10 +288,10 @@ jobs:
           launch = root / "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
           launch_source = launch.read_text(encoding="utf-8")
 
-          if not re.search(r"VgramTheme\\.apply\\(this\\);", launch_source):
+          if not re.search(r"VgramTheme\.apply\(this\);", launch_source):
               launch_source, create_count = re.subn(
-                  r'((?:public|protected)\\s+void\\s+onCreate\\s*\\(\\s*Bundle\\s+savedInstanceState\\s*\\)\\s*\\{[\\s\\S]*?super\\.onCreate\\(savedInstanceState\\)\\s*;)',
-                  r'\\1\\n        VgramTheme.apply(this);',
+                  r'((?:public|protected)\s+void\s+onCreate\s*\(\s*Bundle\s+savedInstanceState\s*\)\s*\{[\s\S]*?super\.onCreate\(savedInstanceState\)\s*;)',
+                  r'\1\n        VgramTheme.apply(this);',
                   launch_source,
                   count=1
               )
@@ -299,11 +299,11 @@ jobs:
                   raise SystemExit("VGRAM theme integration failed: could not insert Vgram theme into LaunchActivity.onCreate")
 
           # Check the onResume method specifically, not the entire file after the first occurrence.
-          resume_match = re.search(r'((?:public|protected)\\s+void\\s+onResume\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?super\\.onResume\\(\\)\\s*;)', launch_source)
+          resume_match = re.search(r'((?:public|protected)\s+void\s+onResume\s*\(\s*\)\s*\{[\s\S]*?super\.onResume\(\)\s*;)', launch_source)
           if resume_match:
               resume_body = resume_match.group(1)
               if "VgramTheme.apply(this);" not in resume_body:
-                  launch_source = launch_source[:resume_match.end(1)] + "\\n        VgramTheme.apply(this);" + launch_source[resume_match.end(1):]
+                  launch_source = launch_source[:resume_match.end(1)] + "\n        VgramTheme.apply(this);" + launch_source[resume_match.end(1):]
           else:
               raise SystemExit("VGRAM theme integration failed: could not find LaunchActivity.onResume")
 
