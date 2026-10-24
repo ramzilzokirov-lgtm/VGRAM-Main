@@ -1998,7 +1998,7 @@ jobs:
                   raise SystemExit("VGRAM Material 3 activity theme missing")
           print("VGRAM custom screens, API diagnostics and Material 3 dependencies are registered.")
           profile_source = Path("TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java").read_text(encoding="utf-8")
-          required_profile_hooks = ["Could not load local profile banner", "topView.addView(vgramBannerOverlay, 0", "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
+          required_profile_hooks = ["VGRAM profile banners are local-only", "Could not load local profile banner", "vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP)", "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
           missing_profile_hooks = [hook for hook in required_profile_hooks if hook not in profile_source]
           if missing_profile_hooks:
               raise SystemExit("VGRAM profile integration incomplete: " + ", ".join(missing_profile_hooks))
