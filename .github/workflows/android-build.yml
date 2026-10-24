@@ -1949,7 +1949,7 @@ jobs:
           if missing_drawables:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
-          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
+          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramBadgeSync.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
               if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
                   raise SystemExit("VGRAM screen source missing: " + source_name)
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
@@ -1965,6 +1965,12 @@ jobs:
               if theme not in manifest:
                   raise SystemExit("VGRAM Material 3 activity theme missing")
           print("VGRAM custom screens, API diagnostics and Material 3 dependencies are registered.")
+          profile_source = Path("TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java").read_text(encoding="utf-8")
+          required_profile_hooks = ["Could not load local profile banner", "topView.addView(vgramBannerOverlay, 0", "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
+          missing_profile_hooks = [hook for hook in required_profile_hooks if hook not in profile_source]
+          if missing_profile_hooks:
+              raise SystemExit("VGRAM profile integration incomplete: " + ", ".join(missing_profile_hooks))
+          print("Profile banner layer and server-synced badge name hook are present.")
           PY
 
       - name: Prepare stable VGRAM signing key
