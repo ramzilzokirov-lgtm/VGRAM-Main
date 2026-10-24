@@ -5,7 +5,7 @@ import android.os.Bundle;
 public class VgramPrivacyActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen(getString(R.string.VgramPrivacyEyebrow), getString(R.string.PrivacyPolicy),
+        setupScreen(getString(R.string.VgramPrivacyEyebrow), getString(R.string.VgramPrivacyTitle),
                 getString(R.string.VgramPrivacySubtitle));
         card(getString(R.string.VgramPrivacyTelegramTitle), getString(R.string.VgramPrivacyTelegramText));
         card(getString(R.string.VgramPrivacyServerTitle), getString(R.string.VgramPrivacyServerText));
