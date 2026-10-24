@@ -1205,6 +1205,12 @@ jobs:
                   key.setHint("Введи ключ администратора");
                   key.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                   styleInput(key);
+                  key.setEnabled(true);
+                  key.setFocusable(true);
+                  key.setFocusableInTouchMode(true);
+                  key.setCursorVisible(true);
+                  key.setTextIsSelectable(false);
+                  key.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
                   root.addView(key);
                   addButton(root, "Подключиться", v -> connectWithKey(key));
                   key.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
@@ -1223,6 +1229,7 @@ jobs:
                   scroll.setBackgroundColor(0xff17100c);
                   scroll.addView(root);
                   setContentView(scroll);
+                  key.requestFocus();
               }
 
               private void connectWithKey(EditText key) {
@@ -1254,13 +1261,25 @@ jobs:
                               openAdminPanel();
                           });
                       } catch (Exception e) {
-                          String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                          String reason;
+                          if (e instanceof java.net.SocketTimeoutException) {
+                              reason = "Истекло время ожидания ответа сервера. Бесплатный Render может запускаться до минуты; повтори запрос.";
+                          } else if (e instanceof java.net.UnknownHostException || e instanceof java.net.ConnectException) {
+                              reason = "Не удалось установить соединение. Проверь сеть и доступность сервера VGRAM.";
+                          } else if (e.getMessage() != null && e.getMessage().contains("HTTP 401")) {
+                              reason = "Ключ администратора неверный или сервер не принял его (HTTP 401).";
+                          } else if (e.getMessage() != null && e.getMessage().contains("HTTP 403")) {
+                              reason = "Сервер запретил операцию (HTTP 403). Проверь права ключа.";
+                          } else {
+                              reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                          }
+                          final String displayReason = reason;
                           runOnUiThread(() -> {
                               if (isFinishing()) return;
                               progress.dismiss();
                               adminKey = "";
                               new AlertDialog.Builder(this).setTitle("Не удалось подключиться")
-                                  .setMessage("Сервер не ответил или отклонил запрос: " + reason + "\n\nПроверь интернет и попробуй ещё раз через минуту.")
+                                  .setMessage(displayReason)
                                   .setPositiveButton("Повторить", (d, w) -> showKeyGate())
                                   .setNegativeButton("Закрыть", (d, w) -> finish()).show();
                           });
@@ -1381,6 +1400,7 @@ jobs:
                   c.setRequestMethod(method);
                   c.setConnectTimeout(20000);
                   c.setReadTimeout(60000);
+                  c.setInstanceFollowRedirects(false);
                   c.setRequestProperty("Accept", "application/json");
                   c.setRequestProperty("User-Agent", "VGRAM-Android");
                   if (key != null && !key.isEmpty()) c.setRequestProperty("X-VGRAM-ADMIN-KEY", key);
@@ -1397,7 +1417,10 @@ jobs:
                           byte[] buffer = new byte[2048]; int n;
                           while ((n = stream.read(buffer)) != -1) bytes.write(buffer, 0, n);
                       }
-                      if (status < 200 || status >= 300) throw new Exception("HTTP " + status);
+                      if (status == 401) throw new Exception("HTTP 401: ключ администратора отклонён сервером.");
+                      if (status == 403) throw new Exception("HTTP 403: у ключа нет прав администратора.");
+                      if (status >= 300 && status < 400) throw new Exception("HTTP " + status + ": сервер перенаправил запрос; проверь HTTPS и адрес API.");
+                      if (status < 200 || status >= 300) throw new Exception("HTTP " + status + (bytes.size() > 0 ? ": " + bytes.toString("UTF-8").trim() : ""));
                       String raw = bytes.toString("UTF-8").trim();
                       if (raw.isEmpty()) return new JSONObject();
                       if (raw.startsWith("{")) return new JSONObject(raw);
@@ -1454,8 +1477,19 @@ jobs:
               private void addButton(LinearLayout parent, String label, View.OnClickListener click) {
                   android.widget.Button b = new android.widget.Button(this);
                   b.setText(label);
+                  b.setTextColor(0xff171713);
+                  b.setAllCaps(false);
+                  b.setEnabled(true);
+                  b.setClickable(true);
+                  b.setFocusable(true);
+                  if (android.os.Build.VERSION.SDK_INT >= 21) {
+                      b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xffc5b878));
+                  }
                   b.setOnClickListener(click);
-                  parent.addView(b);
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                  lp.topMargin = (int) (12 * getResources().getDisplayMetrics().density);
+                  parent.addView(b, lp);
               }
           }
           ''', encoding="utf-8")
