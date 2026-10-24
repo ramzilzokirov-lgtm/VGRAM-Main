@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import org.telegram.messenger.R;
+
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
