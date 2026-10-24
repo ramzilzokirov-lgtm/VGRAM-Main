@@ -1432,8 +1432,8 @@ jobs:
           two_step_source = two_step.read_text(encoding="utf-8")
           if "VgramTheme.apply(getParentActivity())" not in two_step_source:
               two_step_source, two_step_count = re.subn(
-                  r'(?m)^(\\s*)public View createView\\(Context context\\) \\{',
-                  r'\\1public View createView(Context context) {\\n\\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  r'(?m)^(\s*)public View createView\(Context context\) \{',
+                  r'\1public View createView(Context context) {\n\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
                   two_step_source, count=1
               )
               if two_step_count != 1:
