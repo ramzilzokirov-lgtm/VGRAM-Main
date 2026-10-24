@@ -300,8 +300,8 @@ jobs:
               # Telegram may reload its own selected palette after onCreate; re-apply on resume too.
               if "VgramTheme.apply(this);" not in launch_source[launch_source.find("onResume"):]:
                   launch_source, resume_count = re.subn(
-                      r'((?:public|protected)\\s+void\\s+onResume\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?super\\.onResume\\(\\)\\s*;)',
-                      r'\\1\\n        VgramTheme.apply(this);',
+                      r'((?:public|protected)\s+void\s+onResume\s*\(\s*\)\s*\{[\s\S]*?super\.onResume\(\)\s*;)',
+                      r'\1\n        VgramTheme.apply(this);',
                       launch_source,
                       count=1
                   )
