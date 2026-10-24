@@ -663,24 +663,34 @@ jobs:
                           addButton(item, enabled ? "Отключить плагин" : "Включить плагин", () -> {
                               boolean next = !prefs.getBoolean("enabled." + id, false);
                               prefs.edit().putBoolean("enabled." + id, next).apply();
-                              if (next) applyManifest(manifest);
-                              else {
-                                  getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("accent", 0xffc5b878).putBoolean("animations", true).apply();
-                                  VgramTheme.apply(this);
-                              }
+                              reapplyEnabledPlugins();
                               buildAgain();
                           });
                           addButton(item, "Удалить плагин", () -> {
                               Set<String> current = new HashSet<>(prefs.getStringSet("installed", Collections.<String>emptySet()));
                               current.remove(id);
                               prefs.edit().putStringSet("installed", current).remove("manifest." + id).remove("enabled." + id).apply();
-                              VgramTheme.apply(this);
+                              reapplyEnabledPlugins();
                               buildAgain();
                           });
                       } catch (Exception ignored) {
                           card("Повреждённый плагин", "Манифест " + id + " не читается. Удали его и импортируй заново.");
                       }
                   }
+              }
+
+              private void reapplyEnabledPlugins() {
+                  android.content.SharedPreferences ui = getSharedPreferences("vgram_ui", MODE_PRIVATE);
+                  ui.edit().putInt("accent", 0xffc5b878).putBoolean("animations", true).apply();
+                  Set<String> ids = new HashSet<>(prefs.getStringSet("installed", Collections.<String>emptySet()));
+                  for (String id : ids) {
+                      if (!prefs.getBoolean("enabled." + id, false)) continue;
+                      try {
+                          JSONObject manifest = new JSONObject(prefs.getString("manifest." + id, "{}"));
+                          applyManifest(manifest);
+                      } catch (Exception ignored) { }
+                  }
+                  VgramTheme.apply(this);
               }
 
               private void buildAgain() {
