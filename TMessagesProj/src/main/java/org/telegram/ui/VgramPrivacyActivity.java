@@ -5,18 +5,20 @@ import android.os.Bundle;
 public class VgramPrivacyActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen("VGRAM / PRIVACY", "Политика конфиденциальности", "Какие данные обрабатываются VGRAM и какие действия остаются на устройстве.");
-        card("Telegram и сообщения", "Авторизация, облачные чаты, сообщения, контакты и медиа работают через инфраструктуру Telegram и регулируются политикой Telegram. Сервер VGRAM не предназначен для хранения содержимого Telegram-сообщений и не получает его от этих экранов.");
-        card("Настройки и баннер", "Акцентный цвет, переключатели оформления, импортированные манифесты плагинов и выбранный локальный фон профиля хранятся в настройках приложения на устройстве. Локальный фон не отправляется на сервер автоматически.");
-        card("Серверные бейджи и профиль", "При запросе серверных бейджей приложение отправляет числовой Telegram user_id на vgram-31xt.onrender.com. Для серверного профиля и баннера используется тот же идентификатор. Ответы с бейджами кешируются на устройстве на короткое время. Эти функции не отправляют текст чатов.");
-        card("Административные действия", "Экран выдачи бейджей отправляет введённый ключ администратора только в HTTPS-запросах к серверу для проверки прав и выполнения выбранного действия. Ключ не сохраняется в настройках приложения; закрытие экрана очищает его из текущего состояния.");
-        card("Обновления", "Центр обновлений обращается к GitHub Releases за версией, описанием, ссылками APK и SHA-256. Перед установкой приложение проверяет контрольную сумму; финальную установку подтверждает системный установщик Android.");
-        card("Сеть и журналы", "Сетевые запросы раскрывают сервисам стандартные технические данные соединения, включая IP-адрес и время запроса. VGRAM не контролирует независимые журналы и сроки хранения Telegram, GitHub или хостинга сервера.");
-        card("Плагины", "Поддерживаются декларативные JSON-манифесты тем и пресетов. Импортированные манифесты не исполняют произвольный код и не получают разрешения на чтение переписки.");
-        card("Ограничения", "Это описание функций клиента, а не юридическая гарантия или замена политик сторонних сервисов. Серверные функции зависят от доступности и настроек отдельного сервиса VGRAM.");
-        addButton(body, "Открыть политику Telegram", () -> {
-            try { startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://telegram.org/privacy"))); }
-            catch (Exception ignored) { }
+        setupScreen(getString(R.string.VgramPrivacyEyebrow), getString(R.string.PrivacyPolicy),
+                getString(R.string.VgramPrivacySubtitle));
+        card(getString(R.string.VgramPrivacyTelegramTitle), getString(R.string.VgramPrivacyTelegramText));
+        card(getString(R.string.VgramPrivacyServerTitle), getString(R.string.VgramPrivacyServerText));
+        card(getString(R.string.VgramPrivacyBannerTitle), getString(R.string.VgramPrivacyBannerText));
+        card(getString(R.string.VgramPrivacyLocalTitle), getString(R.string.VgramPrivacyLocalText));
+        card(getString(R.string.VgramPrivacyAdminTitle), getString(R.string.VgramPrivacyAdminText));
+        card(getString(R.string.VgramPrivacyNetworkTitle), getString(R.string.VgramPrivacyNetworkText));
+        card(getString(R.string.VgramPrivacyThirdPartyTitle), getString(R.string.VgramPrivacyThirdPartyText));
+        addButton(body, getString(R.string.VgramPrivacyTelegramButton), () -> {
+            try {
+                startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse(getString(R.string.PrivacyPolicyUrl))));
+            } catch (Exception ignored) { }
         });
     }
 }
