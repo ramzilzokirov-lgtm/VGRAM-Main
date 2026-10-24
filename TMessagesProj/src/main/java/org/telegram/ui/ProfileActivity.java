@@ -5214,6 +5214,41 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         topView = new TopView(context);
         topView.setBackgroundColorId(peerColor, false);
         topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
+        // VGRAM profile banners are local-only and only shown on the current user's own profile.
+        if (userId == getUserConfig().getClientUserId()) {
+            String vgramBannerUri = context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
+                    .getString("profile_background_uri", "");
+            if (!TextUtils.isEmpty(vgramBannerUri)) {
+                try {
+                    ImageView vgramBannerImage = new ImageView(context);
+                    vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    vgramBannerImage.setClickable(false);
+                    vgramBannerImage.setFocusable(false);
+                    vgramBannerImage.setContentDescription(null);
+                    vgramBannerImage.setImageURI(Uri.parse(vgramBannerUri));
+                    if (vgramBannerImage.getDrawable() != null) {
+                        topView.addView(vgramBannerImage, 0, new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                        ));
+                        View vgramBannerScrim = new View(context);
+                        GradientDrawable vgramScrimGradient = new GradientDrawable(
+                                GradientDrawable.Orientation.TOP_BOTTOM,
+                                new int[] {0x22151619, 0xAA151619}
+                        );
+                        vgramBannerScrim.setBackground(vgramScrimGradient);
+                        vgramBannerScrim.setClickable(false);
+                        vgramBannerScrim.setFocusable(false);
+                        topView.addView(vgramBannerScrim, 1, new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                        ));
+                    }
+                } catch (Exception vgramBannerError) {
+                    android.util.Log.w("VGRAM", "Could not load local profile banner", vgramBannerError);
+                }
+            }
+        }
         frameLayout.addView(topView);
         contentView.blurBehindViews.add(topView);
 
