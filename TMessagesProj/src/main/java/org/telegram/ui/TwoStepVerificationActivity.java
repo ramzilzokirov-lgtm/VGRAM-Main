@@ -205,6 +205,7 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
 
     @Override
     public View createView(Context context) {
+        if (getParentActivity() != null) VgramTheme.apply(getParentActivity());
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(false);
         if (!passwordEntered || delegate != null) {
