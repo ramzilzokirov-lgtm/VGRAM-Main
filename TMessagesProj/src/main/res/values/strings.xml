@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">Telegram</string>
-    <string name="AppNameBeta">Telegram Beta</string>
+    <string name="AppName">VGRAM</string>
+    <string name="AppNameBeta">VGRAM Beta</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
     <string name="LanguageNameInEnglish">English</string>
@@ -10600,6 +10600,16 @@
     <string name="SettingsAccountInfo">Number, Username, Bio</string>
     <string name="SettingsChat">Chat Settings</string>
     <string name="SettingsChatInfo">Wallpaper, Night Mode, Animations</string>
+    <string name="VgramSettingsAppearance">Оформление VGRAM</string>
+    <string name="VgramSettingsAppearanceInfo">Темы, цвета и внешний вид</string>
+    <string name="VgramSettingsUpdates">Обновления VGRAM</string>
+    <string name="VgramSettingsUpdatesInfo">Релизы и новые версии</string>
+    <string name="VgramSettingsDevelopers">Разработчики</string>
+    <string name="VgramSettingsDevelopersInfo">Информация о проекте</string>
+    <string name="VgramSettingsPlugins">Плагины VGRAM</string>
+    <string name="VgramSettingsPluginsInfo">Управление установленными расширениями</string>
+    <string name="VgramSettingsBadges">Бейджи VGRAM</string>
+    <string name="VgramSettingsBadgesInfo">TESTER · OG · FRIENDS · TEAM</string>
     <string name="SettingsPrivacySecurity">Privacy &amp; Security</string>
     <string name="SettingsPrivacySecurityInfo">Last Seen, Devices, Passkeys</string>
     <string name="SettingsNotifications">Notifications</string>
