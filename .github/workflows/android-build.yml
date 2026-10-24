@@ -63,6 +63,10 @@ jobs:
         run: |
           install -D TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
@@ -73,7 +77,12 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+          install -D TMessagesProj/src/main/AndroidManifest.xml upstream/TMessagesProj/src/main/AndroidManifest.xml
+          install -D TMessagesProj/build.gradle upstream/TMessagesProj/build.gradle
           install -D TMessagesProj/src/main/res/values/strings.xml upstream/TMessagesProj/src/main/res/values/strings.xml
+          for resource in vgram_settings_appearance vgram_settings_updates vgram_settings_developers vgram_settings_plugins vgram_settings_badges vgram_settings_privacy vgram_launcher_icon; do
+            install -D "TMessagesProj/src/main/res/drawable/$resource.xml" "upstream/TMessagesProj/src/main/res/drawable/$resource.xml"
+          done
 
       - name: Apply VGRAM bootstrap branding
         env:
@@ -221,75 +230,8 @@ jobs:
           # in drawable (not only drawable-nodpi) to satisfy resource linking.
           (drawable_res / "vgram_launcher_icon.xml").write_text(icon_xml.read_text(encoding="utf-8"), encoding="utf-8")
 
-          # Integrate VGRAM entries into the real upstream SettingsActivity.
-          settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
-          source = settings.read_text(encoding="utf-8")
+          # SettingsActivity is committed with VGRAM entries; no build-time Java patching.
 
-          # Replace Telegram-branded help links with VGRAM-owned screens and remove "Ask a Question".
-          ask_row = '        items.add(SettingCell.Factory.of(17, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_ask, getString(R.string.AskAQuestion)));'
-          faq_row = '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.TelegramFAQ)));'
-          features_row = '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));'
-          if source.count(ask_row) != 1 or source.count(faq_row) != 1 or source.count(features_row) != 1:
-              raise SystemExit("VGRAM help-menu patch failed: upstream help rows changed")
-          source = source.replace(ask_row, "", 1)
-          source = source.replace('        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));', '        items.add(SettingCell.Factory.of(19, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_privacy, getString(R.string.VgramSettingsPrivacy)));', 1)
-          source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.VgramSettingsQuestions)));', 1)
-          source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.VgramSettingsFeatures)));', 1)
-          faq_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));'
-          if source.count(faq_handler) != 1:
-              raise SystemExit("VGRAM help-menu patch failed: FAQ handler changed")
-          source = source.replace(faq_handler, '                getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));', 1)
-          privacy_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.PrivacyPolicyUrl));'
-          if source.count(privacy_handler) != 1:
-              raise SystemExit("VGRAM privacy patch failed: privacy handler changed")
-          source = source.replace(privacy_handler, '                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPrivacyActivity.class));', 1)
-          feature_pattern = r'(?s)case 23:\s*\{.*?\n\s*\}\s*(?=\n\s*case 24:)'
-          feature_replacement = '''case 23: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
-                break;
-            }'''
-          source, feature_count = re.subn(feature_pattern, feature_replacement, source, count=1)
-          if feature_count != 1:
-              raise SystemExit("VGRAM help-menu patch failed: could not locate case 23 before case 24")
-
-          list_anchor = '        items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));'
-          list_patch = list_anchor + '''
-          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, getString(R.string.VgramSettingsAppearance), getString(R.string.VgramSettingsAppearanceInfo)));
-          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
-          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
-          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, getString(R.string.VgramSettingsPlugins), getString(R.string.VgramSettingsPluginsInfo)));
-          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, getString(R.string.VgramSettingsBadges), getString(R.string.VgramSettingsBadgesInfo)));'''
-          if source.count(list_anchor) != 1:
-              raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
-          source = source.replace(list_anchor, list_patch, 1)
-          # Regex matching avoids brittle whitespace / indentation mismatches.
-          switch_pattern = r'(?s)(case 26:\s*\{\s*presentFragment\(new AudioRecorderSettingsActivity\(\)\);\s*break;\s*\})'
-          switch_match = re.search(switch_pattern, source)
-          if not switch_match:
-              raise SystemExit("VGRAM patch failed: SettingsActivity case 26 handler not found")
-          switch_patch = switch_match.group(1) + '''
-            case 27: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramSettingsActivity.class));
-                break;
-            }
-            case 28: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramUpdateActivity.class));
-                break;
-            }
-            case 29: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramDevelopersActivity.class));
-                break;
-            }
-            case 30: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPluginsActivity.class));
-                break;
-            }
-            case 31: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class));
-                break;
-            }'''
-          source = source[:switch_match.start(1)] + switch_patch + source[switch_match.end(1):]
-          settings.write_text(source, encoding="utf-8")
 
           # Add native, fully branded VGRAM screens to the upstream Android application.
           ui_dir = root / "TMessagesProj/src/main/java/org/telegram/ui"
