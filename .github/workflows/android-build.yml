@@ -384,7 +384,7 @@ jobs:
               raise SystemExit("Committed VGRAM profile banner source is incomplete: " + ", ".join(missing_banner_code))
           print("Using committed VGRAM profile banner implementation.")
           print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
-          print("Applied extended VGRAM palette keys: " + str(len(applied_extended)))
+          print("Committed extended VGRAM palette is ready.")
 
           # Server badge rendering is committed in ProfileActivity.java; do not patch source here.
 
