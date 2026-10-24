@@ -5,7 +5,7 @@ import android.os.Bundle;
 public class VgramQuestionsActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen(getString(R.string.VgramQuestionsEyebrow), getString(R.string.TelegramFAQ),
+        setupScreen(getString(R.string.VgramQuestionsEyebrow), getString(R.string.VgramQuestionsTitle),
                 getString(R.string.VgramQuestionsSubtitle));
         expandableCard(getString(R.string.VgramFaqLoginTitle), getString(R.string.VgramFaqLoginText));
         expandableCard(getString(R.string.VgramFaqBadgesTitle), getString(R.string.VgramFaqBadgesText));
