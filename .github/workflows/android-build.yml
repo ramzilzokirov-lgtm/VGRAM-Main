@@ -85,6 +85,9 @@ jobs:
               "VgramSettingsDevelopers": "Разработчики",
               "VgramSettingsPlugins": "Плагины VGRAM",
               "VgramSettingsBadges": "Бейджи VGRAM",
+              "VgramSettingsPrivacy": "Политика конфиденциальности VGRAM",
+              "VgramSettingsQuestions": "Вопросы о VGRAM",
+              "VgramSettingsFeatures": "Возможности VGRAM",
           }
           actual_strings = {node.attrib.get("name"): "".join(node.itertext()) for node in strings_root.findall("string")}
           invalid_strings = [name for name, value in required_strings.items() if actual_strings.get(name) != value]
@@ -218,9 +221,9 @@ jobs:
           if source.count(ask_row) != 1 or source.count(faq_row) != 1 or source.count(features_row) != 1:
               raise SystemExit("VGRAM help-menu patch failed: upstream help rows changed")
           source = source.replace(ask_row, "", 1)
-          source = source.replace('        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));', '        items.add(SettingCell.Factory.of(19, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_privacy, "Политика конфиденциальности VGRAM"));', 1)
-          source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, "Вопросы о VGRAM"));', 1)
-          source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, "Возможности VGRAM"));', 1)
+          source = source.replace('        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));', '        items.add(SettingCell.Factory.of(19, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_privacy, getString(R.string.VgramSettingsPrivacy)));', 1)
+          source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.VgramSettingsQuestions)));', 1)
+          source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.VgramSettingsFeatures)));', 1)
           faq_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));'
           if source.count(faq_handler) != 1:
               raise SystemExit("VGRAM help-menu patch failed: FAQ handler changed")
@@ -1925,7 +1928,7 @@ jobs:
           import xml.etree.ElementTree as ET
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
           s = p.read_text(encoding="utf-8")
-          required = ['Политика конфиденциальности VGRAM', 'Вопросы о VGRAM', 'Возможности VGRAM', 'VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'R.string.VgramSettingsBadges', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
+          required = ['VgramQuestionsActivity.class', 'VgramFeaturesActivity.class', 'R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'R.string.VgramSettingsBadges', 'R.string.VgramSettingsPrivacy', 'R.string.VgramSettingsQuestions', 'R.string.VgramSettingsFeatures', 'case 27:', 'case 28:', 'case 29:', 'case 30:', 'case 31:']
           missing = [x for x in required if x not in s]
           if missing:
               raise SystemExit("VGRAM settings integration incomplete: " + ", ".join(missing))
