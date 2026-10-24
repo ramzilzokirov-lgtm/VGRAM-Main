@@ -1815,8 +1815,19 @@ jobs:
                                       android.graphics.Bitmap vgramBannerBitmap = android.graphics.BitmapFactory.decodeStream(vgramBannerStream);
                                       if (vgramBannerBitmap != null) {
                                           BitmapDrawable vgramBannerDrawable = new android.graphics.drawable.BitmapDrawable(getParentActivity().getResources(), vgramBannerBitmap);
-                                          vgramBannerDrawable.setAlpha(205);
-                                          topView.setBackground(vgramBannerDrawable);
+                                          vgramBannerDrawable.setAlpha(220);
+                                          // TopView paints its own opaque color in onDraw(), so setting its background
+                                          // hides the image. Add a real image layer to the header instead: it is drawn
+                                          // above the header color and below the avatar/profile controls.
+                                          android.widget.ImageView vgramBannerOverlay = new android.widget.ImageView(getParentActivity());
+                                          vgramBannerOverlay.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                                          vgramBannerOverlay.setImageDrawable(vgramBannerDrawable);
+                                          vgramBannerOverlay.setAlpha(0.86f);
+                                          vgramBannerOverlay.setContentDescription("Баннер профиля VGRAM");
+                                          topView.addView(vgramBannerOverlay, 0, new android.widget.FrameLayout.LayoutParams(
+                                              android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                              AndroidUtilities.dp(150),
+                                              android.view.Gravity.TOP));
                                       }
                                   }
                               }
