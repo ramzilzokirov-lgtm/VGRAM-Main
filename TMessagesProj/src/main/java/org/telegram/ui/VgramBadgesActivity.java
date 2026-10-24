@@ -70,7 +70,12 @@ public class VgramBadgesActivity extends VgramBaseActivity {
         scroll.setBackgroundColor(0xff17100c);
         scroll.addView(root);
         setContentView(scroll);
-        key.requestFocus();
+        key.post(() -> {
+            key.requestFocus();
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(key, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+        });
     }
 
     private void connectWithKey(EditText key) {
