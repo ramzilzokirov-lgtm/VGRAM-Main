@@ -475,6 +475,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         versionView.setGravity(Gravity.CENTER);
         versionView.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), Theme.RIPPLE_MASK_ALL));
         versionView.setOnClickListener(v -> {
+            if (!BuildVars.DEBUG_VERSION && !BuildVars.DEBUG_PRIVATE_VERSION) {
+                return;
+            }
             versionViewPressCount++;
             if (versionViewPressCount < 2 && !BuildVars.DEBUG_PRIVATE_VERSION) {
                 try {
@@ -749,14 +752,15 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));
         items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));
 
-        if (SharedSettings.experimentalSettingsAllowed.get()) {
+        if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION) && SharedSettings.experimentalSettingsAllowed.get()) {
             items.add(UItem.asShadow(null));
             items.add(UItem.asHeader("Experimental"));
             items.add(SettingCell.Factory.of(24, 0xFFF45255, 0xFFDF3955, 0, getString(R.string.RoundVideoSettings)));
             items.add(SettingCell.Factory.of(26, 0xFF55CA47, 0xFF27B434, 0, getString(R.string.AudioRecorderSettings)));
         }
 
-        if (BuildVars.LOGS_ENABLED || BuildVars.DEBUG_PRIVATE_VERSION) {
+        if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION)
+                && (BuildVars.LOGS_ENABLED || BuildVars.DEBUG_PRIVATE_VERSION)) {
             items.add(UItem.asShadow(null));
             items.add(UItem.asHeader(getString(R.string.SettingsDebug)));
             items.add(SettingCell.Factory.of(20, 0xFF55CA47, 0xFF27B434, 0, getString(R.string.DebugSendLogs)));
@@ -1458,6 +1462,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
     }
 
     public void openDebugMenu() {
+        if (!BuildVars.DEBUG_VERSION && !BuildVars.DEBUG_PRIVATE_VERSION) {
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourceProvider);
         builder.setTitle(getString(R.string.DebugMenu));
         CharSequence[] items;
