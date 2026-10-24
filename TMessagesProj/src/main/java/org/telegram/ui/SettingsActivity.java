@@ -871,13 +871,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
 
             case 17:
-                showDialog(AlertsCreator.createSupportAlert(this, resourceProvider));
+                presentFragment(new VgramSupportActivity());
                 break;
             case 18:
-                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));
+                presentFragment(new VgramQuestionsActivity());
                 break;
             case 19:
-                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.PrivacyPolicyUrl));
+                presentFragment(new VgramPrivacyActivity());
                 break;
 
             case 20:
@@ -889,14 +889,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             case 22:
                 FileLog.cleanupLogs();
                 break;
-            case 23: {
-                if (MessagesController.getInstance(currentAccount).isFrozen()) {
-                    AccountFrozenAlert.show(currentAccount);
-                } else {
-                    Browser.openUrl(getContext(), LocaleController.getString(R.string.TelegramFeaturesUrl));
-                }
+            case 23:
+                presentFragment(new VgramFeaturesActivity());
                 break;
-            }
             case 24: {
                 presentFragment(new RoundVideoSettingsActivity());
                 break;
