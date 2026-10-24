@@ -1939,6 +1939,9 @@ jobs:
               "VgramSettingsDevelopers": "Разработчики",
               "VgramSettingsPlugins": "Плагины VGRAM",
               "VgramSettingsBadges": "Бейджи VGRAM",
+              "VgramSettingsPrivacy": "Политика конфиденциальности VGRAM",
+              "VgramSettingsQuestions": "Вопросы о VGRAM",
+              "VgramSettingsFeatures": "Возможности VGRAM",
           }
           actual = {node.attrib.get("name"): "".join(node.itertext()) for node in resource_root.findall("string")}
           wrong = [name for name, value in expected.items() if actual.get(name) != value]
