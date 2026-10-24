@@ -67,6 +67,7 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
@@ -362,153 +363,8 @@ jobs:
 
           print("Installed VGRAM Studio, persistent accent settings, developers page and native OTA updater.")
 
-          # Apply a real VGRAM dark graphite + muted gold palette to Telegram's actual default UI.
-          # This changes the chat list, action bars, common surfaces, text, dividers and message bubbles,
-          # rather than only adding a VGRAM label to Settings.
-          theme_colors = root / "TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java"
-          theme_source = theme_colors.read_text(encoding="utf-8")
-          palette = {
-              "key_windowBackgroundWhite": "0xff111214",
-              "key_dialogBackground": "0xff191a1d",
-              "key_dialogBackgroundGray": "0xff151619",
-              "key_windowBackgroundWhiteBlackText": "0xfff0f0ec",
-              "key_windowBackgroundWhiteGrayText": "0xffa0a09a",
-              "key_windowBackgroundWhiteGrayText2": "0xff92928d",
-              "key_windowBackgroundWhiteGrayText3": "0xff777872",
-              "key_windowBackgroundWhiteGrayText4": "0xff777872",
-              "key_windowBackgroundWhiteGrayText5": "0xffaaa9a1",
-              "key_windowBackgroundWhiteGrayText6": "0xff8c8c85",
-              "key_windowBackgroundWhiteHintText": "0xff777872",
-              "key_windowBackgroundWhiteBlueText": "0xffc5b878",
-              "key_windowBackgroundWhiteBlueText2": "0xffc5b878",
-              "key_windowBackgroundWhiteBlueText3": "0xffb5a75e",
-              "key_windowBackgroundWhiteBlueText4": "0xffd2c47d",
-              "key_windowBackgroundWhiteBlueText5": "0xffc5b878",
-              "key_windowBackgroundWhiteBlueText6": "0xffc5b878",
-              "key_windowBackgroundWhiteBlueText7": "0xffb5a75e",
-              "key_windowBackgroundWhiteBlueButton": "0xffb7a85e",
-              "key_windowBackgroundWhiteBlueIcon": "0xffc5b878",
-              "key_windowBackgroundWhiteLinkText": "0xffc5b878",
-              "key_windowBackgroundWhiteBlueHeader": "0xffc5b878",
-              "key_windowBackgroundWhiteInputField": "0xff393a3d",
-              "key_windowBackgroundWhiteInputFieldActivated": "0xffc5b878",
-              "key_listSelector": "0x18c5b878",
-              "key_divider": "0xff2b2c2f",
-              "key_actionBarDefault": "0xff151619",
-              "key_actionBarDefaultIcon": "0xffe5e4dd",
-              "key_actionBarDefaultTitle": "0xfff0f0ec",
-              "key_actionBarDefaultSubtitle": "0xff92928d",
-              "key_actionBarDefaultSelector": "0x18c5b878",
-              "key_actionBarDefaultSearch": "0xfff0f0ec",
-              "key_actionBarDefaultSearchPlaceholder": "0xff92928d",
-              "key_actionBarDefaultSubmenuItem": "0xfff0f0ec",
-              "key_actionBarDefaultSubmenuItemIcon": "0xffc5b878",
-              "key_actionBarDefaultSubmenuBackground": "0xff1b1c1f",
-              "key_actionBarDefaultSubmenuSeparator": "0xff303135",
-              "key_chats_unreadCounter": "0xffb7a85e",
-              "key_chats_unreadCounterMuted": "0xff55565a",
-              "key_chats_name": "0xfff0f0ec",
-              "key_chats_nameArchived": "0xffd6d5cf",
-              "key_chats_message": "0xffa0a09a",
-              "key_chats_messageArchived": "0xff858680",
-              "key_chats_message_threeLines": "0xff92928d",
-              "key_chats_nameMessage": "0xffc5b878",
-              "key_chats_nameMessageArchived": "0xffb5a75e",
-              "key_chats_nameMessage_threeLines": "0xffd2c47d",
-              "key_chats_nameMessageArchived_threeLines": "0xffaaa9a1",
-              "key_chat_inBubble": "0xff242528",
-              "key_chat_inBubbleSelected": "0xff34332c",
-              "key_chat_outBubble": "0xff393727",
-              "key_chat_outBubbleSelected": "0xff4a4630",
-              "key_chat_messagePanelBackground": "0xff191a1d",
-          }
-          for key, value in palette.items():
-              pattern = rf'(?m)^(\s*defaultColors\[{re.escape(key)}\]\s*=\s*)[^;]+;'
-              theme_source, count = re.subn(pattern, rf'\g<1>{value};', theme_source, count=1)
-              if count != 1:
-                  raise SystemExit("VGRAM palette could not patch ThemeColors key: " + key)
-          # Extend the palette beyond the chat list: dialogs, profile actions, chat composer,
-          # media controls and folder tabs should share the same muted graphite/gold identity.
-          # Optional keys are applied only when present in the pinned Telegram source, so upstream
-          # changes do not break the build simply because a color key was renamed or removed.
-          extended_palette = {
-              "key_dialogTextBlack": "0xfff0f0ec",
-              "key_dialogTextLink": "0xffffc857",
-              "key_dialogTextBlue": "0xffffc857",
-              "key_dialogTextBlue2": "0xffb59aff",
-              "key_dialogTextBlue4": "0xffd2c47d",
-              "key_dialogTextGray": "0xffa0a09a",
-              "key_dialogTextGray2": "0xff92928d",
-              "key_dialogTextGray3": "0xff777872",
-              "key_dialogTextGray4": "0xff777872",
-              "key_dialogTextHint": "0xff777872",
-              "key_dialogIcon": "0xffffc857",
-              "key_dialogGrayLine": "0xff303135",
-              "key_dialogInputField": "0xff303135",
-              "key_dialogInputFieldActivated": "0xffffc857",
-              "key_dialogCheckboxSquareBackground": "0xffb7a85e",
-              "key_dialogRadioBackgroundChecked": "0xffb7a85e",
-              "key_dialogRoundCheckBox": "0xffb7a85e",
-              "key_dialogSearchBackground": "0xff202125",
-              "key_dialogSearchHint": "0xff92928d",
-              "key_dialogSearchIcon": "0xffa0a09a",
-              "key_dialogSearchText": "0xfff0f0ec",
-              "key_dialogFloatingButton": "0xffb7a85e",
-              "key_dialogFloatingIcon": "0xff111214",
-              "key_dialogGiftsBackground": "0xff191a1d",
-              "key_dialogGiftsTabText": "0xffd6d5cf",
-              "key_actionBarTabActiveText": "0xffd2c47d",
-              "key_actionBarTabUnactiveText": "0xff92928d",
-              "key_actionBarTabLine": "0xffb7a85e",
-              "key_actionBarTabSelector": "0x18c5b878",
-              "key_chats_tabUnreadActiveBackground": "0xffb7a85e",
-              "key_chats_tabUnreadUnactiveBackground": "0xff55565a",
-              "key_chat_inBubble": "0xff242528",
-              "key_chat_inBubbleSelected": "0xff34332c",
-              "key_chat_inBubbleShadow": "0xff111214",
-              "key_chat_outBubble": "0xff393727",
-              "key_chat_outBubbleSelected": "0xff4a4630",
-              "key_chat_outBubbleShadow": "0xff111214",
-              "key_chat_messagePanelBackground": "0xff191a1d",
-              "key_chat_messagePanelText": "0xfff0f0ec",
-              "key_chat_messagePanelHint": "0xff92928d",
-              "key_chat_messagePanelCursor": "0xffc5b878",
-              "key_chat_messagePanelIcons": "0xffa0a09a",
-              "key_chat_messagePanelSend": "0xffb7a85e",
-              "key_chat_messagePanelVoiceBackground": "0xffb7a85e",
-              "key_chat_messagePanelVoiceLockBackground": "0xff242528",
-              "key_chat_topPanelBackground": "0xff191a1d",
-              "key_chat_topPanelClose": "0xffa0a09a",
-              "key_chat_topPanelLine": "0xffb7a85e",
-              "key_chat_topPanelTitle": "0xffd2c47d",
-              "key_chat_topPanelMessage": "0xffa0a09a",
-              "key_chat_inReplyLine": "0xffc5b878",
-              "key_chat_outReplyLine": "0xffb7a85e",
-              "key_chat_inReplyNameText": "0xffd2c47d",
-              "key_chat_outReplyNameText": "0xffd2c47d",
-              "key_chat_inForwardedNameText": "0xffd2c47d",
-              "key_chat_outForwardedNameText": "0xffd2c47d",
-              "key_chat_inAudioSeekbarFill": "0xffc5b878",
-              "key_chat_outAudioSeekbarFill": "0xffc5b878",
-              "key_chat_inVoiceSeekbarFill": "0xffc5b878",
-              "key_chat_outVoiceSeekbarFill": "0xffc5b878",
-              "key_profile_creatorIcon": "0xffc5b878",
-              "key_profile_actionIcon": "0xffc5b878",
-              "key_profile_actionBackground": "0xff191a1d",
-              "key_profile_verifiedBackground": "0xffb7a85e",
-              "key_profile_title": "0xfff0f0ec",
-              "key_profile_status": "0xffa0a09a",
-              "key_profile_tabText": "0xff92928d",
-              "key_profile_tabSelectedText": "0xffd2c47d",
-              "key_profile_tabSelectedLine": "0xffb59aff",
-          }
-          applied_extended = []
-          for key, value in extended_palette.items():
-              pattern = rf'(?m)^(\s*defaultColors\[{re.escape(key)}\]\s*=\s*)[^;]+;'
-              theme_source, count = re.subn(pattern, rf'\g<1>{value};', theme_source, count=1)
-              if count:
-                  applied_extended.append(key)
-          theme_colors.write_text(theme_source, encoding="utf-8")
+          # Telegram's graphite/gold palette is committed in ThemeColors.java and overlaid before build.
+
 
           # VgramBadgeSync.java is committed under TMessagesProj and copied into the pinned upstream source.
 
