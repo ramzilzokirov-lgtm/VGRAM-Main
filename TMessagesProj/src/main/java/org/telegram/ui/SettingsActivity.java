@@ -871,13 +871,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
 
             case 17:
-                presentFragment(new VgramSupportActivity());
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramSupportActivity.class));
                 break;
             case 18:
-                presentFragment(new VgramQuestionsActivity());
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));
                 break;
             case 19:
-                presentFragment(new VgramPrivacyActivity());
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPrivacyActivity.class));
                 break;
 
             case 20:
@@ -890,7 +890,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 FileLog.cleanupLogs();
                 break;
             case 23:
-                presentFragment(new VgramFeaturesActivity());
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
                 break;
             case 24: {
                 presentFragment(new RoundVideoSettingsActivity());
