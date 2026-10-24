@@ -10610,6 +10610,9 @@
     <string name="VgramSettingsPluginsInfo">Управление установленными расширениями</string>
     <string name="VgramSettingsBadges">Бейджи VGRAM</string>
     <string name="VgramSettingsBadgesInfo">TESTER · OG · FRIENDS · TEAM</string>
+    <string name="VgramSettingsPrivacy">Политика конфиденциальности VGRAM</string>
+    <string name="VgramSettingsQuestions">Вопросы о VGRAM</string>
+    <string name="VgramSettingsFeatures">Возможности VGRAM</string>
     <string name="SettingsPrivacySecurity">Privacy &amp; Security</string>
     <string name="SettingsPrivacySecurityInfo">Last Seen, Devices, Passkeys</string>
     <string name="SettingsNotifications">Notifications</string>
