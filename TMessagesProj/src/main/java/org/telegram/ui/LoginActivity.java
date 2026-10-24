@@ -538,6 +538,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     private View cachedFragmentView;
     @Override
     public View createView(Context context) {
+        if (getParentActivity() != null) VgramTheme.apply(getParentActivity());
         if (cachedFragmentView != null) {
             fragmentView = cachedFragmentView;
             cachedFragmentView = null;
