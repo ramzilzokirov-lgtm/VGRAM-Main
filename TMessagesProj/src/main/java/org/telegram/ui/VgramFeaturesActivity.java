@@ -5,7 +5,7 @@ import android.os.Bundle;
 public class VgramFeaturesActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen(getString(R.string.VgramFeaturesEyebrow), getString(R.string.TelegramFeatures),
+        setupScreen(getString(R.string.VgramFeaturesEyebrow), getString(R.string.VgramFeaturesTitle),
                 getString(R.string.VgramFeaturesSubtitle));
         card(getString(R.string.VgramFeatureThemesTitle), getString(R.string.VgramFeatureThemesText));
         card(getString(R.string.VgramFeatureBadgesTitle), getString(R.string.VgramFeatureBadgesText));
