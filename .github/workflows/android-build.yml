@@ -297,8 +297,18 @@ jobs:
               )
               if hook_count != 1:
                   raise SystemExit("VGRAM theme integration failed: could not insert VgramTheme.apply into LaunchActivity.onCreate")
+              # Telegram may reload its own selected palette after onCreate; re-apply on resume too.
+              if "VgramTheme.apply(this);" not in launch_source[launch_source.find("onResume"):]:
+                  launch_source, resume_count = re.subn(
+                      r'((?:public|protected)\\s+void\\s+onResume\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?super\\.onResume\\(\\)\\s*;)',
+                      r'\\1\\n        VgramTheme.apply(this);',
+                      launch_source,
+                      count=1
+                  )
+                  if resume_count != 1:
+                      raise SystemExit("VGRAM theme integration failed: could not insert onResume palette refresh")
               launch.write_text(launch_source, encoding="utf-8")
-              print("Applied VGRAM palette to the actual Telegram application at launch.")
+              print("Applied VGRAM palette at launch and resume.")
           else:
               print("VGRAM launch theme hook already present.")
 
@@ -1140,8 +1150,9 @@ jobs:
                   root.addView(text("Серверные бейджи. Ключ администратора проверяется сервером и не сохраняется в настройках приложения."));
                   EditText key = new EditText(this);
                   key.setSingleLine(true);
-                  key.setHint("VGRAM_ADMIN_KEY");
+                  key.setHint("Введи ключ администратора");
                   key.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                  styleInput(key);
                   root.addView(key);
                   addButton(root, "Подключиться", v -> {
                       String candidate = key.getText().toString().trim();
@@ -1195,6 +1206,7 @@ jobs:
                               .setItems(LABELS, (dialog, which) -> {
                                   EditText label = new EditText(this);
                                   label.setSingleLine(true);
+                                  styleInput(label);
                                   label.setText(LABELS[which]);
                                   new AlertDialog.Builder(this).setTitle("Подпись бейджа")
                                       .setView(label).setNegativeButton("Отмена", null)
@@ -1310,7 +1322,21 @@ jobs:
                   id.setSingleLine(true);
                   id.setInputType(InputType.TYPE_CLASS_NUMBER);
                   id.setHint("Например, 123456789");
+                  styleInput(id);
                   return id;
+              }
+              private void styleInput(EditText input) {
+                  input.setTextColor(0xfff5eee7);
+                  input.setHintTextColor(0xffb7a99c);
+                  input.setLinkTextColor(0xffc5b878);
+                  input.setTextSize(16);
+                  input.setPadding(18, 16, 18, 16);
+                  android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                  bg.setColor(0xff30251d);
+                  bg.setCornerRadius(18);
+                  bg.setStroke(2, 0xffc5b878);
+                  input.setBackground(bg);
+                  input.setSelectAllOnFocus(false);
               }
               private String normalizeId(String raw) {
                   String value = raw == null ? "" : raw.trim();
