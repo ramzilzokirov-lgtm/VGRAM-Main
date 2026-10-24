@@ -152,6 +152,23 @@ jobs:
               (drawable_res / (name + ".xml")).write_text(xml, encoding="utf-8")
           print("Restored additional compile-time drawables: preview_back, preview_mic, dino_pic.")
 
+          # Original VGRAM icons for the custom settings rows (not Telegram's stock icons).
+          vgram_icons = {
+              "vgram_settings_appearance": "M12,2L14.5,8.5L21,11L14.5,13.5L12,20L9.5,13.5L3,11L9.5,8.5Z",
+              "vgram_settings_updates": "M12,4V1L8,5L12,9V6C15.3,6 18,8.7 18,12C18,13 17.8,13.8 17.3,14.6L19.5,16.8C20.5,15.4 21,13.7 21,12C21,7 17,4 12,4ZM6,12C6,11 6.2,10.2 6.7,9.4L4.5,7.2C3.5,8.6 3,10.3 3,12C3,17 7,20 12,20V23L16,19L12,15V18C8.7,18 6,15.3 6,12Z",
+              "vgram_settings_developers": "M12,2A4,4 0,1 0,12 10A4,4 0,1 0,12 2ZM4,20C4,15.6 7.6,12 12,12S20,15.6 20,20V22H4Z",
+              "vgram_settings_plugins": "M10,2H14V6H18V10H22V14H18V18H14V22H10V18H6V14H2V10H6V6H10Z",
+              "vgram_settings_badges": "M12,2L15,4L19,4L20,8L22,11L20,14L19,18L15,18L12,21L9,18L5,18L4,14L2,11L4,8L5,4L9,4Z M10,11L12,13L16,9L17.5,10.5L12,16L8.5,12.5Z",
+              "vgram_settings_privacy": "M12,2L20,5V11C20,16 16.6,20 12,22C7.4,20 4,16 4,11V5Z M10,12L11.5,13.5L15,10L16.5,11.5L11.5,16.5L8.5,13.5Z"
+          }
+          for icon_name, path_data in vgram_icons.items():
+              (drawable_res / (icon_name + ".xml")).write_text(
+                  '<?xml version="1.0" encoding="utf-8"?>'
+                  '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">'
+                  f'<path android:fillColor="#FFFFFFFF" android:pathData="{path_data}"/>'
+                  '</vector>', encoding="utf-8")
+          print("Generated custom VGRAM icons for appearance, updates, developers, plugins, badges and privacy.")
+
           # Original VGRAM launcher mark: metallic face, violet hair and muted gold eyes.
           icon_xml = drawable / "vgram_launcher_icon.xml"
           icon_xml.write_text("""<?xml version="1.0" encoding="utf-8"?>
@@ -182,6 +199,7 @@ jobs:
           if source.count(ask_row) != 1 or source.count(faq_row) != 1 or source.count(features_row) != 1:
               raise SystemExit("VGRAM help-menu patch failed: upstream help rows changed")
           source = source.replace(ask_row, "", 1)
+          source = source.replace('        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));', '        items.add(SettingCell.Factory.of(19, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_privacy, "Политика конфиденциальности VGRAM"));', 1)
           source = source.replace(faq_row, '        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, "Вопросы о VGRAM"));', 1)
           source = source.replace(features_row, '        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, "Возможности VGRAM"));', 1)
           faq_handler = '                Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));'
@@ -197,13 +215,13 @@ jobs:
           if feature_count != 1:
               raise SystemExit("VGRAM help-menu patch failed: could not locate case 23 before case 24")
 
-          list_anchor = '        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));'
+          list_anchor = '        items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));'
           list_patch = list_anchor + '''
-          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_chat, "Оформление VGRAM", "Темы, цвета и внешний вид"));
-          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Обновления VGRAM", "Релизы и новые версии"));
-          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Разработчики", "Информация о проекте"));
-          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_features, "Плагины VGRAM", "Управление установленными расширениями"));
-          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_policy, "Бейджи VGRAM", "TESTER · OG · FRIENDS · TEAM"));'''
+          items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, "Оформление VGRAM", "Темы, цвета и внешний вид"));
+          items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, "Обновления VGRAM", "Релизы и новые версии"));
+          items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, "Разработчики", "Информация о проекте"));
+          items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, "Плагины VGRAM", "Управление установленными расширениями"));
+          items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, "Бейджи VGRAM", "TESTER · OG · FRIENDS · TEAM"));'''
           if source.count(list_anchor) != 1:
               raise SystemExit("VGRAM patch failed: SettingsActivity settings-list anchor changed")
           source = source.replace(list_anchor, list_patch, 1)
@@ -1877,7 +1895,7 @@ jobs:
           if missing:
               raise SystemExit("VGRAM integration incomplete: " + ", ".join(missing))
           print("VGRAM settings entries and handlers are present.")
-          required_drawables = ["preview_smile", "preview_back", "preview_mic", "dino_pic", "wallet_action_card_gradient", "wallet_card_diamond"]
+          required_drawables = ["preview_smile", "preview_back", "preview_mic", "dino_pic", "wallet_action_card_gradient", "wallet_card_diamond", "vgram_settings_appearance", "vgram_settings_updates", "vgram_settings_developers", "vgram_settings_plugins", "vgram_settings_badges", "vgram_settings_privacy"]
           drawable_dir = Path("TMessagesProj/src/main/res/drawable")
           missing_drawables = [name for name in required_drawables if not (drawable_dir / (name + ".xml")).is_file()]
           if missing_drawables:
