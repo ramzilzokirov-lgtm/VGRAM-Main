@@ -11538,6 +11538,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 } else {
                     nameTextView[a].setText(newString);
                 }
+                if (a == 0 && user != null) {
+                    VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a]);
+                }
                 if (a == 0 && onlineTextOverride != null) {
                     onlineTextView[a].setText(onlineTextOverride);
                 } else if (a == 0 && copyFromChatActivity) {
