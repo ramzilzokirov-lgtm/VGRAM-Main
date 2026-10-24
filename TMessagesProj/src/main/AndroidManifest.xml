@@ -113,12 +113,12 @@
     >
         <!-- usesCleartextTraffic for browser supporting opening http:// links -->
 
-        <activity-alias android:enabled="true" android:name="org.telegram.messenger.DefaultIcon" android:targetActivity="org.telegram.ui.LaunchActivity" android:exported="true" android:label="VGRAM">
+        <activity-alias android:enabled="false" android:name="org.telegram.messenger.DefaultIcon" android:targetActivity="org.telegram.ui.LaunchActivity" android:exported="true" android:label="VGRAM">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" /></intent-filter>
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity-alias>
 
-        <activity-alias android:enabled="false" android:name="org.telegram.messenger.VgramIcon01" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/vgram_icon_01" android:roundIcon="@mipmap/vgram_icon_01" android:label="V Gold" android:exported="true">
+        <activity-alias android:enabled="true" android:name="org.telegram.messenger.VgramIcon01" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/vgram_icon_01" android:roundIcon="@mipmap/vgram_icon_01" android:label="V Gold" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" /></intent-filter>
         </activity-alias>
 
