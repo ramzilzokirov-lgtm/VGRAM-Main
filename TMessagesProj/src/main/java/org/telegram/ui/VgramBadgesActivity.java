@@ -28,6 +28,8 @@ public class VgramBadgesActivity extends VgramBaseActivity {
     private android.content.SharedPreferences prefs;
     private String adminKey = "";
     private int failedAttempts = 0;
+    private static final int PICK_SERVER_BANNER = 742;
+    private String pendingBannerTelegramId = "";
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -132,11 +134,103 @@ public class VgramBadgesActivity extends VgramBaseActivity {
         root.addView(text("Выдача и отзыв выполняются на сервере. Введи числовой Telegram ID: username нельзя надёжно сопоставить с ID через Telegram API. Бейджи доступны через API профиля VGRAM."));
         addButton(root, "Выдать серверный бейдж", this::grantDialog);
         addButton(root, "Отозвать серверный бейдж", this::revokeDialog);
+        addButton(root, "Включить VGRAM Premium", () -> setPremiumDialog(true));
+        addButton(root, "Отключить VGRAM Premium", () -> setPremiumDialog(false));
+        addButton(root, "Загрузить серверный баннер профиля", this::bannerDialog);
         addButton(root, "Обновить список", this::refresh);
         list = column();
         root.addView(list);
         setContentView(root);
         refresh();
+    }
+
+    private void setPremiumDialog(boolean enabled) {
+        EditText id = idInput();
+        new AlertDialog.Builder(this).setTitle("Telegram ID для VGRAM Premium")
+            .setMessage(enabled ? "Включить отдельный статус VGRAM Premium? Это не меняет Telegram Premium." :
+                "Отключить статус VGRAM Premium?")
+            .setView(id).setNegativeButton("Отмена", null)
+            .setPositiveButton(enabled ? "Включить" : "Отключить", (d, w) -> {
+                String telegramId = normalizeId(id.getText().toString());
+                if (telegramId.isEmpty()) { id.setError("Нужен числовой Telegram ID"); return; }
+                new Thread(() -> {
+                    try {
+                        JSONObject body = new JSONObject();
+                        body.put("enabled", enabled);
+                        JSONObject result = request("PUT", "/admin/telegram/" + telegramId + "/premium", body, adminKey);
+                        if (!result.optBoolean("ok", false)) throw new Exception("Сервер не подтвердил изменение");
+                        runOnUiThread(() -> new AlertDialog.Builder(this)
+                            .setMessage(enabled ? "VGRAM Premium включён." : "VGRAM Premium отключён.")
+                            .setPositiveButton("OK", null).show());
+                    } catch (Exception error) {
+                        String message = error.getMessage() == null ? "Не удалось изменить VGRAM Premium." : error.getMessage();
+                        runOnUiThread(() -> new AlertDialog.Builder(this).setTitle("Ошибка сервера")
+                            .setMessage(message).setPositiveButton("OK", null).show());
+                    }
+                }).start();
+            }).show();
+    }
+
+    private void bannerDialog() {
+        EditText id = idInput();
+        new AlertDialog.Builder(this).setTitle("Telegram ID для баннера")
+            .setMessage("Баннер будет доступен на профиле пользователя через сервер VGRAM.")
+            .setView(id).setNegativeButton("Отмена", null)
+            .setPositiveButton("Выбрать изображение", (d, w) -> {
+                String telegramId = normalizeId(id.getText().toString());
+                if (telegramId.isEmpty()) { id.setError("Нужен числовой Telegram ID"); return; }
+                pendingBannerTelegramId = telegramId;
+                android.content.Intent pick = new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT);
+                pick.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+                pick.setType("image/*");
+                pick.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try { startActivityForResult(pick, PICK_SERVER_BANNER); }
+                catch (Exception error) {
+                    android.widget.Toast.makeText(this, "Не удалось открыть выбор изображения", android.widget.Toast.LENGTH_LONG).show();
+                }
+            }).show();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != PICK_SERVER_BANNER || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        final android.net.Uri uri = data.getData();
+        final String telegramId = pendingBannerTelegramId;
+        pendingBannerTelegramId = "";
+        new Thread(() -> {
+            try {
+                String mime = getContentResolver().getType(uri);
+                if (mime == null || !(mime.equals("image/png") || mime.equals("image/jpeg") || mime.equals("image/webp"))) {
+                    throw new Exception("Поддерживаются PNG, JPEG и WebP.");
+                }
+                byte[] raw;
+                try (InputStream in = getContentResolver().openInputStream(uri);
+                     ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                    if (in == null) throw new Exception("Не удалось прочитать изображение.");
+                    byte[] buffer = new byte[8192];
+                    int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        if (out.size() + count > 2 * 1024 * 1024) throw new Exception("Размер баннера не должен превышать 2 MiB.");
+                        out.write(buffer, 0, count);
+                    }
+                    raw = out.toByteArray();
+                }
+                if (raw.length == 0) throw new Exception("Выбран пустой файл.");
+                JSONObject body = new JSONObject();
+                body.put("content_type", mime);
+                body.put("data_base64", android.util.Base64.encodeToString(raw, android.util.Base64.NO_WRAP));
+                JSONObject result = request("PUT", "/admin/telegram/" + telegramId + "/banner", body, adminKey);
+                if (!result.optBoolean("ok", false)) throw new Exception("Сервер не подтвердил загрузку баннера.");
+                runOnUiThread(() -> new AlertDialog.Builder(this)
+                    .setTitle("Баннер загружен")
+                    .setMessage("Баннер сохранён на сервере VGRAM. Он появится в профиле после обновления данных.")
+                    .setPositiveButton("OK", null).show());
+            } catch (Exception error) {
+                String message = error.getMessage() == null ? "Не удалось загрузить баннер." : error.getMessage();
+                runOnUiThread(() -> new AlertDialog.Builder(this).setTitle("Ошибка загрузки")
+                    .setMessage(message).setPositiveButton("OK", null).show());
+            }
+        }).start();
     }
 
     private void grantDialog() {
