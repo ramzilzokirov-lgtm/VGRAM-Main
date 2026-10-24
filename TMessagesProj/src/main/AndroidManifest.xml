@@ -668,6 +668,7 @@
         <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramSupportActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
     </application>

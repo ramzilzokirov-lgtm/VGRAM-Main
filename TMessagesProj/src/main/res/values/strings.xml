@@ -11561,4 +11561,15 @@
     <string name="CreateManagedBotUsernameBotLimit">This bot already has a Premium username. Remove it before adding another.</string>
     <string name="CreateManagedBotUsernameSuffixMissing">The username must end in %1$s.</string>
     <string name="CreateManagedBotUsernameCheckFailed">Couldn\'t check this username. Please try again.</string>
+    <string name="VgramHelpSupport">Поддержка VGRAM</string>
+    <string name="VgramHelpFaq">Вопросы о VGRAM</string>
+    <string name="VgramHelpFeatures">Возможности VGRAM</string>
+    <string name="VgramHelpPrivacy">Политика конфиденциальности VGRAM</string>
+    <string name="VgramSupportEyebrow">ПОДДЕРЖКА ПРОЕКТА</string>
+    <string name="VgramSupportTitle">Поддержка VGRAM</string>
+    <string name="VgramSupportDescription">Связаться с автором проекта и сообщить об ошибке.</string>
+    <string name="VgramSupportContactTitle">Обратная связь</string>
+    <string name="VgramSupportContactDescription">Откроется раздел Issues репозитория VGRAM-Main. Опишите проблему и шаги её воспроизведения. Не публикуйте коды входа, пароли и личные переписки.</string>
+    <string name="VgramSupportWrite">Написать разработчику</string>
+    <string name="VgramSupportRepository">Исходный код проекта</string>
 </resources>
