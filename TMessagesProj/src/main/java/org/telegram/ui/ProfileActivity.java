@@ -5227,7 +5227,23 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     vgramBannerImage.setContentDescription(null);
                     vgramBannerImage.setImageURI(Uri.parse(vgramBannerUri));
                     if (vgramBannerImage.getDrawable() != null) {
-                        topView.addView(vgramBannerImage, 0, new FrameLayout.LayoutParams(
+                        FrameLayout vgramBannerLayer = new FrameLayout(context) {
+                            @Override
+                            protected void dispatchDraw(Canvas canvas) {
+                                int save = canvas.save();
+                                int headerBottom = (int) (ActionBar.getCurrentActionBarHeight()
+                                        + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0)
+                                        + extraHeight + searchTransitionOffset);
+                                canvas.clipRect(0, 0, getWidth(), Math.max(0, Math.min(getHeight(), headerBottom)));
+                                super.dispatchDraw(canvas);
+                                canvas.restoreToCount(save);
+                            }
+                        };
+                        vgramBannerLayer.setClipChildren(true);
+                        vgramBannerLayer.setClipToPadding(true);
+                        vgramBannerLayer.setClickable(false);
+                        vgramBannerLayer.setFocusable(false);
+                        vgramBannerLayer.addView(vgramBannerImage, new FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT
                         ));
@@ -5239,7 +5255,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         vgramBannerScrim.setBackground(vgramScrimGradient);
                         vgramBannerScrim.setClickable(false);
                         vgramBannerScrim.setFocusable(false);
-                        topView.addView(vgramBannerScrim, 1, new FrameLayout.LayoutParams(
+                        vgramBannerLayer.addView(vgramBannerScrim, new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                        ));
+                        topView.addView(vgramBannerLayer, 0, new FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT
                         ));
