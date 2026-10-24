@@ -131,7 +131,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.VintageIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
-            android:icon="@mipmap/icon_6_launcher"
+            android:icon="@drawable/vgram_launcher_icon"
             android:roundIcon="@mipmap/icon_6_launcher_round"
             android:exported="true">
 
@@ -147,7 +147,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.AquaIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
-            android:icon="@mipmap/icon_4_launcher"
+            android:icon="@drawable/vgram_launcher_icon"
             android:roundIcon="@mipmap/icon_4_launcher_round"
             android:exported="true">
 
@@ -163,7 +163,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.PremiumIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
-            android:icon="@mipmap/icon_3_launcher"
+            android:icon="@drawable/vgram_launcher_icon"
             android:roundIcon="@mipmap/icon_3_launcher_round"
             android:exported="true">
 
@@ -179,7 +179,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.TurboIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
-            android:icon="@mipmap/icon_5_launcher"
+            android:icon="@drawable/vgram_launcher_icon"
             android:roundIcon="@mipmap/icon_5_launcher_round"
             android:exported="true">
 
@@ -195,7 +195,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.NoxIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
-            android:icon="@mipmap/icon_2_launcher"
+            android:icon="@drawable/vgram_launcher_icon"
             android:roundIcon="@mipmap/icon_2_launcher_round"
             android:exported="true">
 
@@ -710,6 +710,14 @@
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="org.telegram.messenger.chromecast.ChromecastOptionsProvider" />
 
+        <activity android:name="org.telegram.ui.VgramSettingsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramPrivacyActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
     </application>
 
 </manifest>
