@@ -13,6 +13,16 @@ on:
       - "VGRAM_ICON.png"
       - "TELEGRAM_UPSTREAM_COMMIT.txt"
       - "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/Vgram*.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java"
+      - "TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java"
+      - "TMessagesProj/src/main/AndroidManifest.xml"
+      - "TMessagesProj/build.gradle"
+      - "TMessagesProj/src/main/res/drawable/vgram_*.xml"
       - "TMessagesProj/src/main/res/values/strings.xml"
 
 permissions:
