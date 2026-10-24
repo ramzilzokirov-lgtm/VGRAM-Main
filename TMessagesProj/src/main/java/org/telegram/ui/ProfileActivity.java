@@ -5222,106 +5222,132 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         topView = new TopView(context);
         topView.setBackgroundColorId(peerColor, false);
         topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
-        // VGRAM profile banners are local-only and only shown on the current user's own profile.
-        if (userId == getUserConfig().getClientUserId()) {
-            String vgramBannerUri = context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
-                    .getString("profile_background_uri", "");
-            if (!TextUtils.isEmpty(vgramBannerUri)) {
-                try {
-                    Uri bannerUri = Uri.parse(vgramBannerUri);
-                    ImageView vgramBannerImage = new ImageView(context);
-                    vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    vgramBannerImage.setClickable(false);
-                    vgramBannerImage.setFocusable(false);
-                    vgramBannerImage.setContentDescription(null);
+        // Prefer the owner's local image; otherwise load a VGRAM server banner for this Telegram user.
+        String vgramLocalBannerUri = userId == getUserConfig().getClientUserId()
+                ? context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getString("profile_background_uri", "")
+                : "";
+        boolean vgramRemoteBanner = TextUtils.isEmpty(vgramLocalBannerUri) && userId > 0;
+        String vgramBannerSource = !TextUtils.isEmpty(vgramLocalBannerUri) ? vgramLocalBannerUri
+                : (vgramRemoteBanner ? "https://vgram-31xt.onrender.com/users/telegram/" + userId + "/banner" : "");
+        if (!TextUtils.isEmpty(vgramBannerSource)) {
+            try {
+                final boolean useRemoteBanner = vgramRemoteBanner;
+                final String cacheKey = useRemoteBanner ? "server:" + userId : vgramLocalBannerUri;
+                final Uri bannerUri = useRemoteBanner ? null : Uri.parse(vgramBannerSource);
+                ImageView vgramBannerImage = new ImageView(context);
+                vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                vgramBannerImage.setClickable(false);
+                vgramBannerImage.setFocusable(false);
+                vgramBannerImage.setContentDescription(null);
 
-                    FrameLayout vgramBannerLayer = new FrameLayout(context) {
-                        @Override
-                        protected void dispatchDraw(Canvas canvas) {
-                            int save = canvas.save();
-                            int headerBottom = (int) (ActionBar.getCurrentActionBarHeight()
-                                    + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0)
-                                    + extraHeight + searchTransitionOffset);
-                            canvas.clipRect(0, 0, getWidth(), Math.max(0, Math.min(getHeight(), headerBottom)));
-                            super.dispatchDraw(canvas);
-                            canvas.restoreToCount(save);
-                        }
-                    };
-                    vgramBannerLayer.setClipChildren(true);
-                    vgramBannerLayer.setClipToPadding(true);
-                    vgramBannerLayer.setClickable(false);
-                    vgramBannerLayer.setFocusable(false);
-                    vgramBannerLayer.addView(vgramBannerImage, new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                    ));
-                    View vgramBannerScrim = new View(context);
-                    GradientDrawable vgramScrimGradient = new GradientDrawable(
-                            GradientDrawable.Orientation.TOP_BOTTOM,
-                            new int[] {0x22151619, 0xAA151619}
-                    );
-                    vgramBannerScrim.setBackground(vgramScrimGradient);
-                    vgramBannerScrim.setClickable(false);
-                    vgramBannerScrim.setFocusable(false);
-                    vgramBannerLayer.addView(vgramBannerScrim, new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                    ));
-                    topView.addView(vgramBannerLayer, 0, new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                    ));
+                FrameLayout vgramBannerLayer = new FrameLayout(context) {
+                    @Override
+                    protected void dispatchDraw(Canvas canvas) {
+                        int save = canvas.save();
+                        int headerBottom = (int) (ActionBar.getCurrentActionBarHeight()
+                                + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0)
+                                + extraHeight + searchTransitionOffset);
+                        canvas.clipRect(0, 0, getWidth(), Math.max(0, Math.min(getHeight(), headerBottom)));
+                        super.dispatchDraw(canvas);
+                        canvas.restoreToCount(save);
+                    }
+                };
+                vgramBannerLayer.setClipChildren(true);
+                vgramBannerLayer.setClipToPadding(true);
+                vgramBannerLayer.setClickable(false);
+                vgramBannerLayer.setFocusable(false);
+                vgramBannerLayer.addView(vgramBannerImage, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                View vgramBannerScrim = new View(context);
+                GradientDrawable vgramScrimGradient = new GradientDrawable(
+                        GradientDrawable.Orientation.TOP_BOTTOM, new int[] {0x22151619, 0xAA151619});
+                vgramBannerScrim.setBackground(vgramScrimGradient);
+                vgramBannerScrim.setClickable(false);
+                vgramBannerScrim.setFocusable(false);
+                vgramBannerLayer.addView(vgramBannerScrim, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                topView.addView(vgramBannerLayer, 0, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-                    Bitmap cachedBanner = VGRAM_PROFILE_BANNER_CACHE.get(vgramBannerUri);
-                    if (cachedBanner != null && !cachedBanner.isRecycled()) {
-                        vgramBannerImage.setImageBitmap(cachedBanner);
-                    } else {
-                        Utilities.globalQueue.postRunnable(() -> {
-                            Bitmap decodedBanner = null;
-                            try {
-                                BitmapFactory.Options bounds = new BitmapFactory.Options();
-                                bounds.inJustDecodeBounds = true;
-                                try (java.io.InputStream input = context.getContentResolver().openInputStream(bannerUri)) {
-                                    if (input != null) {
-                                        BitmapFactory.decodeStream(input, null, bounds);
-                                    }
-                                }
-                                if (bounds.outWidth > 0 && bounds.outHeight > 0) {
-                                    int targetWidth = Math.max(1, AndroidUtilities.displaySize.x);
-                                    int targetHeight = Math.max(1, dp(320));
-                                    int sampleSize = 1;
-                                    while (bounds.outWidth / sampleSize > targetWidth * 2
-                                            || bounds.outHeight / sampleSize > targetHeight * 2) {
-                                        sampleSize *= 2;
-                                    }
-                                    BitmapFactory.Options options = new BitmapFactory.Options();
-                                    options.inSampleSize = sampleSize;
-                                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                                    try (java.io.InputStream input = context.getContentResolver().openInputStream(bannerUri)) {
-                                        if (input != null) {
-                                            decodedBanner = BitmapFactory.decodeStream(input, null, options);
+                Bitmap cachedBanner = VGRAM_PROFILE_BANNER_CACHE.get(cacheKey);
+                if (cachedBanner != null && !cachedBanner.isRecycled()) {
+                    vgramBannerImage.setImageBitmap(cachedBanner);
+                } else {
+                    Utilities.globalQueue.postRunnable(() -> {
+                        Bitmap decodedBanner = null;
+                        try {
+                            BitmapFactory.Options bounds = new BitmapFactory.Options();
+                            bounds.inJustDecodeBounds = true;
+                            byte[] remoteBytes = null;
+                            if (useRemoteBanner) {
+                                java.net.HttpURLConnection connection = (java.net.HttpURLConnection)
+                                        new java.net.URL(vgramBannerSource).openConnection();
+                                connection.setConnectTimeout(8000);
+                                connection.setReadTimeout(10000);
+                                connection.setInstanceFollowRedirects(false);
+                                connection.setRequestProperty("Accept", "image/png, image/jpeg, image/webp");
+                                connection.setRequestProperty("User-Agent", "VGRAM-Android");
+                                try {
+                                    int status = connection.getResponseCode();
+                                    int length = connection.getContentLength();
+                                    if (status == 200 && (length <= 0 || length <= 3 * 1024 * 1024)) {
+                                        try (java.io.InputStream input = connection.getInputStream();
+                                             java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+                                            byte[] buffer = new byte[8192];
+                                            int count;
+                                            while ((count = input.read(buffer)) != -1) {
+                                                if (output.size() + count > 3 * 1024 * 1024) break;
+                                                output.write(buffer, 0, count);
+                                            }
+                                            remoteBytes = output.toByteArray();
                                         }
                                     }
+                                } finally {
+                                    connection.disconnect();
                                 }
-                            } catch (Exception vgramBannerError) {
-                                android.util.Log.w("VGRAM", "Could not load local profile banner", vgramBannerError);
+                                if (remoteBytes != null && remoteBytes.length > 0) {
+                                    BitmapFactory.decodeByteArray(remoteBytes, 0, remoteBytes.length, bounds);
+                                }
+                            } else {
+                                try (java.io.InputStream input = context.getContentResolver().openInputStream(bannerUri)) {
+                                    if (input != null) BitmapFactory.decodeStream(input, null, bounds);
+                                }
                             }
-                            final Bitmap result = decodedBanner;
-                            AndroidUtilities.runOnUIThread(() -> {
-                                if (result != null && !result.isRecycled() && vgramBannerImage.getParent() != null) {
-                                    VGRAM_PROFILE_BANNER_CACHE.put(vgramBannerUri, result);
-                                    vgramBannerImage.setImageBitmap(result);
-                                } else if (result != null && !result.isRecycled()) {
-                                    result.recycle();
-                                } else if (vgramBannerLayer.getParent() != null) {
-                                    topView.removeView(vgramBannerLayer);
+                            if (bounds.outWidth > 0 && bounds.outHeight > 0) {
+                                int targetWidth = Math.max(1, AndroidUtilities.displaySize.x);
+                                int targetHeight = Math.max(1, dp(320));
+                                int sampleSize = 1;
+                                while (bounds.outWidth / sampleSize > targetWidth * 2
+                                        || bounds.outHeight / sampleSize > targetHeight * 2) sampleSize *= 2;
+                                BitmapFactory.Options options = new BitmapFactory.Options();
+                                options.inSampleSize = sampleSize;
+                                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                                if (useRemoteBanner) {
+                                    decodedBanner = BitmapFactory.decodeByteArray(remoteBytes, 0, remoteBytes.length, options);
+                                } else {
+                                    try (java.io.InputStream input = context.getContentResolver().openInputStream(bannerUri)) {
+                                        if (input != null) decodedBanner = BitmapFactory.decodeStream(input, null, options);
+                                    }
                                 }
-                            });
+                            }
+                        } catch (Exception vgramBannerError) {
+                            android.util.Log.w("VGRAM", "Could not load VGRAM profile banner", vgramBannerError);
+                        }
+                        final Bitmap result = decodedBanner;
+                        AndroidUtilities.runOnUIThread(() -> {
+                            if (result != null && !result.isRecycled() && vgramBannerImage.getParent() != null) {
+                                VGRAM_PROFILE_BANNER_CACHE.put(cacheKey, result);
+                                vgramBannerImage.setImageBitmap(result);
+                            } else if (result != null && !result.isRecycled()) {
+                                result.recycle();
+                            } else if (vgramBannerLayer.getParent() != null) {
+                                topView.removeView(vgramBannerLayer);
+                            }
                         });
-                    }
-                } catch (Exception vgramBannerError) {
-                    android.util.Log.w("VGRAM", "Could not load local profile banner", vgramBannerError);
+                    });
                 }
+            } catch (Exception vgramBannerError) {
+                android.util.Log.w("VGRAM", "Could not load VGRAM profile banner", vgramBannerError);
             }
         }
         frameLayout.addView(topView);
