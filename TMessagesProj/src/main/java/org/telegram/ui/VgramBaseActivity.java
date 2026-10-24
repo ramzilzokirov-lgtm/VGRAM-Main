@@ -6,6 +6,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -23,7 +24,7 @@ abstract class VgramBaseActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-  new int[] { 0xff292c31, 0xff17191d, 0xff202328 }));
+            new int[] { 0xff292c31, 0xff17191d, 0xff202328 }));
         root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
         LinearLayout header = new LinearLayout(this);
@@ -37,7 +38,7 @@ abstract class VgramBaseActivity extends Activity {
         LinearLayout brand = new LinearLayout(this);
         brand.setOrientation(LinearLayout.VERTICAL);
         brand.setPadding(dp(13), 0, 0, 0);
-        brand.addView(label("VGRAM", 11, accent(), true));
+        brand.addView(label(getString(R.string.VgramBrand), 11, accent(), true));
         brand.addView(label(eyebrow, 10, 0xffb5b5b0, true));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         root.addView(header, new LinearLayout.LayoutParams(-1, -2));
@@ -55,13 +56,21 @@ abstract class VgramBaseActivity extends Activity {
         body.addView(description, margin(0, 0, 0, 19));
         scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView footer = label("VGRAM  •  TELEGRAM NETWORK", 10, 0xff72767d, true);
+        TextView footer = label(getString(R.string.VgramFooter), 10, 0xff72767d, true);
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, margin(0, dp(5), 0, 0));
         setContentView(root);
     }
 
     protected LinearLayout card(String title, String description) {
+        return createCard(title, description, false);
+    }
+
+    protected LinearLayout expandableCard(String title, String description) {
+        return createCard(title, description, true);
+    }
+
+    private LinearLayout createCard(String title, String description, boolean expandable) {
         boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
         int fill = glass ? 0xe51e2024 : 0xff22252a;
         int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
@@ -75,10 +84,33 @@ abstract class VgramBaseActivity extends Activity {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(17), dp(17), dp(17), dp(17));
         surface.addView(card);
-        card.addView(label(title, 16, 0xfff1f0eb, true), margin(0, 0, 0, 7));
+
+        LinearLayout heading = new LinearLayout(this);
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        TextView titleView = label(title, 16, 0xfff1f0eb, true);
+        heading.addView(titleView, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView indicator = null;
+        if (expandable) {
+            indicator = label("+", 22, accent(), true);
+            indicator.setGravity(Gravity.CENTER);
+            heading.addView(indicator, new LinearLayout.LayoutParams(dp(28), dp(28)));
+        }
+        card.addView(heading);
         TextView sub = label(description, 13, 0xffa3a49f, false);
         sub.setLineSpacing(dp(3), 1f);
-        card.addView(sub);
+        if (expandable) {
+            sub.setVisibility(View.GONE);
+            final TextView toggle = indicator;
+            heading.setOnClickListener(v -> {
+                boolean show = sub.getVisibility() != View.VISIBLE;
+                sub.setVisibility(show ? View.VISIBLE : View.GONE);
+                toggle.setText(show ? "−" : "+");
+                surface.setCardElevation(show ? dp(2) : dp(1));
+            });
+            heading.setClickable(true);
+            heading.setFocusable(true);
+        }
+        card.addView(sub, margin(0, 7, 0, 0));
         body.addView(surface, margin(0, 0, 0, 12));
         return card;
     }
@@ -109,11 +141,11 @@ abstract class VgramBaseActivity extends Activity {
         button.setClickable(true);
         button.setFocusable(true);
         button.setOnClickListener(v -> {
-  if (getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("animations", true)) {
-      v.animate().scaleX(0.98f).scaleY(0.98f).setDuration(70).withEndAction(() ->
-          v.animate().scaleX(1f).scaleY(1f).setDuration(90).start()).start();
-  }
-  if (action != null) action.run();
+            if (getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("animations", true)) {
+                v.animate().scaleX(0.98f).scaleY(0.98f).setDuration(70).withEndAction(() ->
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(90).start()).start();
+            }
+            if (action != null) action.run();
         });
         parent.addView(button, margin(0, dp(13), 0, 0));
         return button;
