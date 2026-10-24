@@ -33,8 +33,8 @@ public final class VgramBadgeSync {
             try {
                 connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/badges").openConnection();
                 connection.setRequestMethod("GET");
-                connection.setConnectTimeout(8000);
-                connection.setReadTimeout(8000);
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(30000);
                 connection.setRequestProperty("Accept", "application/json");
                 connection.setRequestProperty("User-Agent", "VGRAM-Android");
                 int status = connection.getResponseCode();
@@ -67,8 +67,8 @@ public final class VgramBadgeSync {
                 try {
                     HttpURLConnection profileConnection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/profile").openConnection();
                     profileConnection.setRequestMethod("GET");
-                    profileConnection.setConnectTimeout(8000);
-                    profileConnection.setReadTimeout(8000);
+                    profileConnection.setConnectTimeout(15000);
+                    profileConnection.setReadTimeout(20000);
                     profileConnection.setRequestProperty("Accept", "application/json");
                     profileConnection.setRequestProperty("User-Agent", "VGRAM-Android");
                     try {
@@ -93,6 +93,8 @@ public final class VgramBadgeSync {
                 cache.edit().putString("badges_" + id, result).putLong("time_" + id, System.currentTimeMillis()).apply();
                 MAIN.post(() -> render(title, result));
             } catch (Exception ignored) {
+                // Avoid hammering a sleeping/free-tier service; retry on the next profile visit after ~60 seconds.
+                cache.edit().putLong("time_" + id, System.currentTimeMillis() - 240000L).apply();
             } finally {
                 if (connection != null) connection.disconnect();
             }
