@@ -64,6 +64,31 @@ public final class VgramBadgeSync {
                         suffix.append("◆ ").append(label.trim());
                     }
                 }
+                try {
+                    HttpURLConnection profileConnection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/profile").openConnection();
+                    profileConnection.setRequestMethod("GET");
+                    profileConnection.setConnectTimeout(8000);
+                    profileConnection.setReadTimeout(8000);
+                    profileConnection.setRequestProperty("Accept", "application/json");
+                    profileConnection.setRequestProperty("User-Agent", "VGRAM-Android");
+                    try {
+                        if (profileConnection.getResponseCode() == 200) {
+                            try (InputStream in = profileConnection.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                                byte[] buffer = new byte[2048]; int count;
+                                while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+                                JSONObject profile = new JSONObject(out.toString("UTF-8"));
+                                if (profile.optBoolean("premium", false)) {
+                                    if (suffix.length() > 0) suffix.append("  ");
+                                    suffix.append("✦ VGRAM PREMIUM");
+                                }
+                            }
+                        }
+                    } finally {
+                        profileConnection.disconnect();
+                    }
+                } catch (Exception ignoredProfileLookup) {
+                    // A temporary profile endpoint failure must not hide already fetched badges.
+                }
                 String result = suffix.toString();
                 cache.edit().putString("badges_" + id, result).putLong("time_" + id, System.currentTimeMillis()).apply();
                 MAIN.post(() -> render(title, result));
