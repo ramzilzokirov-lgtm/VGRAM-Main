@@ -283,34 +283,32 @@ jobs:
           }
           ''', encoding="utf-8")
 
-          # Apply VGRAM colors to the actual Telegram application on launch, not only to VGRAM settings pages.
+          # Apply VGRAM colors on every launch and resume. Keep the hooks independent:
+          # an existing onCreate hook must never prevent adding/fixing onResume.
           launch = root / "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
           launch_source = launch.read_text(encoding="utf-8")
-          if "VgramTheme.apply(this);" not in launch_source:
-              # Insert into the real onCreate body using a whitespace-tolerant regex.
-              # Never silently ship a build where the app-wide theme hook was skipped.
-              launch_source, hook_count = re.subn(
-                  r'((?:public|protected)\s+void\s+onCreate\s*\(\s*Bundle\s+savedInstanceState\s*\)\s*\{[\s\S]*?super\.onCreate\(savedInstanceState\)\s*;)',
-                  r'\1\n        VgramTheme.apply(this);',
+
+          if not re.search(r"VgramTheme\\.apply\\(this\\);", launch_source):
+              launch_source, create_count = re.subn(
+                  r'((?:public|protected)\\s+void\\s+onCreate\\s*\\(\\s*Bundle\\s+savedInstanceState\\s*\\)\\s*\\{[\\s\\S]*?super\\.onCreate\\(savedInstanceState\\)\\s*;)',
+                  r'\\1\\n        VgramTheme.apply(this);',
                   launch_source,
                   count=1
               )
-              if hook_count != 1:
-                  raise SystemExit("VGRAM theme integration failed: could not insert VgramTheme.apply into LaunchActivity.onCreate")
-              # Telegram may reload its own selected palette after onCreate; re-apply on resume too.
-              if "VgramTheme.apply(this);" not in launch_source[launch_source.find("onResume"):]:
-                  launch_source, resume_count = re.subn(
-                      r'((?:public|protected)\s+void\s+onResume\s*\(\s*\)\s*\{[\s\S]*?super\.onResume\(\)\s*;)',
-                      r'\1\n        VgramTheme.apply(this);',
-                      launch_source,
-                      count=1
-                  )
-                  if resume_count != 1:
-                      raise SystemExit("VGRAM theme integration failed: could not insert onResume palette refresh")
-              launch.write_text(launch_source, encoding="utf-8")
-              print("Applied VGRAM palette at launch and resume.")
+              if create_count != 1:
+                  raise SystemExit("VGRAM theme integration failed: could not insert Vgram theme into LaunchActivity.onCreate")
+
+          # Check the onResume method specifically, not the entire file after the first occurrence.
+          resume_match = re.search(r'((?:public|protected)\\s+void\\s+onResume\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?super\\.onResume\\(\\)\\s*;)', launch_source)
+          if resume_match:
+              resume_body = resume_match.group(1)
+              if "VgramTheme.apply(this);" not in resume_body:
+                  launch_source = launch_source[:resume_match.end(1)] + "\\n        VgramTheme.apply(this);" + launch_source[resume_match.end(1):]
           else:
-              print("VGRAM launch theme hook already present.")
+              raise SystemExit("VGRAM theme integration failed: could not find LaunchActivity.onResume")
+
+          launch.write_text(launch_source, encoding="utf-8")
+          print("Verified VGRAM theme hooks in LaunchActivity.onCreate and onResume.")
 
           (ui_dir / "VgramBaseActivity.java").write_text(r'''package org.telegram.ui;
 
