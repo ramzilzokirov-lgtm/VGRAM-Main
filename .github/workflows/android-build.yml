@@ -1189,7 +1189,12 @@ jobs:
                   progress.show();
                   new Thread(() -> {
                       try {
-                          request("GET", "/admin/nfts", null, adminKey);
+                          try {
+                              request("GET", "/admin/nfts", null, adminKey);
+                          } catch (java.net.SocketTimeoutException firstTimeout) {
+                              // Render free instances can need time to wake up. Retry once with a fresh connection.
+                              request("GET", "/admin/nfts", null, adminKey);
+                          }
                           runOnUiThread(() -> {
                               if (isFinishing()) return;
                               progress.dismiss();
@@ -1203,7 +1208,7 @@ jobs:
                               progress.dismiss();
                               adminKey = "";
                               new AlertDialog.Builder(this).setTitle("Не удалось подключиться")
-                                  .setMessage("Проверка ключа не прошла. Ответ сервера: " + reason)
+                                  .setMessage("Сервер не ответил или отклонил запрос: " + reason + "\n\nПроверь интернет и попробуй ещё раз через минуту.")
                                   .setPositiveButton("Повторить", (d, w) -> showKeyGate())
                                   .setNegativeButton("Закрыть", (d, w) -> finish()).show();
                           });
@@ -1322,8 +1327,8 @@ jobs:
               private JSONObject request(String method, String path, JSONObject body, String key) throws Exception {
                   HttpURLConnection c = (HttpURLConnection) new URL(API + path).openConnection();
                   c.setRequestMethod(method);
-                  c.setConnectTimeout(12000);
-                  c.setReadTimeout(12000);
+                  c.setConnectTimeout(20000);
+                  c.setReadTimeout(60000);
                   c.setRequestProperty("Accept", "application/json");
                   c.setRequestProperty("User-Agent", "VGRAM-Android");
                   if (key != null && !key.isEmpty()) c.setRequestProperty("X-VGRAM-ADMIN-KEY", key);
