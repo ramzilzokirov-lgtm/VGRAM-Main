@@ -256,6 +256,12 @@ jobs:
                   Theme.setColor(Theme.key_windowBackgroundWhite, 0xff17100c, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xfff5eee7, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffc8bdb2, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteGrayText2, 0xffaaa096, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteHintText, 0xffa99c90, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteInputField, 0xff30251d, false);
+                  Theme.setColor(Theme.key_windowBackgroundWhiteInputFieldActivated, a, false);
+                  Theme.setColor(Theme.key_dialogBackground, 0xff211810, false);
+                  Theme.setColor(Theme.key_dialogBackgroundGray, 0xff19130f, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
                   Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
@@ -1420,6 +1426,19 @@ jobs:
               if login_count != 1:
                   raise SystemExit("VGRAM patch failed: LoginActivity.createView(Context) insertion point not found")
               login_activity.write_text(login_source, encoding="utf-8")
+          # The Telegram cloud-password fragment is a separate screen. Apply the palette there too,
+          # especially input text, hint, and active-field colors, without replacing Telegram auth logic.
+          two_step = root / "TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java"
+          two_step_source = two_step.read_text(encoding="utf-8")
+          if "VgramTheme.apply(getParentActivity())" not in two_step_source:
+              two_step_source, two_step_count = re.subn(
+                  r'(?m)^(\\s*)public View createView\\(Context context\\) \\{',
+                  r'\\1public View createView(Context context) {\\n\\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  two_step_source, count=1
+              )
+              if two_step_count != 1:
+                  raise SystemExit("VGRAM password-screen theme integration failed: TwoStepVerificationActivity.createView not found")
+              two_step.write_text(two_step_source, encoding="utf-8")
           print("Applied VGRAM palette before building the real Telegram login / phone-number UI.")
 
           print("Installed VGRAM Studio, persistent accent settings, developers page and native OTA updater.")
@@ -1624,7 +1643,15 @@ jobs:
                           StringBuilder suffix = new StringBuilder();
                           if (badges != null) for (int i = 0; i < badges.length(); i++) {
                               JSONObject badge = badges.optJSONObject(i);
-                              String label = badge == null ? "" : badge.optString("label", "");
+                              String label = "";
+                              if (badge != null) {
+                                  label = badge.optString("label", "").trim();
+                                  if (label.isEmpty()) label = badge.optString("badge_code", "").trim();
+                                  if (label.isEmpty()) label = badge.optString("code", "").trim();
+                                  if (label.isEmpty()) label = badge.optString("name", "").trim();
+                                  if (label.isEmpty()) label = badge.optString("badge", "").trim();
+                                  if (label.isEmpty()) label = badge.optString("title", "").trim();
+                              }
                               if (label != null && !label.trim().isEmpty()) {
                                   if (suffix.length() > 0) suffix.append("  ");
                                   suffix.append("◆ ").append(label.trim());
