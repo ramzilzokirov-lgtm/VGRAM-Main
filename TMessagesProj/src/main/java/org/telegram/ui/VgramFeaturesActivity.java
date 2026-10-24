@@ -5,15 +5,15 @@ import android.os.Bundle;
 public class VgramFeaturesActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setupScreen("APP CAPABILITIES", "Возможности VGRAM", "Что доступно в VGRAM сейчас — стандартные возможности Telegram и собственные настройки клиента.");
-        card("Сообщения и чаты", "Переписка с контактами, отправка и получение сообщений, обмен фотографиями, видео, файлами, голосовыми сообщениями и документами через инфраструктуру Telegram.");
-        card("Группы и каналы", "Просмотр и участие в группах и каналах Telegram в рамках возможностей аккаунта и самого Telegram.");
-        card("Звонки", "Звонки и другие поддерживаемые Telegram функции связи, если они доступны для аккаунта, устройства и региона.");
-        card("Настройки VGRAM", "Отдельные страницы VGRAM для оформления, обновлений, информации о разработчиках, плагинов и бейджей.");
-        card("Цвета и оформление", "Экран оформления содержит параметры акцентного цвета и визуальных эффектов. Действие каждого параметра зависит от того, какие экраны уже подключены к настройкам.");
-        card("Плагины", "Менеджер предназначен для просмотра и управления поддерживаемыми описательными плагинами. Не устанавливайте неизвестные файлы и не выдавайте расширениям лишние разрешения.");
-        card("Бейджи", "Можно управлять локальными метками TESTER, OG/OLD, FRIENDS и TEAM на этом устройстве. Пока они не являются серверными значками VGRAM, не подтверждаются Telegram и не отображаются автоматически у всех пользователей.");
-        card("Обновления", "Страница обновлений VGRAM проверяет релизы проекта. Перед установкой проверяйте источник APK; доступность и проверка обновлений зависят от текущей сборки.");
-        card("Чего не обещаем", "VGRAM не меняет серверные возможности Telegram и не может гарантировать функции, которые ещё не реализованы или не проверены на устройстве.");
+        setupScreen(getString(R.string.VgramFeaturesEyebrow), getString(R.string.TelegramFeatures),
+                getString(R.string.VgramFeaturesSubtitle));
+        card(getString(R.string.VgramFeatureThemesTitle), getString(R.string.VgramFeatureThemesText));
+        card(getString(R.string.VgramFeatureBadgesTitle), getString(R.string.VgramFeatureBadgesText));
+        card(getString(R.string.VgramFeaturePremiumTitle), getString(R.string.VgramFeaturePremiumText));
+        card(getString(R.string.VgramFeatureBannersTitle), getString(R.string.VgramFeatureBannersText));
+        card(getString(R.string.VgramFeaturePluginsTitle), getString(R.string.VgramFeaturePluginsText));
+        card(getString(R.string.VgramFeatureMessagingTitle), getString(R.string.VgramFeatureMessagingText));
+        card(getString(R.string.VgramFeatureUpdatesTitle), getString(R.string.VgramFeatureUpdatesText));
+        card(getString(R.string.VgramFeatureLimitsTitle), getString(R.string.VgramFeatureLimitsText));
     }
 }
