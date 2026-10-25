@@ -146,6 +146,34 @@ public final class VgramBadgeSync {
         INDICATOR_TEXT.setAlpha(255);
     }
 
+    /**
+     * Draws VGRAM indicators from a ChatMessageCell's current name-layout canvas transform.
+     * Call this immediately after the sender-name layout is drawn. The matrix is used to keep
+     * the indicator on that row while placing it within the cell's visible width.
+     */
+    public static void drawInlineIndicators(Canvas canvas,
+            org.telegram.ui.Cells.ChatMessageCell cell, MessageObject messageObject) {
+        if (canvas == null || cell == null || messageObject == null) return;
+        long senderId = messageObject.getDialogId();
+        if (messageObject.messageOwner != null && messageObject.messageOwner.from_id != null) {
+            senderId = MessageObject.getPeerId(messageObject.messageOwner.from_id);
+        }
+        if (senderId == 0 || cell.getMeasuredWidth() <= 0) return;
+
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        canvas.getMatrix(matrix);
+        float[] values = new float[9];
+        matrix.getValues(values);
+        float scaleX = Math.abs(values[android.graphics.Matrix.MSCALE_X]);
+        float scaleY = Math.abs(values[android.graphics.Matrix.MSCALE_Y]);
+        if (scaleX < 0.01f) scaleX = 1f;
+        if (scaleY < 0.01f) scaleY = 1f;
+        float translatedX = values[android.graphics.Matrix.MTRANS_X];
+        float x = Math.max(0f, (cell.getMeasuredWidth() - translatedX - AndroidUtilities.dp(88)) / scaleX);
+        float centerY = AndroidUtilities.dp(9) / scaleY;
+        drawInlineIndicators(canvas, senderId, x, centerY, 1f);
+    }
+
     private static final Paint INDICATOR_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
     private static final Paint INDICATOR_TEXT = new Paint(Paint.ANTI_ALIAS_FLAG);
 
