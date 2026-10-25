@@ -1,6 +1,8 @@
 package org.telegram.ui;
 
 import android.app.Activity;
+import android.app.Application;
+import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
@@ -30,6 +32,7 @@ public final class VgramAudioService {
     private static TextView playView;
     private static ImageView artworkView;
     private static Context appContext;
+    private static boolean lifecycleHookInstalled;
 
     private VgramAudioService() {}
 
@@ -37,6 +40,7 @@ public final class VgramAudioService {
         if (player == null) {
             appContext = context.getApplicationContext();
             player = new ExoPlayer.Builder(appContext).build();
+            installLaunchActivityMiniPlayerHook(context.getApplicationContext());
             player.addListener(new Player.Listener() {
                 @Override public void onIsPlayingChanged(boolean isPlaying) { refreshMiniPlayer(); }
                 @Override public void onMediaItemTransition(MediaItem item, int reason) { refreshMiniPlayer(); }
@@ -44,6 +48,30 @@ public final class VgramAudioService {
             });
         }
         return player;
+    }
+
+    private static void installLaunchActivityMiniPlayerHook(Context context) {
+        if (lifecycleHookInstalled || !(context instanceof Application)) return;
+        lifecycleHookInstalled = true;
+        ((Application) context).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override public void onActivityCreated(Activity activity, Bundle state) { }
+            @Override public void onActivityStarted(Activity activity) { }
+            @Override public void onActivityResumed(Activity activity) {
+                if (activity instanceof LaunchActivity) {
+                    android.view.View content = activity.findViewById(android.R.id.content);
+                    if (content instanceof FrameLayout) attachMiniPlayer(activity, (FrameLayout) content);
+                }
+            }
+            @Override public void onActivityPaused(Activity activity) { }
+            @Override public void onActivityStopped(Activity activity) { }
+            @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) { }
+            @Override public void onActivityDestroyed(Activity activity) {
+                if (activity instanceof LaunchActivity && miniBar != null && miniBar.getParent() instanceof android.view.ViewGroup) {
+                    ((android.view.ViewGroup) miniBar.getParent()).removeView(miniBar);
+                    miniBar = null; titleView = null; playView = null; artworkView = null;
+                }
+            }
+        });
     }
 
     public static synchronized void setTrack(Context context, String trackTitle, String stream, String coverUrl) {
@@ -142,7 +170,7 @@ public final class VgramAudioService {
     private static GradientDrawable background() {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(0xf126292e);
-        drawable.setCornerRadius(AndroidUtilities.dp(16));
+        drawable.setCornerRadius(AndroidUtilities.dp(14));
         drawable.setStroke(AndroidUtilities.dp(1), 0x55d6b65d);
         return drawable;
     }
@@ -150,7 +178,16 @@ public final class VgramAudioService {
     private static synchronized void refreshMiniPlayer() {
         if (miniBar == null) return;
         boolean active = player != null && player.getMediaItemCount() > 0;
-        miniBar.setVisibility(active ? View.VISIBLE : View.GONE);
+        if (active && miniBar.getVisibility() != View.VISIBLE) {
+            miniBar.setAlpha(0f);
+            miniBar.setTranslationY(AndroidUtilities.dp(12));
+            miniBar.setVisibility(View.VISIBLE);
+            miniBar.animate().alpha(1f).translationY(0f).setDuration(240).start();
+        } else if (!active) {
+            miniBar.animate().alpha(0f).translationY(AndroidUtilities.dp(12)).setDuration(160).withEndAction(() -> {
+                if (miniBar != null && (player == null || player.getMediaItemCount() == 0)) miniBar.setVisibility(View.GONE);
+            }).start();
+        }
         if (titleView != null) titleView.setText(active && !title.isEmpty() ? title : "VGRAM Player");
         if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");
         if (artworkView != null) artworkView.setImageResource(android.R.drawable.ic_media_play);
