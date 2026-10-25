@@ -5230,6 +5230,44 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         topView = new TopView(context);
         topView.setBackgroundColorId(peerColor, false);
         topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
+        TextView vgramVerificationLabel = new TextView(context);
+        vgramVerificationLabel.setGravity(Gravity.CENTER);
+        vgramVerificationLabel.setTextColor(0xFFFFFFFF);
+        vgramVerificationLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        vgramVerificationLabel.setTypeface(AndroidUtilities.bold());
+        vgramVerificationLabel.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[] {0xFF287DE0, 0xFF2466C5}));
+        vgramVerificationLabel.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
+        vgramVerificationLabel.setVisibility(View.GONE);
+        topView.addView(vgramVerificationLabel, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 24, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 164, 12, 0));
+        long vgramProfileId = userId != 0 ? userId : chatId;
+        if (vgramProfileId > 0) {
+            TextView vgramTelegramId = new TextView(context);
+            vgramTelegramId.setGravity(Gravity.CENTER);
+            vgramTelegramId.setTextColor(0xFFD5D7DC);
+            vgramTelegramId.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            vgramTelegramId.setText("Telegram ID: " + vgramProfileId + "  ·  Копировать");
+            vgramTelegramId.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[] {0x442C3036, 0x332C3036}));
+            vgramTelegramId.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
+            vgramTelegramId.setOnClickListener(view -> {
+                try {
+                    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Telegram ID", Long.toString(vgramProfileId)));
+                        android.widget.Toast.makeText(context, "Telegram ID скопирован", android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                } catch (RuntimeException ignored) { }
+            });
+            topView.addView(vgramTelegramId, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 23, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 190, 12, 0));
+            if (userId > 0) {
+                VgramBadgeSync.requestRefresh(context, userId, () -> {
+                    String role = VgramBadgeSync.getVerificationLabel(context, userId);
+                    if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
+                    else vgramVerificationLabel.setVisibility(View.GONE);
+                });
+                String role = VgramBadgeSync.getVerificationLabel(context, userId);
+                if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
+            }
+        }
         // Prefer the owner's local image; otherwise load a VGRAM server banner for this Telegram user.
         String vgramLocalBannerUri = userId == getUserConfig().getClientUserId()
                 ? context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getString("profile_background_uri", "")

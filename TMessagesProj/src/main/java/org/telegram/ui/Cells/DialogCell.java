@@ -2394,6 +2394,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             CharSequence nameStringFinal = nameString;
             // VGRAM server labels are cached locally; never block dialog-list rendering on network I/O.
             if (user != null && user.id > 0) {
+                VgramBadgeSync.requestRefresh(getContext(), user.id, this::invalidate);
                 nameStringFinal = VgramBadgeSync.withBadges(getContext(), user.id, nameStringFinal);
             }
             if (nameLayoutEllipsizeByGradient) {

@@ -135,6 +135,7 @@ import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.WebFile;
 import org.telegram.messenger.browser.Browser;
@@ -1697,6 +1698,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     private float nameY;
     private boolean drawName;
     private boolean drawNameLayout;
+    private final Paint vgramVerificationPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path vgramVerificationPath = new Path();
     private boolean drawNameAvatar;
 
     private float ephemeralX, ephemeralY;
@@ -22205,6 +22208,28 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
             Theme.chat_namePaint.setAlpha(oldAlpha);
+            long vgramPeerId = currentUser != null ? currentUser.id : 0L;
+            if (vgramPeerId > 0) {
+                VgramBadgeSync.requestRefresh(getContext(), vgramPeerId, this::invalidate);
+                if (VgramBadgeSync.isVerified(getContext(), vgramPeerId)) {
+                    float checkX = (nameLayout.getLineCount() > 0 ? nameLayout.getLineWidth(0) : 0) + dp(8);
+                    float checkY = dp(8);
+                    vgramVerificationPaint.setStyle(Paint.Style.FILL);
+                    vgramVerificationPaint.setColor(0xFF2F80ED);
+                    canvas.drawCircle(checkX, checkY, dp(6), vgramVerificationPaint);
+                    vgramVerificationPaint.setStyle(Paint.Style.STROKE);
+                    vgramVerificationPaint.setStrokeWidth(dp(1.7f));
+                    vgramVerificationPaint.setStrokeCap(Paint.Cap.ROUND);
+                    vgramVerificationPaint.setStrokeJoin(Paint.Join.ROUND);
+                    vgramVerificationPaint.setColor(0xFFFFFFFF);
+                    vgramVerificationPath.reset();
+                    vgramVerificationPath.moveTo(checkX - dp(2.5f), checkY);
+                    vgramVerificationPath.lineTo(checkX - dp(.5f), checkY + dp(2));
+                    vgramVerificationPath.lineTo(checkX + dp(3), checkY - dp(2.5f));
+                    canvas.drawPath(vgramVerificationPath, vgramVerificationPaint);
+                    vgramVerificationPaint.setStyle(Paint.Style.FILL);
+                }
+            }
             canvas.restore();
 
             float end;

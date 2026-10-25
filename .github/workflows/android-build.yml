@@ -129,6 +129,8 @@ jobs:
           grep -q "^package org.telegram.messenger;" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          grep -q "VgramBadgeSync.isVerified" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VGRAM-owned verification and copyable Telegram ID" upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           echo "Validated all Vgram*.java sources and both chat cell overlays before compilation."
