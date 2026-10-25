@@ -6,9 +6,6 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import androidx.dynamicanimation.animation.DynamicAnimation;
-import androidx.dynamicanimation.animation.SpringAnimation;
-import androidx.dynamicanimation.animation.SpringForce;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -51,6 +48,7 @@ abstract class VgramBaseActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setClipToPadding(false);
+        VgramMotion.applyOverscroll(scroll);
         scroll.setPadding(0, dp(12), 0, dp(8));
         body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
@@ -92,14 +90,7 @@ abstract class VgramBaseActivity extends Activity {
             card.setBackground(VgramGlassDrawable.card(this));
         }
         surface.addView(card);
-        surface.setOnTouchListener((view, event) -> {
-            float target = event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? 0.955f : 1f;
-            SpringForce spring = new SpringForce(target).setDampingRatio(event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY : SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY).setStiffness(SpringForce.STIFFNESS_LOW);
-            new SpringAnimation(view, DynamicAnimation.SCALE_X).setSpring(spring).animateToFinalPosition(target);
-            SpringForce springY = new SpringForce(target).setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY).setStiffness(SpringForce.STIFFNESS_LOW);
-            new SpringAnimation(view, DynamicAnimation.SCALE_Y).setSpring(springY).animateToFinalPosition(target);
-            return false;
-        });
+        VgramMotion.applySpringTouch(surface);
 
         LinearLayout heading = new LinearLayout(this);
         heading.setGravity(Gravity.CENTER_VERTICAL);
@@ -156,6 +147,7 @@ abstract class VgramBaseActivity extends Activity {
         button.setPadding(dp(16), dp(14), dp(16), dp(14));
         button.setClickable(true);
         button.setFocusable(true);
+        VgramMotion.applySpringTouch(button);
         button.setOnClickListener(v -> {
             if (getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("animations", true)) {
                 v.animate().scaleX(0.98f).scaleY(0.98f).setDuration(70).withEndAction(() ->
