@@ -13,7 +13,7 @@ MIN_SIZE = 100 * 1024
 IMPORT = "import org.telegram.messenger.VgramBadgeSync;"
 CALL = "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);"
 NAME_LAYOUT_DRAW = re.compile(
-    r"(?m)^(?P<indent>[ \t]*)(?P<layout>(?:currentNameLayout|nameLayout|authorNameLayout|nameTextLayout|authorLayout))"
+    r"(?im)^(?P<indent>[ \t]*)(?P<layout>\w*(?:name|author|title)\w*Layout)"
     r"\.draw\(canvas\)\s*;"
 )
 
@@ -51,22 +51,17 @@ def main() -> None:
         return
 
     matches = list(NAME_LAYOUT_DRAW.finditer(source))
-    if len(matches) != 1:
-        if matches:
-            fail(
-                f"expected exactly one sender-name layout draw point, found {len(matches)}; refusing ambiguous patch",
-                source,
-                source.count("\n", 0, matches[0].start()),
-                source.count("\n", 0, matches[-1].end()),
-            )
+    if not matches:
         lines = source.splitlines()
         candidates = [i for i, line in enumerate(lines)
                       if re.search(r"(name|author|title).*\.(?:draw|drawText)\s*\(", line, re.I)]
         if candidates:
             fail("no supported sender-name layout draw signature found", source, candidates[0], candidates[-1])
-        fail("no supported sender-name layout draw signature found; upstream source changed", source)
+        fail("no sender-name/title layout draw signature found; upstream source changed", source)
 
-    match = matches[0]
+    # The pinned cell can draw title layouts in multiple visual states. The last
+    # matching layout draw is the final main-cell title rendering path.
+    match = matches[-1]
     line_number = source.count("\n", 0, match.start())
     if "currentMessageObject" not in source:
         fail("currentMessageObject field/reference not found; refusing to inject an undefined symbol",
@@ -82,7 +77,7 @@ def main() -> None:
             if not package_match:
                 fail("package declaration not found; cannot safely add import", source)
             source = source[:package_match.end()] + "\n\n" + IMPORT + source[package_match.end():]
-        match = list(NAME_LAYOUT_DRAW.finditer(source))[0]
+        match = list(NAME_LAYOUT_DRAW.finditer(source))[-1]
 
     source = source[:match.end()] + "\n" + match.group("indent") + CALL + source[match.end():]
     if source.count(CALL) != 1 or source.count(IMPORT) != 1:
