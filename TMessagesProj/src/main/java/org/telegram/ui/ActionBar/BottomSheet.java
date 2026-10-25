@@ -61,6 +61,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.ui.VgramGlassDrawable;
 import org.telegram.messenger.AnimationNotificationsLocker;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.FileLog;
@@ -1355,6 +1356,10 @@ public class BottomSheet extends Dialog implements BaseFragment.AttachedSheet {
         } else {
             window = getWindow();
             window.setWindowAnimations(R.style.DialogNoAnimation);
+            if (Build.VERSION.SDK_INT >= 31) {
+                VgramGlassDrawable.enableBlurBehind(window, dp(45));
+                window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0xE617191D));
+            }
             setContentView(container, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
