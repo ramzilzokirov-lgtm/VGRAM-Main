@@ -52,6 +52,7 @@ public final class VgramPlayer extends VgramBaseActivity {
         return thread;
     });
     private ExoPlayer player;
+    private VgramPlaybackManager playbackManager;
     private EditText search;
     private LinearLayout results;
     private LinearLayout miniPlayer;
@@ -67,7 +68,8 @@ public final class VgramPlayer extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         try {
-            player = VgramAudioService.getPlayer(getApplicationContext());
+            playbackManager = VgramPlaybackManager.get(getApplicationContext());
+            player = playbackManager.getPlayer();
             currentTitle = VgramAudioService.getTitle();
             activityPlayerListener = new Player.Listener() {
                 @Override public void onPlayerError(PlaybackException error) {
@@ -249,8 +251,8 @@ public final class VgramPlayer extends VgramBaseActivity {
             currentTitle = title + " — " + artist;
             miniTitle.setText(currentTitle);
             miniTitle.setSelected(true);
-            VgramAudioService.setTrack(getApplicationContext(), currentTitle, stream, artwork);
-            player = VgramAudioService.getPlayer(getApplicationContext());
+            playbackManager.play(new VgramPlaybackManager.Track(title, artist, stream, artwork));
+            player = playbackManager.getPlayer();
             waveform.setPlaying(true);
             row.setTranslationX(dp(10));
             row.animate().translationX(0).setDuration(260).setInterpolator(new DecelerateInterpolator()).start();
@@ -264,11 +266,11 @@ public final class VgramPlayer extends VgramBaseActivity {
             showError("Сначала выберите трек.");
             return;
         }
-        if (player.isPlaying()) player.pause(); else player.play();
+        playbackManager.togglePlayPause();
     }
 
     private void stopPlayback() {
-        if (player != null && !released) VgramAudioService.stop(getApplicationContext());
+        if (playbackManager != null && !released) playbackManager.stop();
         currentTitle = "";
         miniTitle.setText("Выберите трек");
         miniPlay.setText("▶");
@@ -294,6 +296,23 @@ public final class VgramPlayer extends VgramBaseActivity {
         card.addView(icon);
         card.addView(title, textLp);
         card.addView(message, textLp);
+        TextView retry = label("Повторить поиск", 13, accent(), true);
+        retry.setGravity(Gravity.CENTER);
+        retry.setPadding(dp(14), dp(10), dp(14), dp(10));
+        retry.setBackground(panel(0x30d6b65d, 0x66d6b65d, 14));
+        LinearLayout.LayoutParams retryLp = new LinearLayout.LayoutParams(-2, -2);
+        retryLp.topMargin = dp(14);
+        card.addView(retry, retryLp);
+        VgramMotion.applySpringTouch(retry);
+        retry.setOnClickListener(v -> {
+            String query = search == null ? "" : search.getText().toString().trim();
+            if (query.isEmpty()) {
+                if (search != null) search.setError("Введите название трека или исполнителя");
+            } else {
+                results.removeAllViews();
+                searchTracks(query);
+            }
+        });
         results.addView(card, margin(0, 0, 0, dp(8)));
         VgramMotion.crossfadeIn(card);
     }
