@@ -121,12 +121,10 @@ jobs:
           cp -f TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           cp -f TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           CHAT_CELL="TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
-          if [[ -s "$CHAT_CELL" ]]; then
-            cp -f "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          else
-            test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-            echo "Retaining full upstream ChatMessageCell.java; empty repository marker is not overlaid."
-          fi
+          test -s "$CHAT_CELL"
+          grep -q "VgramBadgeSync.isVerified" "$CHAT_CELL"
+          cp -f "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "^package org.telegram.messenger;" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
