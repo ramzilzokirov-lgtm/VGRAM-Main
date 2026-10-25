@@ -703,8 +703,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
         items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, getString(R.string.VgramSettingsAppearance), getString(R.string.VgramSettingsAppearanceInfo)));
-        items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
-        items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
         items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, getString(R.string.VgramSettingsPlugins), getString(R.string.VgramSettingsPluginsInfo)));
         items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, getString(R.string.VgramSettingsBadges), getString(R.string.VgramSettingsBadgesInfo)));
         items.add(SettingCell.Factory.of(3, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
@@ -751,6 +749,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(18, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_faq, "Вопросы о VGRAM"));
         items.add(SettingCell.Factory.of(23, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_features, "Возможности VGRAM"));
         items.add(SettingCell.Factory.of(19, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_policy, "Конфиденциальность VGRAM"));
+        items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
+        items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
 
         if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION) && SharedSettings.experimentalSettingsAllowed.get()) {
             items.add(UItem.asShadow(null));
