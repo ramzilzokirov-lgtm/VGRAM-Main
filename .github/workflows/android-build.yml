@@ -107,7 +107,15 @@ jobs:
           # DialogCell and ChatMessageCell are modified Telegram upstream classes and must
           # be overlaid explicitly before Java compilation.
           install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          # Some branch snapshots contain an empty ChatMessageCell overlay. Never replace
+          # the real upstream implementation with an empty file; overlay only a non-empty
+          # committed customization, then validate the compiled upstream source.
+          CHAT_CELL="TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
+          if [[ -s "$CHAT_CELL" ]]; then
+            install -D "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          else
+            echo "No ChatMessageCell customization committed; retaining the upstream implementation."
+          fi
           grep -q "^package org.telegram.ui;" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           grep -q "import org.telegram.ui.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
