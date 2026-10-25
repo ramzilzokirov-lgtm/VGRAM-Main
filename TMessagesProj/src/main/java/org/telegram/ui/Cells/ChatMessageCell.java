@@ -22206,9 +22206,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
             Theme.chat_namePaint.setAlpha(oldAlpha);
-            if (currentUser != null && currentUser.id > 0) {
-                VgramBadgeSync.observe(currentUser.id, this);
-                VgramBadgeSync.drawInlineIndicators(canvas, currentUser.id,
+            long vgramSenderId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
+            if (vgramSenderId > 0 && nameLayout != null) {
+                VgramBadgeSync.observe(vgramSenderId, this);
+                VgramBadgeSync.drawInlineIndicators(canvas, vgramSenderId,
                         nameLayout.getLineRight(0) + dp(4),
                         nameLayout.getLineBaseline(0) - dp(6), nameAlpha);
             }
