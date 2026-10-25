@@ -158,6 +158,7 @@ public final class VgramBadgeSync {
         if (messageObject.messageOwner != null && messageObject.messageOwner.from_id != null) {
             senderId = MessageObject.getPeerId(messageObject.messageOwner.from_id);
         }
+        if (senderId < 0) senderId = -senderId;
         if (senderId == 0 || cell.getMeasuredWidth() <= 0) return;
 
         android.graphics.Matrix matrix = new android.graphics.Matrix();
