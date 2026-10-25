@@ -8,8 +8,6 @@
 
 package org.telegram.ui.Cells;
 
-import org.telegram.messenger.VgramBadgeSync;
-
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.find;
@@ -138,6 +136,7 @@ import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
+import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.WebFile;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.utils.Choreographer60FpsContent;
@@ -265,27 +264,6 @@ import me.vkryl.core.BitwiseUtils;
 public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate, ImageReceiver.ImageReceiverDelegate,
         DownloadController.FileDownloadProgressListener, TextSelectionHelper.SelectableView,
         NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target, IMessageCell {
-    private void drawVgramSenderBadges(Canvas canvas, float alpha) {
-        if (nameLayout == null || currentMessageObject == null) return;
-        final long fromId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
-        if (fromId <= 0L) return;
-        VgramBadgeSync.requestRefresh(getContext(), fromId, this::invalidate);
-        final boolean verified = VgramBadgeSync.isVerified(fromId);
-        final boolean hasBadge = VgramBadgeSync.hasBadge(fromId);
-        if (!verified && !hasBadge) return;
-        float x = nameLayout.getLineRight(0) + dp(4);
-        if (currentNameStatus != null) x += dp(24);
-        if (currentNameBotVerificationId != 0) x += dp(20);
-        final float baseline = nameLayout.getLineBaseline(0);
-        Paint circle = new Paint(Paint.ANTI_ALIAS_FLAG), checkPaint = new Paint(Paint.ANTI_ALIAS_FLAG), pill = new Paint(Paint.ANTI_ALIAS_FLAG), text = new Paint(Paint.ANTI_ALIAS_FLAG);
-        circle.setColor(0xFF2F80ED); circle.setAlpha((int)(255 * alpha));
-        checkPaint.setColor(Color.WHITE); checkPaint.setStyle(Paint.Style.STROKE); checkPaint.setStrokeWidth(dp(1.8f)); checkPaint.setStrokeCap(Paint.Cap.ROUND); checkPaint.setStrokeJoin(Paint.Join.ROUND); checkPaint.setAlpha((int)(255 * alpha));
-        pill.setColor(0xFFD4C78F); pill.setAlpha((int)(255 * alpha));
-        text.setColor(0xFF272720); text.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD)); text.setTextSize(dp(8.5f)); text.setAlpha((int)(255 * alpha));
-        if (verified) { float radius=dp(6), cx=x+radius, cy=baseline-dp(6); canvas.drawCircle(cx,cy,radius,circle); Path check=new Path(); check.moveTo(cx-dp(3),cy); check.lineTo(cx-dp(0.7f),cy+dp(2.3f)); check.lineTo(cx+dp(3.5f),cy-dp(2.7f)); canvas.drawPath(check,checkPaint); x+=dp(17); }
-        if (hasBadge) { String label="VGRAM"; float width=text.measureText(label)+dp(10), height=dp(14), top=baseline-dp(12); canvas.drawRoundRect(x,top,x+width,top+height,dp(5),dp(5),pill); canvas.drawText(label,x+dp(5),top+height-dp(3),text); }
-    }
-
     private final static int TIME_APPEAR_MS = 200;
     private final static int UPLOADING_ALLOWABLE_ERROR = 1024 * 1024;
     private final static int STICKER_STATUS_OFFSET = 6;
@@ -22227,8 +22205,14 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             oldAlpha = Theme.chat_namePaint.getAlpha();
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
-            drawVgramSenderBadges(canvas, nameAlpha);
             Theme.chat_namePaint.setAlpha(oldAlpha);
+            long vgramSenderId = currentUser != null ? currentUser.id : 0;
+            if (vgramSenderId > 0) {
+                VgramBadgeSync.observe(vgramSenderId, this);
+                VgramBadgeSync.drawInlineIndicators(canvas, vgramSenderId,
+                        nameLayoutWidth + dp(currentNameStatus != null ? 26 : 4),
+                        nameLayout.getHeight() / 2.0f, nameAlpha);
+            }
             canvas.restore();
 
             float end;
