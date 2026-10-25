@@ -77,30 +77,30 @@ abstract class VgramBaseActivity extends Activity {
 
     private LinearLayout createCard(String title, String description, boolean expandable) {
         boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
-        int fill = glass ? 0xd923252a : 0xff22252a;
-        int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
+        int fill = glass ? 0x20ffffff : 0xff22252a;
+        int stroke = glass ? 0x40ffffff : Color.argb(45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
         com.google.android.material.card.MaterialCardView surface = new com.google.android.material.card.MaterialCardView(this);
         surface.setCardBackgroundColor(fill);
-        surface.setRadius(dp(24));
-        surface.setStrokeColor(glass ? 0x66ffffff : stroke);
-        surface.setStrokeWidth(dp(glass ? 1.2f : 1));
-        surface.setCardElevation(dp(glass ? 8 : 1));
+        surface.setRadius(dp(glass ? 18 : 14));
+        surface.setStrokeColor(stroke);
+        surface.setStrokeWidth(dp(1));
+        surface.setCardElevation(dp(glass ? 5 : 1));
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(17), dp(17), dp(17), dp(17));
         if (glass) {
             GradientDrawable glassLayer = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                    new int[] { 0x35ffffff, 0x182f3339, 0x24202025 });
-            glassLayer.setCornerRadius(dp(24));
-            glassLayer.setStroke(dp(1), 0x55ffffff);
+                    new int[] { 0x20ffffff, 0x182f3339, 0x10202025 });
+            glassLayer.setCornerRadius(dp(18));
+            glassLayer.setStroke(dp(1), 0x40ffffff);
             card.setBackground(glassLayer);
         }
         surface.addView(card);
         surface.setOnTouchListener((view, event) -> {
-            float target = event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? 0.985f : 1f;
-            SpringForce spring = new SpringForce(target).setDampingRatio(0.62f).setStiffness(520f);
+            float target = event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? 0.955f : 1f;
+            SpringForce spring = new SpringForce(target).setDampingRatio(event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY : SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY).setStiffness(SpringForce.STIFFNESS_LOW);
             new SpringAnimation(view, DynamicAnimation.SCALE_X).setSpring(spring).animateToFinalPosition(target);
-            SpringForce springY = new SpringForce(target).setDampingRatio(0.62f).setStiffness(520f);
+            SpringForce springY = new SpringForce(target).setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY).setStiffness(SpringForce.STIFFNESS_LOW);
             new SpringAnimation(view, DynamicAnimation.SCALE_Y).setSpring(springY).animateToFinalPosition(target);
             return false;
         });
