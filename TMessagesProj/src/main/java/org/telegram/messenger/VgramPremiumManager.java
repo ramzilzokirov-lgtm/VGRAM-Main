@@ -45,8 +45,8 @@ public final class VgramPremiumManager {
         String id = Long.toString(telegramId);
         SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         synchronized (VgramPremiumManager.class) {
-            if (IN_FLIGHT.containsKey(id)) return;
-            IN_FLIGHT.put(id, Boolean.TRUE);
+            if (IN_FLIGHT.contains(id)) return;
+            IN_FLIGHT.add(id);
         }
         IO.execute(() -> {
             HttpURLConnection connection = null;
