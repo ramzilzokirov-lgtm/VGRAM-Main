@@ -13,6 +13,7 @@ import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.style.ReplacementSpan;
 import android.view.View;
+import java.lang.ref.WeakReference;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,6 +41,7 @@ public final class VgramBadgeSync {
     private static final String PREFS = "vgram_badge_cache";
     private static final String TAG = "VgramBadgeSync";
     private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Runnable>> LISTENERS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<WeakReference<View>>> VIEWS = new ConcurrentHashMap<>();
     private static final long CACHE_TTL = 300000L;
 
     private VgramBadgeSync() {}
@@ -73,6 +75,33 @@ public final class VgramBadgeSync {
     public static void requestRefresh(Context context, long telegramId, Runnable onUpdated) {
         if (context != null && telegramId > 0) refreshInternal(context, telegramId, null, null, onUpdated);
     }
+    /** Register a currently visible view for redraw when this user's badge data changes. */
+    public static void observe(long telegramId, View view) {
+        if (telegramId <= 0 || view == null) return;
+        VIEWS.computeIfAbsent(Long.toString(telegramId), key -> new java.util.concurrent.CopyOnWriteArrayList<>())
+                .add(new WeakReference<>(view));
+    }
+
+    /** Remove dead view references opportunistically; callers need not manage observer lifetime. */
+    private static void invalidateObservedViews(String id) {
+        java.util.concurrent.CopyOnWriteArrayList<WeakReference<View>> views = VIEWS.get(id);
+        if (views == null) return;
+        for (WeakReference<View> ref : views) {
+            View view = ref.get();
+            if (view == null) {
+                views.remove(ref);
+            } else {
+                view.post(() -> {
+                    if (view.getParent() != null) {
+                        view.invalidate();
+                        view.requestLayout();
+                    }
+                });
+            }
+        }
+        if (views.isEmpty()) VIEWS.remove(id, views);
+    }
+
     public static boolean hasBadge(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -116,10 +145,13 @@ public final class VgramBadgeSync {
         final Context app = context.getApplicationContext();
         final String id = Long.toString(telegramId);
         SharedPreferences cache = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        long savedAt = cache.getLong("time_" + id, 0L);
-        if (savedAt > 0 && System.currentTimeMillis() - savedAt < CACHE_TTL) return;
         if (onUpdated != null) {
             LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(onUpdated);
+        }
+        long savedAt = cache.getLong("time_" + id, 0L);
+        if (savedAt > 0 && System.currentTimeMillis() - savedAt < CACHE_TTL) {
+            if (onUpdated != null) notifyListeners(id);
+            return;
         }
         if (title != null && baseName != null) {
             LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(() -> {
@@ -147,9 +179,13 @@ public final class VgramBadgeSync {
                         raw = out.toString("UTF-8");
                     }
                     JSONObject response = new JSONObject(raw);
-                    String responseId = firstNonEmpty(response, "telegram_id", "user_id", "id");
-                    if (!responseId.isEmpty() && !id.equals(responseId)) {
-                        throw new IllegalStateException("Response user id mismatch: requested " + id + ", got " + responseId);
+                    String contentType = connection.getContentType();
+                    if (contentType == null || !contentType.toLowerCase(java.util.Locale.ROOT).contains("application/json")) {
+                        throw new IllegalStateException("Expected application/json but received " + contentType);
+                    }
+                    String responseId = firstNonEmpty(response, "user_id", "telegram_id", "id");
+                    if (responseId.isEmpty() || !id.equals(responseId)) {
+                        throw new IllegalStateException("Response user id missing or mismatched: requested " + id + ", got " + responseId);
                     }
                     JSONArray badges = response.optJSONArray("badges");
                     JSONArray labels = new JSONArray();
@@ -160,6 +196,11 @@ public final class VgramBadgeSync {
                             || response.optBoolean("vgram_verified", false);
                     String role = firstNonEmpty(response, "role", "role_code").toLowerCase(java.util.Locale.ROOT);
                     String badgeType = firstNonEmpty(response, "badge_type", "badge").toLowerCase(java.util.Locale.ROOT);
+                    // Some server deployments expose a single badge field instead of an array.
+                    if (!badgeType.isEmpty() && !"none".equals(badgeType) && !"null".equals(badgeType)) {
+                        if (isVerificationRole(role) || isVerificationRole(badgeType)) verified = true;
+                        else if (!"vgram_premium".equals(badgeType) && !"premium".equals(badgeType)) labels.put(badgeType);
+                    }
                     if (!verificationLabel.isEmpty()) {
                         labels.put("✓ " + verificationLabel);
                     } else if (verified || isVerificationRole(role) || isVerificationRole(badgeType)) {
@@ -208,6 +249,7 @@ public final class VgramBadgeSync {
     }
 
     private static void notifyListeners(String id) {
+        invalidateObservedViews(id);
         java.util.concurrent.CopyOnWriteArrayList<Runnable> callbacks = LISTENERS.remove(id);
         if (callbacks == null) return;
         for (Runnable callback : callbacks) {
