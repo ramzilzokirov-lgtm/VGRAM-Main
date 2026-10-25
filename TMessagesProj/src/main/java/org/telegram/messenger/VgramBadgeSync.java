@@ -240,8 +240,10 @@ public final class VgramBadgeSync {
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
-            if (value.startsWith("✓ ") || value.contains("VGRAM VERIFIED") || value.contains("РАЗРАБОТЧИК VGRAM")
-                    || value.contains("ОДИН ИЗ РАЗРАБОТЧИКОВ VGRAM") || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")) return true;
+            if (value.startsWith("✓ ") || value.contains("VGRAM VERIFIED") || value.equals("VERIFIED_CHANNEL")
+                    || value.contains("VGRAM_DEVELOPER") || value.contains("VGRAM_TEAM")
+                    || value.contains("РАЗРАБОТЧИК VGRAM") || value.contains("ОДИН ИЗ РАЗРАБОТЧИКОВ VGRAM")
+                    || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")) return true;
         }
         return false;
     }
