@@ -255,8 +255,11 @@ public final class VgramBadgeSync {
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
             if (value.startsWith("✓ ")) return label.substring(2).trim();
-            if (value.contains("VGRAM VERIFIED")) return "VGRAM VERIFIED";
-            if (value.contains("РАЗРАБОТЧИК VGRAM") || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")) return label;
+            if (value.contains("VGRAM VERIFIED") || value.equals("VERIFIED_CHANNEL")) return "Канал верифицирован VGRAM";
+            if (value.contains("VGRAM_DEVELOPER")) return "Разработчик VGRAM";
+            if (value.contains("VGRAM_TEAM")) return "Один из разработчиков VGRAM";
+            if (value.contains("РАЗРАБОТЧИК VGRAM") || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")
+                    || value.contains("ОДИН ИЗ РАЗРАБОТЧИКОВ VGRAM")) return label;
         }
         return "";
     }
