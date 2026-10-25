@@ -5239,6 +5239,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         vgramVerificationLabel.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
         vgramVerificationLabel.setVisibility(View.GONE);
         topView.addView(vgramVerificationLabel, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 24, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 164, 12, 0));
+        // VGRAM-owned verification and copyable Telegram ID
         long vgramProfileId = userId != 0 ? userId : chatId;
         if (vgramProfileId > 0) {
             TextView vgramTelegramId = new TextView(context);

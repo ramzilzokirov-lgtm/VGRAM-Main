@@ -115,26 +115,26 @@ jobs:
             install -D "$source_file" "upstream/TMessagesProj/src/main/java/$relative"
           done < <(find TMessagesProj/src/main/java -type f -name "Vgram*.java" -print0 | sort -z)
 
-          # DialogCell and ChatMessageCell are modified Telegram upstream classes and must
-          # be overlaid explicitly before Java compilation.
-          install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
-          # Some branch snapshots contain an empty ChatMessageCell overlay. Never replace
-          # the real upstream implementation with an empty file; overlay only a non-empty
-          # committed customization, then validate the compiled upstream source.
+          # Keep Telegram's full upstream ChatMessageCell.java unless a complete,
+          # non-empty replacement is committed. The current repo snapshot intentionally
+          # stores an empty marker file; never copy it over the compilable upstream class.
+          cp -f TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          cp -f TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           CHAT_CELL="TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
           if [[ -s "$CHAT_CELL" ]]; then
-            install -D "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+            cp -f "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           else
-            echo "No ChatMessageCell customization committed; retaining the upstream implementation."
+            test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+            echo "Retaining full upstream ChatMessageCell.java; empty repository marker is not overlaid."
           fi
           grep -q "^package org.telegram.messenger;" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
-          grep -q "VgramBadgeSync.isVerified" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VgramBadgeSync.withBadges" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           grep -q "VGRAM-owned verification and copyable Telegram ID" upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
-          echo "Validated all Vgram*.java sources and both chat cell overlays before compilation."
+          echo "Validated committed profile/dialog overlays and the non-empty upstream message cell before compilation."
           test -s upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           install -D TMessagesProj/src/main/AndroidManifest.xml upstream/TMessagesProj/src/main/AndroidManifest.xml
           install -D TMessagesProj/build.gradle upstream/TMessagesProj/build.gradle
