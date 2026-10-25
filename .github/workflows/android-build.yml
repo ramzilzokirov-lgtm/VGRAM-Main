@@ -3,7 +3,7 @@ name: VGRAM Android Build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, vgram-dev]
     paths:
       - ".github/workflows/android-build.yml"
       - "README.md"
