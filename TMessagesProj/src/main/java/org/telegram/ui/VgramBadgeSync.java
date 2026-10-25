@@ -92,7 +92,14 @@ public final class VgramBadgeSync {
                     JSONObject response = new JSONObject(raw);
                     JSONArray badges = response.optJSONArray("badges");
                     JSONArray labels = new JSONArray();
-                    // Render VGRAM Premium independently from verification badges/checkmarks.
+                    // Keep VGRAM verification separate from official Telegram verification and Premium.
+                    boolean verified = response.optBoolean("verified", false)
+                            || response.optBoolean("is_verified", false)
+                            || response.optBoolean("verified_channel", false)
+                            || response.optBoolean("vgram_verified", false);
+                    String role = response.optString("role", "").toLowerCase(java.util.Locale.ROOT);
+                    verified = verified || role.contains("verified") || role.contains("developer") || role.contains("team");
+                    if (verified) labels.put("✓ VGRAM VERIFIED");
                     if (response.optBoolean("premium", false)) labels.put("✦ VGRAM PREMIUM");
                     if (badges != null) for (int i = 0; i < badges.length(); i++) {
                         JSONObject badge = badges.optJSONObject(i);
@@ -162,7 +169,8 @@ public final class VgramBadgeSync {
             textDrawPaint.setColor(0xFF35352E);
             textDrawPaint.setTypeface(textPaint.getTypeface());
             textDrawPaint.setTextSize(textPaint.getTextSize());
-            backgroundPaint.setColor(0xFFD4C78F);
+            backgroundPaint.setColor(label.toUpperCase(java.util.Locale.ROOT).contains("VERIFIED") ? 0xFF2F80ED : 0xFFD4C78F);
+            if (label.toUpperCase(java.util.Locale.ROOT).contains("VERIFIED")) textDrawPaint.setColor(0xFFFFFFFF);
         }
 
         @Override
