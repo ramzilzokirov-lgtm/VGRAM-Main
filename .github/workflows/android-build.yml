@@ -114,7 +114,7 @@ jobs:
           # Patch the pinned, full upstream ChatMessageCell in the build tree. The repository
           # overlay intentionally contains no replacement for this large Telegram source file.
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, currentUser.id," upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
 
           # Overlay every committed Vgram*.java file while preserving its source-tree path.
           # This includes UI and messenger packages and prevents clean-upstream builds from
