@@ -8,6 +8,8 @@
 
 package org.telegram.ui.Cells;
 
+import org.telegram.messenger.VgramBadgeSync;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.find;
@@ -136,7 +138,6 @@ import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
-import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.WebFile;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.utils.Choreographer60FpsContent;
@@ -264,6 +265,19 @@ import me.vkryl.core.BitwiseUtils;
 public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate, ImageReceiver.ImageReceiverDelegate,
         DownloadController.FileDownloadProgressListener, TextSelectionHelper.SelectableView,
         NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target, IMessageCell {
+    private void drawVgramSenderBadges(Canvas canvas, float alpha) {
+        if (nameLayout == null || currentMessageObject == null) return;
+        final long fromId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
+        if (fromId <= 0L) return;
+        VgramBadgeSync.observe(fromId, this);
+        VgramBadgeSync.requestRefresh(getContext(), fromId, null);
+        float x = nameLayout.getLineRight(0) + dp(4);
+        if (currentNameStatus != null) x += dp(24);
+        if (currentNameBotVerificationId != 0) x += dp(20);
+        float centerY = nameLayout.getLineBaseline(0) - dp(6);
+        VgramBadgeSync.drawInlineIndicators(canvas, fromId, x, centerY, alpha);
+    }
+
     private final static int TIME_APPEAR_MS = 200;
     private final static int UPLOADING_ALLOWABLE_ERROR = 1024 * 1024;
     private final static int STICKER_STATUS_OFFSET = 6;
@@ -22205,13 +22219,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             oldAlpha = Theme.chat_namePaint.getAlpha();
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
+            drawVgramSenderBadges(canvas, nameAlpha);
             Theme.chat_namePaint.setAlpha(oldAlpha);
-            if (currentUser != null && currentUser.id > 0) {
-                VgramBadgeSync.observe(currentUser.id, this);
-                VgramBadgeSync.drawInlineIndicators(canvas, currentUser.id,
-                        nameLayout.getLineRight(0) + dp(4),
-                        nameLayout.getLineBaseline(0) - dp(6), nameAlpha);
-            }
             canvas.restore();
 
             float end;
