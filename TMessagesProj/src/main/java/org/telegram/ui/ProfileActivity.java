@@ -669,6 +669,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int userInfoRow;
     private int channelInfoRow;
     private int usernameRow;
+    private int telegramIdRow;
     private int notificationsDividerRow;
     private int notificationsRow;
     private int bizHoursRow;
@@ -4496,6 +4497,15 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 onMemberClick(participant, false, view);
             } else if (position == addMemberRow) {
                 openAddMember();
+            } else if (position == telegramIdRow) {
+                long profileId = userId > 0 ? userId : chatId;
+                try {
+                    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getParentActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Telegram ID", Long.toString(profileId)));
+                        Toast.makeText(getParentActivity(), "ID скопирован", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (RuntimeException ignored) { }
             } else if (position == usernameRow) {
                 processOnClickOrPress(position, view, x, y);
             } else if (position == linkedCommunityRow) {
@@ -5239,35 +5249,15 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         vgramVerificationLabel.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
         vgramVerificationLabel.setVisibility(View.GONE);
         topView.addView(vgramVerificationLabel, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 24, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 164, 12, 0));
-        // VGRAM-owned verification and copyable Telegram ID
-        long vgramProfileId = userId != 0 ? userId : chatId;
-        if (vgramProfileId > 0) {
-            TextView vgramTelegramId = new TextView(context);
-            vgramTelegramId.setGravity(Gravity.CENTER);
-            vgramTelegramId.setTextColor(0xFFD5D7DC);
-            vgramTelegramId.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-            vgramTelegramId.setText("Telegram ID: " + vgramProfileId + "  ·  Копировать");
-            vgramTelegramId.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[] {0x442C3036, 0x332C3036}));
-            vgramTelegramId.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
-            vgramTelegramId.setOnClickListener(view -> {
-                try {
-                    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (clipboard != null) {
-                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Telegram ID", Long.toString(vgramProfileId)));
-                        android.widget.Toast.makeText(context, "Telegram ID скопирован", android.widget.Toast.LENGTH_SHORT).show();
-                    }
-                } catch (RuntimeException ignored) { }
-            });
-            topView.addView(vgramTelegramId, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 23, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 190, 12, 0));
-            if (userId > 0) {
-                VgramBadgeSync.requestRefresh(context, userId, () -> {
-                    String role = VgramBadgeSync.getVerificationLabel(context, userId);
-                    if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
-                    else vgramVerificationLabel.setVisibility(View.GONE);
-                });
+        // VGRAM verification is independent of the profile title. Telegram ID is a list row below contact details.
+        if (userId > 0) {
+            VgramBadgeSync.requestRefresh(context, userId, () -> {
                 String role = VgramBadgeSync.getVerificationLabel(context, userId);
                 if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
-            }
+                else vgramVerificationLabel.setVisibility(View.GONE);
+            });
+            String role = VgramBadgeSync.getVerificationLabel(context, userId);
+            if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
         }
         // Prefer the owner's local image; otherwise load a VGRAM server banner for this Telegram user.
         String vgramLocalBannerUri = userId == getUserConfig().getClientUserId()
@@ -10709,6 +10699,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         locationRow = -1;
         channelInfoRow = -1;
         usernameRow = -1;
+        telegramIdRow = -1;
         settingsTimerRow = -1;
         settingsKeyRow = -1;
         notificationsDividerRow = -1;
@@ -10901,6 +10892,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (user != null && username != null) {
                     usernameRow = rowCount++;
+                }
+                if (userId > 0 || chatId > 0) {
+                    telegramIdRow = rowCount++;
                 }
                 if (userInfo != null) {
                     if (userInfo.birthday != null) {
@@ -13679,6 +13673,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
                             containsGift = !myProfile && today && !getMessagesController().premiumPurchaseBlocked();
                         }
+                    } else if (position == telegramIdRow) {
+                        long profileId = userId > 0 ? userId : chatId;
+                        detailCell.setTextAndValue("ID: " + profileId, "Копировать", true);
                     } else if (position == phoneRow) {
                         String text;
                         TLRPC.User user = getMessagesController().getUser(userId);
@@ -14510,7 +14507,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
+            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == telegramIdRow) {
                 return VIEW_TYPE_TEXT_DETAIL;
             } else if (position == usernameRow || position == setUsernameRow) {
                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;
