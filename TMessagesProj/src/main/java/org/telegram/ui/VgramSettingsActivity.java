@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 public class VgramSettingsActivity extends VgramBaseActivity {
     private static final int PICK_PROFILE_BACKGROUND = 741;
+    private static final int CROP_PROFILE_BACKGROUND = 742;
     private final int[] colors = { 0xffc5b878, 0xffa8a0c7, 0xff7eaaa5, 0xffbd858d };
     private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
@@ -127,14 +128,24 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
-        if (requestCode != PICK_PROFILE_BACKGROUND) return;
+        if (requestCode == PICK_PROFILE_BACKGROUND) {
+            Intent crop = new Intent(this, VgramBannerCropActivity.class);
+            crop.setData(uri);
+            crop.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try { startActivityForResult(crop, CROP_PROFILE_BACKGROUND); }
+            catch (Exception error) { Toast.makeText(this, "Не удалось открыть кадрирование баннера", Toast.LENGTH_LONG).show(); }
+            return;
+        }
+        if (requestCode != CROP_PROFILE_BACKGROUND) return;
         try {
-            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if ("content".equalsIgnoreCase(uri.getScheme())) {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
             getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putString("profile_background_uri", uri.toString()).apply();
-            Toast.makeText(this, "Изображение сохранено для VGRAM", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Обрезанный баннер сохранён для VGRAM", Toast.LENGTH_SHORT).show();
             recreate();
         } catch (Exception error) {
-            Toast.makeText(this, "Не удалось сохранить доступ к изображению", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Не удалось сохранить обрезанный баннер", Toast.LENGTH_LONG).show();
         }
     }
 

@@ -671,6 +671,7 @@
         <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity android:name="org.telegram.ui.VgramAudioPlayerActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+        <activity android:name="org.telegram.ui.VgramBannerCropActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
     </application>
 
 </manifest>

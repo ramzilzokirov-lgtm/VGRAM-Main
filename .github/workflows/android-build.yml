@@ -76,6 +76,7 @@ jobs:
 
       - name: Overlay committed VGRAM profile and resource sources
         run: |
+          set -x
           # Explicit package directories make source overlays deterministic and auditable.
           mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells
           mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/ui
@@ -377,6 +378,7 @@ jobs:
           <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramBannerCropActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
           """
           manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
           if "org.telegram.ui.VgramBadgesActivity" not in manifest_text:
