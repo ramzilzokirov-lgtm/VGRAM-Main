@@ -2391,6 +2391,10 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 nameString = ((String) nameString).replace('\n', ' ');
             }
             CharSequence nameStringFinal = nameString;
+            // VGRAM server labels are cached locally; never block dialog-list rendering on network I/O.
+            if (user != null && user.id > 0) {
+                nameStringFinal = VgramBadgeSync.withBadges(getContext(), user.id, nameStringFinal);
+            }
             if (nameLayoutEllipsizeByGradient) {
                 nameLayoutFits = nameStringFinal.length() == TextUtils.ellipsize(nameStringFinal, Theme.dialogs_namePaint[paintIndex], ellipsizeWidth, TextUtils.TruncateAt.END).length();
                 ellipsizeWidth += dp(48);
