@@ -145,13 +145,12 @@ public final class VgramBadgeSync {
         final Context app = context.getApplicationContext();
         final String id = Long.toString(telegramId);
         SharedPreferences cache = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long savedAt = cache.getLong("time_" + id, 0L);
+        // Avoid immediate invalidation for fresh cache entries: requestRefresh can be called
+        // during drawing, and invoking the callback here would cause an endless redraw loop.
+        if (savedAt > 0 && System.currentTimeMillis() - savedAt < CACHE_TTL) return;
         if (onUpdated != null) {
             LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(onUpdated);
-        }
-        long savedAt = cache.getLong("time_" + id, 0L);
-        if (savedAt > 0 && System.currentTimeMillis() - savedAt < CACHE_TTL) {
-            if (onUpdated != null) notifyListeners(id);
-            return;
         }
         if (title != null && baseName != null) {
             LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(() -> {

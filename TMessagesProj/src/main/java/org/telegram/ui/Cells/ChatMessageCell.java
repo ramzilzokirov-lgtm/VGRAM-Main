@@ -8,6 +8,8 @@
 
 package org.telegram.ui.Cells;
 
+import org.telegram.messenger.VgramBadgeSync;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.find;
@@ -125,7 +127,6 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessageObject;
-import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -264,6 +265,27 @@ import me.vkryl.core.BitwiseUtils;
 public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate, ImageReceiver.ImageReceiverDelegate,
         DownloadController.FileDownloadProgressListener, TextSelectionHelper.SelectableView,
         NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target, IMessageCell {
+    private void drawVgramSenderBadges(Canvas canvas, float alpha) {
+        if (nameLayout == null || currentMessageObject == null) return;
+        final long fromId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
+        if (fromId <= 0L) return;
+        VgramBadgeSync.requestRefresh(getContext(), fromId, this::invalidate);
+        final boolean verified = VgramBadgeSync.isVerified(fromId);
+        final boolean hasBadge = VgramBadgeSync.hasBadge(fromId);
+        if (!verified && !hasBadge) return;
+        float x = nameLayout.getLineRight(0) + dp(4);
+        if (currentNameStatus != null) x += dp(24);
+        if (currentNameBotVerificationId != 0) x += dp(20);
+        final float baseline = nameLayout.getLineBaseline(0);
+        Paint circle = new Paint(Paint.ANTI_ALIAS_FLAG), checkPaint = new Paint(Paint.ANTI_ALIAS_FLAG), pill = new Paint(Paint.ANTI_ALIAS_FLAG), text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        circle.setColor(0xFF2F80ED); circle.setAlpha((int)(255 * alpha));
+        checkPaint.setColor(Color.WHITE); checkPaint.setStyle(Paint.Style.STROKE); checkPaint.setStrokeWidth(dp(1.8f)); checkPaint.setStrokeCap(Paint.Cap.ROUND); checkPaint.setStrokeJoin(Paint.Join.ROUND); checkPaint.setAlpha((int)(255 * alpha));
+        pill.setColor(0xFFD4C78F); pill.setAlpha((int)(255 * alpha));
+        text.setColor(0xFF272720); text.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD)); text.setTextSize(dp(8.5f)); text.setAlpha((int)(255 * alpha));
+        if (verified) { float radius=dp(6), cx=x+radius, cy=baseline-dp(6); canvas.drawCircle(cx,cy,radius,circle); Path check=new Path(); check.moveTo(cx-dp(3),cy); check.lineTo(cx-dp(0.7f),cy+dp(2.3f)); check.lineTo(cx+dp(3.5f),cy-dp(2.7f)); canvas.drawPath(check,checkPaint); x+=dp(17); }
+        if (hasBadge) { String label="VGRAM"; float width=text.measureText(label)+dp(10), height=dp(14), top=baseline-dp(12); canvas.drawRoundRect(x,top,x+width,top+height,dp(5),dp(5),pill); canvas.drawText(label,x+dp(5),top+height-dp(3),text); }
+    }
+
     private final static int TIME_APPEAR_MS = 200;
     private final static int UPLOADING_ALLOWABLE_ERROR = 1024 * 1024;
     private final static int STICKER_STATUS_OFFSET = 6;
@@ -13341,16 +13363,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                  boolean topNear,
                                  boolean firstInChat,
                                  boolean lastInChatList) {
-        if (messageObject != null && messageObject.messageOwner != null && messageObject.messageOwner.from_id != null) {
-            final long vgramSenderId = Math.abs(DialogObject.getPeerDialogId(messageObject.messageOwner.from_id));
-            if (vgramSenderId > 0) {
-                VgramBadgeSync.observe(vgramSenderId, this);
-                VgramBadgeSync.requestRefresh(getContext(), vgramSenderId, () -> {
-                    invalidate();
-                    requestLayout();
-                });
-            }
-        }
         if (attachedToWindow && !frozen) {
             setMessageContent(messageObject, groupedMessages, bottomNear, topNear, firstInChat, lastInChatList);
         } else {
@@ -21997,57 +22009,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         return !TextUtils.equals(lastPostAuthor, currentMessageObject.messageOwner.post_author);
     }
 
-    /** Draw VGRAM verification and badge markers after the sender name without changing Telegram text layout. */
-    private void drawVgramNameMarkers(Canvas canvas, StaticLayout layout, float alpha) {
-        if (layout == null || layout.getLineCount() == 0 || currentMessageObject == null
-                || currentMessageObject.messageOwner == null || currentMessageObject.messageOwner.from_id == null) {
-            return;
-        }
-        long senderId = Math.abs(DialogObject.getPeerDialogId(currentMessageObject.messageOwner.from_id));
-        if (senderId <= 0) return;
-        boolean verified = VgramBadgeSync.isVerified(senderId);
-        boolean hasBadge = VgramBadgeSync.hasBadge(senderId);
-        if (!verified && !hasBadge) return;
-
-        float x = layout.getLineWidth(0) + dp(5);
-        float baseline = layout.getLineBaseline(0);
-        Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        markerPaint.setAlpha(Math.max(0, Math.min(255, (int) (255f * alpha))));
-        if (verified) {
-            float radius = dp(5.5f);
-            float centerX = x + radius;
-            float centerY = baseline - dp(6.5f);
-            markerPaint.setColor(0xFF2F80ED);
-            markerPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(centerX, centerY, radius, markerPaint);
-            markerPaint.setColor(Color.WHITE);
-            markerPaint.setStyle(Paint.Style.STROKE);
-            markerPaint.setStrokeWidth(dp(1.35f));
-            markerPaint.setStrokeCap(Paint.Cap.ROUND);
-            markerPaint.setStrokeJoin(Paint.Join.ROUND);
-            Path check = new Path();
-            check.moveTo(centerX - dp(2.6f), centerY);
-            check.lineTo(centerX - dp(0.7f), centerY + dp(1.9f));
-            check.lineTo(centerX + dp(2.8f), centerY - dp(2.2f));
-            canvas.drawPath(check, markerPaint);
-            markerPaint.setStyle(Paint.Style.FILL);
-            x += dp(15);
-        }
-        if (hasBadge) {
-            markerPaint.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
-            markerPaint.setTextSize(dp(8.5f));
-            String label = "VGRAM";
-            float textWidth = markerPaint.measureText(label);
-            float pillHeight = dp(13);
-            float pillWidth = textWidth + dp(8);
-            float top = baseline - dp(10.5f);
-            markerPaint.setColor(0xFFD4C78F);
-            canvas.drawRoundRect(x, top, x + pillWidth, top + pillHeight, dp(5), dp(5), markerPaint);
-            markerPaint.setColor(0xFF35352E);
-            canvas.drawText(label, x + dp(4), top + pillHeight - dp(3), markerPaint);
-        }
-    }
-
     public void drawNamesLayout(Canvas canvas, float alpha) {
         long newAnimationTime = SystemClock.elapsedRealtime();
         long dt = newAnimationTime - lastNamesAnimationTime;
@@ -22266,7 +22227,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             oldAlpha = Theme.chat_namePaint.getAlpha();
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
-            drawVgramNameMarkers(canvas, nameLayout, nameAlpha);
+            drawVgramSenderBadges(canvas, nameAlpha);
             Theme.chat_namePaint.setAlpha(oldAlpha);
             canvas.restore();
 
