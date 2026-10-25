@@ -6,6 +6,10 @@ import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -18,6 +22,12 @@ import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
 import org.telegram.messenger.AndroidUtilities;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Process-wide audio playback owner. The player is intentionally not owned by
@@ -33,6 +43,13 @@ public final class VgramAudioService {
     private static ImageView artworkView;
     private static Context appContext;
     private static boolean lifecycleHookInstalled;
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static final ExecutorService artworkExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "VGRAM-Artwork");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private static String loadedArtworkUrl = "";
 
     private VgramAudioService() {}
 
@@ -191,8 +208,46 @@ public final class VgramAudioService {
         if (titleView != null) titleView.setText(active && !title.isEmpty() ? title : "VGRAM Player");
         if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");
         if (artworkView != null) {
-            artworkView.setImageResource(android.R.drawable.ic_media_play);
+            String requestedArtwork = active ? artworkUrl : "";
             artworkView.setContentDescription(active ? "Обложка: " + title : "VGRAM Player");
+            if (requestedArtwork.isEmpty()) {
+                loadedArtworkUrl = "";
+                artworkView.setImageResource(android.R.drawable.ic_media_play);
+            } else if (!requestedArtwork.equals(loadedArtworkUrl)) {
+                loadedArtworkUrl = requestedArtwork;
+                artworkView.setImageResource(android.R.drawable.ic_media_play);
+                final ImageView target = artworkView;
+                final String expectedUrl = requestedArtwork;
+                artworkExecutor.execute(() -> {
+                    Bitmap bitmap = null;
+                    HttpURLConnection connection = null;
+                    try {
+                        connection = (HttpURLConnection) new URL(expectedUrl).openConnection();
+                        connection.setConnectTimeout(5000);
+                        connection.setReadTimeout(7000);
+                        connection.setInstanceFollowRedirects(true);
+                        try (InputStream input = connection.getInputStream()) {
+                            bitmap = BitmapFactory.decodeStream(input);
+                        }
+                    } catch (Exception ignored) {
+                    } finally {
+                        if (connection != null) connection.disconnect();
+                    }
+                    final Bitmap decoded = bitmap;
+                    if (decoded != null) {
+                        mainHandler.post(() -> {
+                            if (target == artworkView && expectedUrl.equals(artworkUrl) && !target.isAttachedToWindow()) {
+                                return;
+                            }
+                            if (target == artworkView && expectedUrl.equals(artworkUrl)) {
+                                target.setImageBitmap(decoded);
+                            } else {
+                                decoded.recycle();
+                            }
+                        });
+                    }
+                });
+            }
         }
     }
 }

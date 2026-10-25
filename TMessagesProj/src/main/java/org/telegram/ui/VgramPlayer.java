@@ -73,7 +73,11 @@ public final class VgramPlayer extends VgramBaseActivity {
             currentTitle = VgramAudioService.getTitle();
             activityPlayerListener = new Player.Listener() {
                 @Override public void onPlayerError(PlaybackException error) {
-                    main.post(() -> showError("Не удалось воспроизвести поток: " + error.getErrorCodeName()));
+                    main.post(() -> {
+                        if (miniPlay != null) miniPlay.setText("↻");
+                        if (status != null) status.setText("Не удалось воспроизвести поток. Повторите попытку.");
+                        showError("Ошибка потока: " + (error == null ? "неизвестная ошибка" : error.getErrorCodeName()));
+                    });
                 }
                 @Override public void onIsPlayingChanged(boolean isPlaying) {
                     main.post(() -> {
@@ -132,7 +136,7 @@ public final class VgramPlayer extends VgramBaseActivity {
         VgramMotion.applySpringTouch(miniPlay);
         VgramMotion.applySpringTouch(close);
         VgramMotion.applySpringTouch(miniPlayer);
-        miniPlay.setOnClickListener(v -> { v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY); togglePlayback(); });
+        miniPlay.setOnClickListener(v -> { v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY); if (player != null && player.getPlaybackState() == Player.STATE_IDLE && player.getMediaItemCount() > 0) player.prepare(); togglePlayback(); });
         close.setOnClickListener(v -> stopPlayback());
         miniPlayer.setOnClickListener(v -> {
             body.setAlpha(0.7f);

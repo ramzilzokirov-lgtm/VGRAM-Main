@@ -98,6 +98,8 @@ public final class VgramPlaybackManager {
     public Track getCurrentTrack() { return currentTrack; }
     public boolean isPlaying() { return player.isPlaying(); }
     public boolean isBuffering() { return buffering; }
+    public long getCurrentPosition() { return player.getCurrentPosition(); }
+    public long getDuration() { long duration = player.getDuration(); return duration < 0 ? 0L : duration; }
 
     public void addListener(PlayerListener listener) {
         if (listener == null) return;
