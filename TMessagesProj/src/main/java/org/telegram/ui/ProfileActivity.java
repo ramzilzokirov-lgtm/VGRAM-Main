@@ -11582,6 +11582,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
             }
+            String vgramRoleLabel = VgramBadgeSync.getVerificationLabel(getParentActivity(), user.id);
+            if (!TextUtils.isEmpty(vgramRoleLabel)) {
+                newString2 = vgramRoleLabel;
+                isOnline[0] = false;
+            }
             hasCustomPhoto = user.photo != null && user.photo.personal;
             try {
                 newString = Emoji.replaceEmoji(newString, nameTextView[1].getPaint().getFontMetricsInt(), false);
