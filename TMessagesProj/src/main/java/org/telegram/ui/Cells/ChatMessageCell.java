@@ -137,6 +137,7 @@ import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.VgramBadgeSync;
+import org.telegram.ui.VgramGlassDrawable;
 import org.telegram.messenger.WebFile;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.utils.Choreographer60FpsContent;
@@ -14933,6 +14934,17 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 avatarImage.setImageCoords(photoImage.getImageX() + dp(7), photoImage.getImageY() + dp(7), dp(26) * scale, dp(26) * scale);
                 avatarImage.setAlpha(avatarAlpha);
                 avatarImage.draw(canvas);
+                long vgramAvatarPremiumId = currentUser != null ? currentUser.id : 0L;
+                if (vgramAvatarPremiumId > 0 && VgramBadgeSync.isPremium(vgramAvatarPremiumId)) {
+                    float ringLeft = avatarX - dp(1.5f);
+                    float ringTop = ny + dp(13) * (1.0f - scale) - dp(1.5f);
+                    float ringSize = dp(26) * scale + dp(3);
+                    float ringPhase = (android.os.SystemClock.uptimeMillis() % 6000L) * 360f / 6000f;
+                    VgramGlassDrawable.drawPremiumRing(canvas,
+                            new android.graphics.RectF(ringLeft, ringTop, ringLeft + ringSize, ringTop + ringSize),
+                            ringPhase, dp(1.5f));
+                    postInvalidateOnAnimation();
+                }
                 avatarImage.setImageCoords(wasX, wasY, wasWidth, wasHeight);
                 avatarImage.setAlpha(wasAlpha);
                 avatarImage.setVisible(wasVisible, false);
