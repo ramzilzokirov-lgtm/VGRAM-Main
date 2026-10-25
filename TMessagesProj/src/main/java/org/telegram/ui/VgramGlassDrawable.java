@@ -67,3 +67,5 @@ public final class VgramGlassDrawable {
         RING_PAINT.setStyle(Paint.Style.FILL);
     }
 }
+
+// Triggers validation of the DialogCell drawable bridge.
