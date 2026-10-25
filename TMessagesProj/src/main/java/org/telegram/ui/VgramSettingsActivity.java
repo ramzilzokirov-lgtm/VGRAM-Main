@@ -154,9 +154,9 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         if (index < 1 || index > 10) return;
         PackageManager pm = getPackageManager();
         ComponentName fallback = new ComponentName(this, "org.telegram.messenger.DefaultIcon");
-        ComponentName selected = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", index));
+        ComponentName selected = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.LaunchActivityAlias%d", index));
         ComponentName[] aliases = new ComponentName[10];
-        for (int i=1;i<=10;i++) aliases[i-1] = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", i));
+        for (int i=1;i<=10;i++) aliases[i-1] = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.LaunchActivityAlias%d", i));
         try {
             for (ComponentName alias : aliases) pm.setComponentEnabledSetting(alias, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
             pm.setComponentEnabledSetting(fallback, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
