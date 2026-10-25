@@ -1,4 +1,5 @@
 name: VGRAM Android Build
+# Badge-sync package alignment: org.telegram.messenger
 
 on:
   workflow_dispatch:
