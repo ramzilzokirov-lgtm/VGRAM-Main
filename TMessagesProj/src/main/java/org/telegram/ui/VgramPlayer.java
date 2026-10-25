@@ -62,12 +62,14 @@ public final class VgramPlayer extends VgramBaseActivity {
     private Runnable pendingSearch;
     private String currentTitle = "";
     private boolean released;
+    private Player.Listener activityPlayerListener;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         try {
-            player = new ExoPlayer.Builder(getApplicationContext()).build();
-            player.addListener(new Player.Listener() {
+            player = VgramAudioService.getPlayer(getApplicationContext());
+            currentTitle = VgramAudioService.getTitle();
+            activityPlayerListener = new Player.Listener() {
                 @Override public void onPlayerError(PlaybackException error) {
                     main.post(() -> showError("Не удалось воспроизвести поток: " + error.getErrorCodeName()));
                 }
@@ -77,7 +79,8 @@ public final class VgramPlayer extends VgramBaseActivity {
                         if (miniPlay != null) miniPlay.setText(isPlaying ? "Ⅱ" : "▶");
                     });
                 }
-            });
+            };
+            player.addListener(activityPlayerListener);
             buildPlayerUi();
         } catch (RuntimeException error) {
             showError("Не удалось запустить аудиоплеер.");
@@ -179,7 +182,8 @@ public final class VgramPlayer extends VgramBaseActivity {
                 main.post(() -> renderTracks(tracks));
             } catch (Exception error) {
                 main.post(() -> {
-                    status.setText("Поиск временно недоступен.");
+                    status.setText("");
+                    showEmptyState("Нет соединения", "Проверьте интернет и повторите поиск.");
                     showError("Ошибка сетевого поиска. Проверьте подключение.");
                 });
             } finally {
@@ -192,7 +196,8 @@ public final class VgramPlayer extends VgramBaseActivity {
         if (released || results == null) return;
         results.removeAllViews();
         if (tracks == null || tracks.length() == 0) {
-            status.setText("Ничего не найдено.");
+            status.setText("");
+            showEmptyState("Ничего не найдено", "Попробуйте другое название или имя исполнителя.");
             return;
         }
         status.setText("Найдено: " + tracks.length() + " · потоковые превью");
@@ -244,9 +249,8 @@ public final class VgramPlayer extends VgramBaseActivity {
             currentTitle = title + " — " + artist;
             miniTitle.setText(currentTitle);
             miniTitle.setSelected(true);
-            player.setMediaItem(MediaItem.fromUri(stream));
-            player.prepare();
-            player.play();
+            VgramAudioService.setTrack(getApplicationContext(), currentTitle, stream, artwork);
+            player = VgramAudioService.getPlayer(getApplicationContext());
             waveform.setPlaying(true);
             row.setTranslationX(dp(10));
             row.animate().translationX(0).setDuration(260).setInterpolator(new DecelerateInterpolator()).start();
@@ -264,14 +268,34 @@ public final class VgramPlayer extends VgramBaseActivity {
     }
 
     private void stopPlayback() {
-        if (player != null && !released) {
-            player.stop();
-            player.clearMediaItems();
-        }
+        if (player != null && !released) VgramAudioService.stop(getApplicationContext());
         currentTitle = "";
         miniTitle.setText("Выберите трек");
         miniPlay.setText("▶");
         if (waveform != null) waveform.setPlaying(false);
+    }
+
+    private void showEmptyState(String heading, String detail) {
+        if (results == null || isFinishing() || isDestroyed()) return;
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(dp(20), dp(22), dp(20), dp(22));
+        card.setBackground(panel(0x242f3339, 0x55d6b65d, 20));
+        TextView icon = label("♫", 30, accent(), true);
+        icon.setGravity(Gravity.CENTER);
+        TextView title = label(heading, 16, 0xfff3f1e9, true);
+        title.setGravity(Gravity.CENTER);
+        TextView message = label(detail, 13, 0xffb5b5b0, false);
+        message.setGravity(Gravity.CENTER);
+        message.setMaxLines(3);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(-1, -2);
+        textLp.topMargin = dp(6);
+        card.addView(icon);
+        card.addView(title, textLp);
+        card.addView(message, textLp);
+        results.addView(card, margin(0, 0, 0, dp(8)));
+        VgramMotion.crossfadeIn(card);
     }
 
     private String formatDuration(long milliseconds) {
@@ -305,10 +329,11 @@ public final class VgramPlayer extends VgramBaseActivity {
         released = true;
         if (pendingSearch != null) main.removeCallbacks(pendingSearch);
         network.shutdownNow();
-        if (player != null) {
-            try { player.release(); } catch (RuntimeException ignored) { }
-            player = null;
+        if (player != null && activityPlayerListener != null) {
+            player.removeListener(activityPlayerListener);
+            activityPlayerListener = null;
         }
+        player = null;
         super.onDestroy();
     }
 
