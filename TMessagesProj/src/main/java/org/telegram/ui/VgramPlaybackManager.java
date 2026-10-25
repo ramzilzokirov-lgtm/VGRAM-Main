@@ -58,11 +58,18 @@ public final class VgramPlaybackManager {
             notifyPlaybackState();
         }
         @Override public void onMediaItemTransition(MediaItem item, int reason) {
+            if (player.getMediaItemCount() == 0) {
+                currentTrack = null;
+                buffering = false;
+            }
             notifyTrackChanged();
+            notifyPlaybackState();
         }
         @Override public void onPlayerError(PlaybackException error) {
             String message = error == null ? "Не удалось воспроизвести поток" : error.getErrorCodeName();
-            for (PlayerListener listener : listeners) listener.onPlayerError(message);
+            for (PlayerListener listener : listeners) {
+                try { listener.onPlayerError(message); } catch (RuntimeException ignored) { }
+            }
             notifyPlaybackState();
         }
     };
@@ -76,6 +83,7 @@ public final class VgramPlaybackManager {
     }
 
     public static VgramPlaybackManager get(Context context) {
+        if (context == null) throw new IllegalArgumentException("Context must not be null");
         VgramPlaybackManager result = instance;
         if (result == null) {
             synchronized (VgramPlaybackManager.class) {
@@ -103,7 +111,9 @@ public final class VgramPlaybackManager {
 
     public void play(Track track) {
         if (track == null || track.streamUrl.isEmpty()) {
-            for (PlayerListener listener : listeners) listener.onPlayerError("У трека нет доступного потокового URL");
+            for (PlayerListener listener : listeners) {
+                try { listener.onPlayerError("У трека нет доступного потокового URL"); } catch (RuntimeException ignored) { }
+            }
             return;
         }
         currentTrack = track;
@@ -130,12 +140,16 @@ public final class VgramPlaybackManager {
 
     private void notifyTrackChanged() {
         Track track = currentTrack;
-        for (PlayerListener listener : listeners) listener.onTrackChanged(track);
+        for (PlayerListener listener : listeners) {
+            try { listener.onTrackChanged(track); } catch (RuntimeException ignored) { }
+        }
     }
 
     private void notifyPlaybackState() {
         boolean playing = player.isPlaying();
         boolean isBuffering = buffering;
-        for (PlayerListener listener : listeners) listener.onPlaybackStateChanged(playing, isBuffering);
+        for (PlayerListener listener : listeners) {
+            try { listener.onPlaybackStateChanged(playing, isBuffering); } catch (RuntimeException ignored) { }
+        }
     }
 }
