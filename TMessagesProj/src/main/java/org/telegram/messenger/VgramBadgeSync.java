@@ -78,8 +78,97 @@ public final class VgramBadgeSync {
     /** Register a currently visible view for redraw when this user's badge data changes. */
     public static void observe(long telegramId, View view) {
         if (telegramId <= 0 || view == null) return;
-        VIEWS.computeIfAbsent(Long.toString(telegramId), key -> new java.util.concurrent.CopyOnWriteArrayList<>())
-                .add(new WeakReference<>(view));
+        String id = Long.toString(telegramId);
+        java.util.concurrent.CopyOnWriteArrayList<WeakReference<View>> views =
+                VIEWS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>());
+        boolean registered = false;
+        for (WeakReference<View> reference : views) {
+            View existing = reference.get();
+            if (existing == null) views.remove(reference);
+            else if (existing == view) { registered = true; break; }
+        }
+        if (!registered) {
+            views.add(new WeakReference<>(view));
+            Context context = view.getContext();
+            if (context != null) requestRefresh(context, telegramId, view::invalidate);
+        }
+    }
+
+    /** Draw a blue verification check and a compact VGRAM badge using only the local cache. */
+    public static void drawInlineIndicators(Canvas canvas, long telegramId, float x, float centerY, float alpha) {
+        if (canvas == null || telegramId <= 0 || ApplicationLoader.applicationContext == null) return;
+        Context context = ApplicationLoader.applicationContext;
+        boolean verified = isVerified(context, telegramId);
+        boolean hasBadge = hasBadge(context, telegramId);
+        if (!verified && !hasBadge) return;
+        float nextX = x;
+        float radius = AndroidUtilities.dp(6.5f);
+        if (verified) {
+            INDICATOR_PAINT.setStyle(Paint.Style.FILL);
+            INDICATOR_PAINT.setColor(0xFF1688F8);
+            INDICATOR_PAINT.setAlpha(Math.max(0, Math.min(255, (int) (255 * alpha))));
+            canvas.drawCircle(nextX + radius, centerY, radius, INDICATOR_PAINT);
+            INDICATOR_PAINT.setStyle(Paint.Style.STROKE);
+            INDICATOR_PAINT.setStrokeWidth(AndroidUtilities.dp(1.6f));
+            INDICATOR_PAINT.setStrokeCap(Paint.Cap.ROUND);
+            INDICATOR_PAINT.setStrokeJoin(Paint.Join.ROUND);
+            INDICATOR_PAINT.setColor(0xFFFFFFFF);
+            Path check = new Path();
+            check.moveTo(nextX + AndroidUtilities.dp(3.2f), centerY);
+            check.lineTo(nextX + AndroidUtilities.dp(5.5f), centerY + AndroidUtilities.dp(2.2f));
+            check.lineTo(nextX + AndroidUtilities.dp(9.7f), centerY - AndroidUtilities.dp(2.6f));
+            canvas.drawPath(check, INDICATOR_PAINT);
+            INDICATOR_PAINT.setStyle(Paint.Style.FILL);
+            nextX += AndroidUtilities.dp(17);
+        }
+        if (hasBadge) {
+            String label = compactBadgeLabel(firstBadgeLabel(context, telegramId));
+            if (label.isEmpty()) label = "VGRAM";
+            INDICATOR_TEXT.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+            INDICATOR_TEXT.setTextSize(AndroidUtilities.dp(8));
+            float padding = AndroidUtilities.dp(5);
+            float width = Math.min(AndroidUtilities.dp(66), INDICATOR_TEXT.measureText(label) + padding * 2);
+            float height = AndroidUtilities.dp(14);
+            RectF pill = new RectF(nextX, centerY - height / 2, nextX + width, centerY + height / 2);
+            INDICATOR_PAINT.setStyle(Paint.Style.FILL);
+            INDICATOR_PAINT.setColor(0xFFE2BE68);
+            INDICATOR_PAINT.setAlpha(Math.max(0, Math.min(255, (int) (255 * alpha))));
+            canvas.drawRoundRect(pill, AndroidUtilities.dp(4), AndroidUtilities.dp(4), INDICATOR_PAINT);
+            INDICATOR_TEXT.setColor(0xFF25221A);
+            INDICATOR_TEXT.setAlpha(Math.max(0, Math.min(255, (int) (255 * alpha))));
+            float textWidth = INDICATOR_TEXT.measureText(label);
+            canvas.drawText(label, nextX + Math.max(padding, (width - textWidth) / 2),
+                    centerY - (INDICATOR_TEXT.ascent() + INDICATOR_TEXT.descent()) / 2, INDICATOR_TEXT);
+        }
+        INDICATOR_PAINT.setAlpha(255);
+        INDICATOR_PAINT.setStyle(Paint.Style.FILL);
+        INDICATOR_TEXT.setAlpha(255);
+    }
+
+    private static final Paint INDICATOR_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final Paint INDICATOR_TEXT = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    private static String firstBadgeLabel(Context context, long telegramId) {
+        SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
+            String normalized = label.toUpperCase(java.util.Locale.ROOT);
+            if (normalized.contains("VGRAM PREMIUM") || normalized.startsWith("✓ ")) continue;
+            return label;
+        }
+        return "";
+    }
+
+    private static String compactBadgeLabel(String label) {
+        if (label == null) return "VGRAM";
+        String normalized = label.toUpperCase(java.util.Locale.ROOT);
+        if (normalized.contains("DEVELOPER") || normalized.contains("РАЗРАБОТЧИК")) return "DEV";
+        if (normalized.contains("TEAM") || normalized.contains("КОМАНД")) return "TEAM";
+        if (normalized.contains("FRIENDS") || normalized.contains("ДРУЗ")) return "FRIENDS";
+        if (normalized.contains("FOUNDER") || normalized.contains("ОСНОВАТ")) return "FOUNDER";
+        if (normalized.contains("TESTER") || normalized.contains("ТЕСТ")) return "TESTER";
+        if (normalized.contains("OG")) return "OG";
+        String result = label.trim().replace("◆", "").trim().toUpperCase(java.util.Locale.ROOT);
+        return result.length() > 10 ? result.substring(0, 10) : result;
     }
 
     /** Remove dead view references opportunistically; callers need not manage observer lifetime. */
