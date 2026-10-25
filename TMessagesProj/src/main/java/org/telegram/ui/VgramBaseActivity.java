@@ -89,11 +89,7 @@ abstract class VgramBaseActivity extends Activity {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(17), dp(17), dp(17), dp(17));
         if (glass) {
-            GradientDrawable glassLayer = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                    new int[] { 0x20ffffff, 0x182f3339, 0x10202025 });
-            glassLayer.setCornerRadius(dp(18));
-            glassLayer.setStroke(dp(1), 0x40ffffff);
-            card.setBackground(glassLayer);
+            card.setBackground(VgramGlassDrawable.card(this));
         }
         surface.addView(card);
         surface.setOnTouchListener((view, event) -> {
