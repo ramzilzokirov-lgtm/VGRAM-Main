@@ -22,8 +22,8 @@ import java.util.Locale;
 public class VgramBadgesActivity extends VgramBaseActivity {
     private static final String PREFS = "vgram_badges_server";
     private static final String API = "https://vgram-31xt.onrender.com";
-    private static final String[] LABELS = {"TESTER", "OG/OLD", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER"};
-    private static final String[] CODES = {"TESTER", "OG", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER"};
+    private static final String[] LABELS = {"TESTER", "OG/OLD", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER", "Разработчик VGRAM", "Один из разработчиков VGRAM", "Канал верифицирован VGRAM"};
+    private static final String[] CODES = {"TESTER", "OG", "FRIENDS", "TEAM", "DEVELOPER", "FOUNDER", "VGRAM_DEVELOPER", "VGRAM_TEAM", "VERIFIED_CHANNEL"};
     private LinearLayout list;
     private android.content.SharedPreferences prefs;
     private String adminKey = "";
