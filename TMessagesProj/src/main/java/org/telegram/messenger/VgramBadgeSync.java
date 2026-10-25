@@ -235,6 +235,21 @@ public final class VgramBadgeSync {
         return ApplicationLoader.applicationContext != null && hasBadge(ApplicationLoader.applicationContext, telegramId);
     }
 
+    /** VGRAM Premium is independent from official Telegram Premium. */
+    public static boolean isPremium(Context context, long telegramId) {
+        if (context == null || telegramId <= 0) return false;
+        SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
+            String value = label.toUpperCase(java.util.Locale.ROOT);
+            if (value.contains("VGRAM PREMIUM") || value.equals("PREMIUM")) return true;
+        }
+        return cache.getBoolean("premium_" + telegramId, false);
+    }
+
+    public static boolean isPremium(long telegramId) {
+        return ApplicationLoader.applicationContext != null && isPremium(ApplicationLoader.applicationContext, telegramId);
+    }
+
     public static boolean isVerified(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
