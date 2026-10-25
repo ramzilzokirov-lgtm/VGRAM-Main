@@ -6,6 +6,9 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import androidx.dynamicanimation.animation.DynamicAnimation;
+import androidx.dynamicanimation.animation.SpringAnimation;
+import androidx.dynamicanimation.animation.SpringForce;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -74,18 +77,33 @@ abstract class VgramBaseActivity extends Activity {
 
     private LinearLayout createCard(String title, String description, boolean expandable) {
         boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
-        int fill = glass ? 0xe51e2024 : 0xff22252a;
+        int fill = glass ? 0xd923252a : 0xff22252a;
         int stroke = Color.argb(glass ? 92 : 45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
         com.google.android.material.card.MaterialCardView surface = new com.google.android.material.card.MaterialCardView(this);
         surface.setCardBackgroundColor(fill);
         surface.setRadius(dp(24));
-        surface.setStrokeColor(stroke);
-        surface.setStrokeWidth(dp(1));
-        surface.setCardElevation(dp(1));
+        surface.setStrokeColor(glass ? 0x66ffffff : stroke);
+        surface.setStrokeWidth(dp(glass ? 1.2f : 1));
+        surface.setCardElevation(dp(glass ? 8 : 1));
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(17), dp(17), dp(17), dp(17));
+        if (glass) {
+            GradientDrawable glassLayer = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    new int[] { 0x35ffffff, 0x182f3339, 0x24202025 });
+            glassLayer.setCornerRadius(dp(24));
+            glassLayer.setStroke(dp(1), 0x55ffffff);
+            card.setBackground(glassLayer);
+        }
         surface.addView(card);
+        surface.setOnTouchListener((view, event) -> {
+            float target = event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN ? 0.985f : 1f;
+            SpringForce spring = new SpringForce(target).setDampingRatio(0.62f).setStiffness(520f);
+            new SpringAnimation(view, DynamicAnimation.SCALE_X).setSpring(spring).animateToFinalPosition(target);
+            SpringForce springY = new SpringForce(target).setDampingRatio(0.62f).setStiffness(520f);
+            new SpringAnimation(view, DynamicAnimation.SCALE_Y).setSpring(springY).animateToFinalPosition(target);
+            return false;
+        });
 
         LinearLayout heading = new LinearLayout(this);
         heading.setGravity(Gravity.CENTER_VERTICAL);

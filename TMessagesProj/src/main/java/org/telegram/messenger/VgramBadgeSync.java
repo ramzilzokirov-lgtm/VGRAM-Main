@@ -99,7 +99,12 @@ public final class VgramBadgeSync {
                             || response.optBoolean("vgram_verified", false);
                     String role = response.optString("role", "").toLowerCase(java.util.Locale.ROOT);
                     verified = verified || role.contains("verified") || role.contains("developer") || role.contains("team");
-                    if (verified) labels.put("✓ VGRAM VERIFIED");
+                    String verificationLabel = fetchVerificationLabel(id);
+                    if (!verificationLabel.isEmpty()) {
+                        labels.put("✓ " + verificationLabel);
+                    } else if (verified) {
+                        labels.put("✓ VGRAM VERIFIED");
+                    }
                     if (response.optBoolean("premium", false)) labels.put("✦ VGRAM PREMIUM");
                     if (badges != null) for (int i = 0; i < badges.length(); i++) {
                         JSONObject badge = badges.optJSONObject(i);
@@ -123,6 +128,39 @@ public final class VgramBadgeSync {
         } catch (RejectedExecutionException full) {
             IN_FLIGHT.remove(id);
         }
+    }
+
+    private static String fetchVerificationLabel(String telegramId) {
+        HttpURLConnection verificationConnection = null;
+        try {
+            verificationConnection = (HttpURLConnection) new URL(API + "/verification/user/" + telegramId).openConnection();
+            verificationConnection.setRequestMethod("GET");
+            verificationConnection.setConnectTimeout(8000);
+            verificationConnection.setReadTimeout(8000);
+            verificationConnection.setRequestProperty("Accept", "application/json");
+            verificationConnection.setRequestProperty("User-Agent", "VGRAM-Android");
+            int code = verificationConnection.getResponseCode();
+            if (code < 200 || code >= 300) return "";
+            String raw;
+            try (InputStream in = verificationConnection.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+                raw = out.toString("UTF-8");
+            }
+            JSONObject status = new JSONObject(raw);
+            if (!status.optBoolean("verified", false)) return "";
+            String label = status.optString("label", "").trim();
+            if (!label.isEmpty() && !"null".equalsIgnoreCase(label)) return label;
+            String role = status.optString("role_code", "").trim();
+            if ("vgram_developer".equals(role)) return "Разработчик VGRAM";
+            if ("vgram_team".equals(role)) return "Один из разработчиков VGRAM";
+            if ("verified_channel".equals(role)) return "Канал верифицирован VGRAM";
+        } catch (Exception ignored) {
+        } finally {
+            if (verificationConnection != null) verificationConnection.disconnect();
+        }
+        return "";
     }
 
     private static String firstNonEmpty(JSONObject object, String... keys) {
