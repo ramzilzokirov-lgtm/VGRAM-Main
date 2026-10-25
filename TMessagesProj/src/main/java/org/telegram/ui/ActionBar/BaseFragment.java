@@ -40,6 +40,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.ui.VgramGlassDrawable;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.ContactsController;
@@ -857,6 +858,9 @@ public abstract class BaseFragment {
                 }
             });
             visibleDialog.show();
+            if (android.os.Build.VERSION.SDK_INT >= 31 && visibleDialog.getWindow() != null) {
+                VgramGlassDrawable.enableBlurBehind(visibleDialog.getWindow(), AndroidUtilities.dp(45));
+            }
             return visibleDialog;
         } catch (Exception e) {
             FileLog.e(e);
