@@ -8,6 +8,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.style.ReplacementSpan;
@@ -37,6 +38,8 @@ public final class VgramBadgeSync {
             runnable -> { Thread thread = new Thread(runnable, "VGRAM-BadgeSync"); thread.setDaemon(true); return thread; },
             new ThreadPoolExecutor.AbortPolicy());
     private static final String PREFS = "vgram_badge_cache";
+    private static final String TAG = "VgramBadgeSync";
+    private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Runnable>> LISTENERS = new ConcurrentHashMap<>();
     private static final long CACHE_TTL = 300000L;
 
     private VgramBadgeSync() {}
@@ -70,14 +73,33 @@ public final class VgramBadgeSync {
     public static void requestRefresh(Context context, long telegramId, Runnable onUpdated) {
         if (context != null && telegramId > 0) refreshInternal(context, telegramId, null, null, onUpdated);
     }
+    public static boolean hasBadge(Context context, long telegramId) {
+        if (context == null || telegramId <= 0) return false;
+        SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
+            if (!label.toUpperCase(java.util.Locale.ROOT).contains("VGRAM PREMIUM")) return true;
+        }
+        return false;
+    }
+
+    /** Convenience API for message-cell drawing code that has no explicit Context parameter. */
+    public static boolean hasBadge(long telegramId) {
+        return ApplicationLoader.applicationContext != null && hasBadge(ApplicationLoader.applicationContext, telegramId);
+    }
+
     public static boolean isVerified(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
-            if (value.startsWith("✓ ") || value.contains("VGRAM VERIFIED") || value.contains("РАЗРАБОТЧИК VGRAM") || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")) return true;
+            if (value.startsWith("✓ ") || value.contains("VGRAM VERIFIED") || value.contains("РАЗРАБОТЧИК VGRAM")
+                    || value.contains("ОДИН ИЗ РАЗРАБОТЧИКОВ VGRAM") || value.contains("КАНАЛ ВЕРИФИЦИРОВАН VGRAM")) return true;
         }
         return false;
+    }
+
+    public static boolean isVerified(long telegramId) {
+        return ApplicationLoader.applicationContext != null && isVerified(ApplicationLoader.applicationContext, telegramId);
     }
     public static String getVerificationLabel(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return "";
@@ -96,6 +118,14 @@ public final class VgramBadgeSync {
         SharedPreferences cache = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long savedAt = cache.getLong("time_" + id, 0L);
         if (savedAt > 0 && System.currentTimeMillis() - savedAt < CACHE_TTL) return;
+        if (onUpdated != null) {
+            LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(onUpdated);
+        }
+        if (title != null && baseName != null) {
+            LISTENERS.computeIfAbsent(id, key -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(() -> {
+                if (title.getParent() != null) title.setText(withBadges(app, telegramId, baseName));
+            });
+        }
         if (IN_FLIGHT.putIfAbsent(id, Boolean.TRUE) != null) return;
         try {
             REQUESTS.execute(() -> {
@@ -117,36 +147,91 @@ public final class VgramBadgeSync {
                         raw = out.toString("UTF-8");
                     }
                     JSONObject response = new JSONObject(raw);
+                    String responseId = firstNonEmpty(response, "telegram_id", "user_id", "id");
+                    if (!responseId.isEmpty() && !id.equals(responseId)) {
+                        throw new IllegalStateException("Response user id mismatch: requested " + id + ", got " + responseId);
+                    }
                     JSONArray badges = response.optJSONArray("badges");
                     JSONArray labels = new JSONArray();
                     String verificationLabel = fetchVerificationLabel(id);
-                    if (!verificationLabel.isEmpty()) labels.put("✓ " + verificationLabel);
-                    else {
-                        boolean verified = response.optBoolean("verified", false) || response.optBoolean("is_verified", false)
-                                || response.optBoolean("verified_channel", false) || response.optBoolean("vgram_verified", false);
-                        String role = response.optString("role", "").toLowerCase(java.util.Locale.ROOT);
-                        if (verified || role.contains("verified") || role.contains("developer") || role.contains("team")) labels.put("✓ VGRAM VERIFIED");
+                    boolean verified = response.optBoolean("is_verified", false)
+                            || response.optBoolean("verified", false)
+                            || response.optBoolean("verified_channel", false)
+                            || response.optBoolean("vgram_verified", false);
+                    String role = firstNonEmpty(response, "role", "role_code").toLowerCase(java.util.Locale.ROOT);
+                    String badgeType = firstNonEmpty(response, "badge_type", "badge").toLowerCase(java.util.Locale.ROOT);
+                    if (!verificationLabel.isEmpty()) {
+                        labels.put("✓ " + verificationLabel);
+                    } else if (verified || isVerificationRole(role) || isVerificationRole(badgeType)) {
+                        labels.put("✓ " + verificationLabelForRole(!role.isEmpty() ? role : badgeType));
                     }
                     if (response.optBoolean("premium", false)) labels.put("✦ VGRAM PREMIUM");
-                    if (badges != null) for (int i=0;i<badges.length();i++) {
-                        JSONObject item=badges.optJSONObject(i); if(item==null) continue;
-                        String label=firstNonEmpty(item,"label","badge_code","code","name","badge","title");
-                        if(!label.isEmpty() && !"VGRAM PREMIUM".equalsIgnoreCase(label)) labels.put(label);
+                    if (badges != null) for (int i = 0; i < badges.length(); i++) {
+                        JSONObject item = badges.optJSONObject(i);
+                        if (item == null) {
+                            Log.w(TAG, "Ignoring non-object badge for Telegram user " + id);
+                            continue;
+                        }
+                        String label = firstNonEmpty(item, "label", "badge_code", "code", "name", "badge", "title", "badge_type");
+                        String itemRole = firstNonEmpty(item, "role", "role_code");
+                        boolean itemVerified = item.optBoolean("is_verified", false) || item.optBoolean("verified", false);
+                        if (itemVerified || isVerificationRole(itemRole) || isVerificationRole(label)) {
+                            String verifiedLabel = firstNonEmpty(item, "label", "role", "role_code", "badge_type", "badge_code");
+                            String rendered = verificationLabelForRole(verifiedLabel);
+                            if (rendered != null && !rendered.isEmpty()) labels.put("✓ " + rendered);
+                        } else if (!label.isEmpty() && !"VGRAM PREMIUM".equalsIgnoreCase(label)) {
+                            labels.put(label);
+                        }
                     }
-                    cache.edit().putString("badges_" + id, labels.toString()).putLong("time_" + id, System.currentTimeMillis()).apply();
-                    updated = true;
+                    // The verification endpoint is authoritative for role status and can exist
+                    // independently from the public profile/badge payload.
+                    if (labels.length() == 0 && !cache.getString("badges_" + id, "").isEmpty()) {
+                        Log.i(TAG, "Server returned no badges for " + id + "; retaining prior non-empty local cache");
+                    } else {
+                        cache.edit().putString("badges_" + id, labels.toString()).putLong("time_" + id, System.currentTimeMillis()).apply();
+                        updated = true;
+                    }
                 } catch (Exception error) {
+                    // Never replace cached labels on transport, HTTP, JSON, or identity errors.
+                    Log.w(TAG, "Badge refresh failed for Telegram user " + id + "; keeping cached values", error);
                     cache.edit().putLong("time_" + id, System.currentTimeMillis() - CACHE_TTL + 60000L).apply();
                 } finally {
                     IN_FLIGHT.remove(id);
                     if(connection!=null) connection.disconnect();
                 }
-                if(updated) MAIN.post(() -> {
-                    if(title!=null && title.getParent()!=null) title.setText(withBadges(app,telegramId,baseName));
-                    if(onUpdated!=null) onUpdated.run();
+                if (updated) MAIN.post(() -> {
+                    if (title != null && title.getParent() != null) title.setText(withBadges(app, telegramId, baseName));
+                    notifyListeners(id);
                 });
             });
         } catch (RejectedExecutionException full) { IN_FLIGHT.remove(id); }
+    }
+
+    private static void notifyListeners(String id) {
+        java.util.concurrent.CopyOnWriteArrayList<Runnable> callbacks = LISTENERS.remove(id);
+        if (callbacks == null) return;
+        for (Runnable callback : callbacks) {
+            if (callback == null) continue;
+            try { callback.run(); } catch (Throwable error) { Log.w(TAG, "Badge update callback failed for " + id, error); }
+        }
+    }
+
+    private static boolean isVerificationRole(String value) {
+        if (value == null) return false;
+        String role = value.toLowerCase(java.util.Locale.ROOT);
+        return role.contains("verified") || role.contains("developer") || role.contains("vgram_team")
+                || role.equals("dev") || role.equals("team") || role.contains("разработчик")
+                || role.contains("vgram_dev") || role.contains("vgram_developer");
+    }
+
+    private static String verificationLabelForRole(String value) {
+        if (value == null) return "";
+        String role = value.toLowerCase(java.util.Locale.ROOT);
+        if (role.contains("verified_channel") || role.contains("канал верифицирован")) return "Канал верифицирован VGRAM";
+        if (role.contains("vgram_team") || role.equals("team") || role.contains("один из разработчиков")) return "Один из разработчиков VGRAM";
+        if (role.contains("vgram_developer") || role.contains("developer") || role.equals("dev") || role.contains("разработчик")) return "Разработчик VGRAM";
+        if (role.contains("verified")) return "VGRAM VERIFIED";
+        return "VGRAM VERIFIED";
     }
 
     private static String fetchVerificationLabel(String telegramId) {
@@ -168,14 +253,16 @@ public final class VgramBadgeSync {
                 raw = out.toString("UTF-8");
             }
             JSONObject status = new JSONObject(raw);
-            if (!status.optBoolean("verified", false)) return "";
-            String label = status.optString("label", "").trim();
-            if (!label.isEmpty() && !"null".equalsIgnoreCase(label)) return label;
-            String role = status.optString("role_code", "").trim();
-            if ("vgram_developer".equals(role)) return "Разработчик VGRAM";
-            if ("vgram_team".equals(role)) return "Один из разработчиков VGRAM";
-            if ("verified_channel".equals(role)) return "Канал верифицирован VGRAM";
-        } catch (Exception ignored) {
+            String responseId = firstNonEmpty(status, "subject_id", "user_id", "telegram_id");
+            if (!responseId.isEmpty() && !telegramId.equals(responseId)) {
+                throw new IllegalStateException("Verification response id mismatch: " + responseId);
+            }
+            boolean verified = status.optBoolean("verified", false) || status.optBoolean("is_verified", false);
+            if (!verified) return "";
+            String label = firstNonEmpty(status, "label", "role", "role_code", "badge_type");
+            return verificationLabelForRole(label);
+        } catch (Exception error) {
+            Log.w(TAG, "Verification lookup failed for Telegram user " + telegramId, error);
         } finally {
             if (verificationConnection != null) verificationConnection.disconnect();
         }
@@ -183,6 +270,7 @@ public final class VgramBadgeSync {
     }
 
     private static String firstNonEmpty(JSONObject object, String... keys) {
+        if (object == null || keys == null) return "";
         for (String key : keys) {
             String value = object.optString(key, "").trim();
             if (!value.isEmpty() && !"null".equalsIgnoreCase(value)) return value;

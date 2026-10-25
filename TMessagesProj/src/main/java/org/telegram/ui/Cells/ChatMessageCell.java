@@ -126,6 +126,7 @@ import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.RichMessageLayout;
@@ -136,7 +137,6 @@ import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
-import org.telegram.messenger.VgramBadgeSync;
 import org.telegram.messenger.WebFile;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.utils.Choreographer60FpsContent;
@@ -268,9 +268,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     private final static int UPLOADING_ALLOWABLE_ERROR = 1024 * 1024;
     private final static int STICKER_STATUS_OFFSET = 6;
     private final static float EPHEMERAL_HINT_HEIGHT = 25f;
-    private static final Paint VGRAM_VERIFICATION_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private static final Paint VGRAM_VERIFICATION_TEXT_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
-
 
     public boolean clipToGroupBounds;
     public boolean drawForBlur;
@@ -18916,6 +18913,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
             int additionalWidth = dp(currentMessageObject.isSponsored() ? -24 : 0);
             CharSequence nameStringFinal = AndroidUtilities.removeDiacritics(currentNameString.replace('\n', ' ').replace('\u200F', ' '));
+            // VGRAM: use the real Telegram sender id, render cached role/badge pills in the name layout,
+            // and subscribe this cell for an immediate redraw when the async server refresh completes.
+            long vgramSenderId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
+            if (vgramSenderId > 0 && !messageObject.isOutOwner()) {
+                VgramBadgeSync.requestRefresh(getContext(), vgramSenderId, this::invalidate);
+                nameStringFinal = VgramBadgeSync.withBadges(getContext(), vgramSenderId, nameStringFinal);
+            }
             try {
                 nameStringFinal = Emoji.replaceEmoji(nameStringFinal, Theme.chat_namePaint.getFontMetricsInt(), false);
             } catch (Exception ignore) {}
@@ -22209,45 +22213,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             Theme.chat_namePaint.setAlpha((int) (oldAlpha * nameAlpha));
             nameLayout.draw(canvas);
             Theme.chat_namePaint.setAlpha(oldAlpha);
-
-            // VGRAM-owned verification mark: draw independently of Telegram's Premium,
-            // emoji-status and native verification rendering so those indicators remain intact.
-            if (currentUser != null && VgramBadgeSync.isVerified(getContext(), currentUser.id)) {
-                final float markRadius = dp(7);
-                final float markX = nameLayout.getWidth() + dp(currentNameStatus != null ? 24 : 7);
-                final float markY = nameLayout.getHeight() * 0.5f;
-                VGRAM_VERIFICATION_PAINT.setStyle(Paint.Style.FILL);
-                VGRAM_VERIFICATION_PAINT.setColor(0xFF2585F7);
-                VGRAM_VERIFICATION_PAINT.setAlpha((int) (255 * nameAlpha));
-                canvas.drawCircle(markX, markY, markRadius, VGRAM_VERIFICATION_PAINT);
-
-                VGRAM_VERIFICATION_TEXT_PAINT.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
-                VGRAM_VERIFICATION_TEXT_PAINT.setTextSize(dp(10));
-                VGRAM_VERIFICATION_TEXT_PAINT.setTextAlign(Paint.Align.CENTER);
-                VGRAM_VERIFICATION_TEXT_PAINT.setColor(Color.WHITE);
-                VGRAM_VERIFICATION_TEXT_PAINT.setAlpha((int) (255 * nameAlpha));
-                canvas.drawText("✓", markX, markY + dp(3.5f), VGRAM_VERIFICATION_TEXT_PAINT);
-
-                String vgramRole = VgramBadgeSync.getVerificationLabel(getContext(), currentUser.id);
-                if (!TextUtils.isEmpty(vgramRole)) {
-                    String role = vgramRole.trim();
-                    if (role.length() > 26) {
-                        role = role.substring(0, 23) + "…";
-                    }
-                    VGRAM_VERIFICATION_TEXT_PAINT.setTextSize(dp(9));
-                    float roleTextWidth = VGRAM_VERIFICATION_TEXT_PAINT.measureText(role);
-                    float pillLeft = markX + markRadius + dp(4);
-                    float pillTop = markY - dp(7);
-                    rect.set(pillLeft, pillTop, pillLeft + roleTextWidth + dp(10), markY + dp(7));
-                    VGRAM_VERIFICATION_PAINT.setColor(0xCC174E8A);
-                    canvas.drawRoundRect(rect, dp(7), dp(7), VGRAM_VERIFICATION_PAINT);
-                    VGRAM_VERIFICATION_TEXT_PAINT.setTextAlign(Paint.Align.LEFT);
-                    VGRAM_VERIFICATION_TEXT_PAINT.setTextSize(dp(9));
-                    canvas.drawText(role, pillLeft + dp(5), markY + dp(3), VGRAM_VERIFICATION_TEXT_PAINT);
-                }
-                VGRAM_VERIFICATION_PAINT.setAlpha(255);
-                VGRAM_VERIFICATION_TEXT_PAINT.setAlpha(255);
-            }
             canvas.restore();
 
             float end;
