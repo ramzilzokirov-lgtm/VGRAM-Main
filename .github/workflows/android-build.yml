@@ -115,24 +115,16 @@ jobs:
             install -D "$source_file" "upstream/TMessagesProj/src/main/java/$relative"
           done < <(find TMessagesProj/src/main/java -type f -name "Vgram*.java" -print0 | sort -z)
 
-          # Keep Telegram's full upstream ChatMessageCell.java unless a complete,
-          # non-empty replacement is committed. The current repo snapshot intentionally
-          # stores an empty marker file; never copy it over the compilable upstream class.
+          # ChatMessageCell is intentionally kept as clean upstream source and patched in a
+          # separate, validated step below. Never overlay a zero-byte marker over Telegram's class.
           cp -f TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           cp -f TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
-          CHAT_CELL="TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
-          test -s "$CHAT_CELL"
-          grep -q "VgramBadgeSync.isVerified" "$CHAT_CELL"
-          cp -f "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "^package org.telegram.messenger;" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           grep -q "VgramBadgeSync.withBadges" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           grep -q "VGRAM-owned verification and copyable Telegram ID" upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
-          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
-          echo "Validated committed profile/dialog overlays and the non-empty upstream message cell before compilation."
+          echo "Validated committed profile/dialog overlays and badge sync class."
           test -s upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           install -D TMessagesProj/src/main/AndroidManifest.xml upstream/TMessagesProj/src/main/AndroidManifest.xml
           install -D TMessagesProj/build.gradle upstream/TMessagesProj/build.gradle
@@ -148,6 +140,43 @@ jobs:
             relative="${resource#TMessagesProj/src/main/res/}"
             install -D "$resource" "upstream/TMessagesProj/src/main/res/$relative"
           done < <(find TMessagesProj/src/main/res -type f \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
+
+      - name: Patch upstream ChatMessageCell with VGRAM indicators
+        working-directory: upstream
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java")
+          source = path.read_text(encoding="utf-8")
+          if len(source) < 100000 or "public class ChatMessageCell" not in source:
+              raise SystemExit("Refusing to patch ChatMessageCell: upstream source is missing or unexpectedly small")
+          import_line = "import org.telegram.messenger.VgramBadgeSync;"
+          if import_line not in source:
+              package_end = re.search(r"(?m)^package\\s+org\\.telegram\\.ui\\.Cells;\\s*$", source)
+              if not package_end:
+                  raise SystemExit("ChatMessageCell patch failed: package declaration not found")
+              source = source[:package_end.end()] + "\\n\\n" + import_line + source[package_end.end():]
+          # Insert at the author-name layout draw site. Resolve the sender only when it is a
+          # user message; channel/group authors keep their upstream rendering unchanged.
+          hook = "VgramBadgeSync.drawInlineIndicators(canvas, currentMessageObject.messageOwner.from_id.user_id, nameLayout.getWidth(), nameLayout.getHeight() / 2f, 1f);"
+          if hook not in source:
+              pattern = r"(?m)^(\\s*)nameLayout\\.draw\\(canvas\\);"
+              def insert(match):
+                  indent = match.group(1)
+                  return (match.group(0) + "\\n" + indent + "if (currentMessageObject != null && currentMessageObject.messageOwner != null && currentMessageObject.messageOwner.from_id instanceof TLRPC.TL_peerUser && nameLayout != null) {\\n" + indent + "    VgramBadgeSync.drawInlineIndicators(canvas, currentMessageObject.messageOwner.from_id.user_id, nameLayout.getWidth(), nameLayout.getHeight() / 2f, 1f);\\n" + indent + "}")
+              source, count = re.subn(pattern, insert, source, count=1)
+              if count != 1:
+                  raise SystemExit("ChatMessageCell patch failed: nameLayout.draw(canvas) anchor not found; refusing a speculative edit")
+          if import_line not in source or "VgramBadgeSync.drawInlineIndicators(canvas, currentMessageObject.messageOwner.from_id.user_id" not in source:
+              raise SystemExit("ChatMessageCell patch validation failed")
+          path.write_text(source, encoding="utf-8")
+          print("Patched original upstream ChatMessageCell.java; preserved all original code outside the import and inline-indicator hook.")
+          PY
+          test -s TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "import org.telegram.messenger.VgramBadgeSync;" TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VgramBadgeSync.drawInlineIndicators" TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
 
       - name: Apply VGRAM bootstrap branding
         env:
