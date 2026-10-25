@@ -6,14 +6,18 @@ import android.view.View;
 import androidx.dynamicanimation.animation.DynamicAnimation;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /** Shared lightweight touch physics for VGRAM interactive surfaces. */
 public final class VgramMotion {
+    private static final Set<View> ATTACHED = Collections.newSetFromMap(new WeakHashMap<>());
     private VgramMotion() {}
 
     public static void applySpringTouch(View view) {
-        if (view == null || Boolean.TRUE.equals(view.getTag(R.id.vgram_motion_attached))) return;
-        view.setTag(R.id.vgram_motion_attached, Boolean.TRUE);
+        if (view == null) return;
+        synchronized (ATTACHED) { if (!ATTACHED.add(view)) return; }
         view.setOnTouchListener((v, event) -> {
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
