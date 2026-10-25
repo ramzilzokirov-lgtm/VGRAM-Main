@@ -544,7 +544,8 @@ jobs:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
           for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSupportActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramBadgeSync.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
-              if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
+              source_root = "org/telegram/messenger" if source_name == "VgramBadgeSync.java" else "org/telegram/ui"
+    if not (Path("TMessagesProj/src/main/java") / source_root / source_name).is_file():
                   raise SystemExit("VGRAM screen source missing: " + source_name)
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
           if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
