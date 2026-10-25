@@ -20,6 +20,7 @@ on:
       - "TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java"
       - "TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java"
+      - "TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java"
       - "TMessagesProj/src/main/AndroidManifest.xml"
       - "TMessagesProj/build.gradle"
       - "TMessagesProj/src/main/res/drawable/vgram_*.xml"
@@ -79,6 +80,7 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java
+          install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java
@@ -453,6 +455,30 @@ jobs:
           else:
               print("WARNING: TG_API_ID/TG_API_HASH secrets not both set; upstream development API values remain. Configure your own values before distribution.")
           buildvars.write_text(text, encoding="utf-8")
+
+          # The APK is built from a clean upstream checkout, so patch the upstream
+          # synchronous Premium gate here rather than relying on an unoverlaid source file.
+          user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
+          text = user_config.read_text(encoding="utf-8")
+          old_premium_method = """    public boolean isPremium() {
+                  TLRPC.User user = currentUser;
+                  if (user == null) {
+                      return false;
+                  }
+                  return user.premium;
+              }"""
+          new_premium_method = """    public boolean isPremium() {
+                  TLRPC.User user = currentUser;
+                  if (user == null) {
+                      return false;
+                  }
+                  return VgramPremiumManager.isPremium(ApplicationLoader.applicationContext, user.id, user.premium);
+              }"""
+          if old_premium_method not in text:
+              raise SystemExit("VGRAM Premium patch failed: UserConfig.isPremium() signature/body changed upstream")
+          text = text.replace(old_premium_method, new_premium_method, 1)
+          user_config.write_text(text, encoding="utf-8")
+          print("Patched UserConfig.isPremium() to combine Telegram Premium with cached VGRAM Premium.")
           PY
 
       - name: Validate VGRAM build patch before compiling
