@@ -514,6 +514,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         drawerLayoutContainer.setClipToPadding(false);
 
         frameLayout.addView(drawerLayoutContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        VgramAudioService.attachMiniPlayer(this, frameLayout);
 
         themeSwitchSunView = new ImageView(this) {
             @Override
