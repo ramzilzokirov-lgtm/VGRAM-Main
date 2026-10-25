@@ -75,7 +75,7 @@ public final class VgramBadgeSync {
             REQUESTS.execute(() -> {
                 HttpURLConnection connection = null;
                 try {
-                    connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/badges").openConnection();
+                    connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/profile").openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(15000);
                     connection.setReadTimeout(30000);
@@ -92,11 +92,13 @@ public final class VgramBadgeSync {
                     JSONObject response = new JSONObject(raw);
                     JSONArray badges = response.optJSONArray("badges");
                     JSONArray labels = new JSONArray();
+                    // Render VGRAM Premium independently from verification badges/checkmarks.
+                    if (response.optBoolean("premium", false)) labels.put("✦ VGRAM PREMIUM");
                     if (badges != null) for (int i = 0; i < badges.length(); i++) {
                         JSONObject badge = badges.optJSONObject(i);
                         if (badge == null) continue;
                         String label = firstNonEmpty(badge, "label", "badge_code", "code", "name", "badge", "title");
-                        if (!label.isEmpty()) labels.put(label);
+                        if (!label.isEmpty() && !"VGRAM PREMIUM".equalsIgnoreCase(label)) labels.put(label);
                     }
                     String result = labels.toString();
                     cache.edit().putString("badges_" + id, result).putLong("time_" + id, System.currentTimeMillis()).apply();
