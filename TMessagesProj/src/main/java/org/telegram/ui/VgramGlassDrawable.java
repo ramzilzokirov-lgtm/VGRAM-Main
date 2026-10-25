@@ -10,6 +10,8 @@ import android.graphics.SweepGradient;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.graphics.RenderEffect;
 
 /** Shared VGRAM glass surfaces and Premium neon-ring drawing helpers. */
@@ -25,6 +27,16 @@ public final class VgramGlassDrawable {
         drawable.setCornerRadius(18f * density);
         drawable.setStroke(Math.max(1, Math.round(density)), Color.argb(60, 255, 255, 255));
         return drawable;
+    }
+
+    /** Enables Android's real window-level blur-behind for translucent dialogs/sheets.
+     * Call only on a dimmed, translucent dialog window; not on the main opaque activity window. */
+    public static void enableBlurBehind(Window window, int radiusPx) {
+        if (window == null || Build.VERSION.SDK_INT < 31) return;
+        window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+        WindowManager.LayoutParams attributes = window.getAttributes();
+        attributes.setBlurBehindRadius(Math.max(1, radiusPx));
+        window.setAttributes(attributes);
     }
 
     /** Applies blur to the supplied backdrop view itself on Android 12+. This is not a true
