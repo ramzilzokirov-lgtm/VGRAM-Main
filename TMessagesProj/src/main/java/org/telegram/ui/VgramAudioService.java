@@ -116,7 +116,7 @@ public final class VgramAudioService {
         LinearLayout bar = new LinearLayout(activity);
         miniBar = new FrameLayout(activity);
         miniBar.setClipToPadding(false);
-        miniBar.setBackground(background());
+        miniBar.setBackground(VgramGlassDrawable.card(activity));
         miniBar.setElevation(AndroidUtilities.dp(8));
         miniBar.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(6), AndroidUtilities.dp(8), AndroidUtilities.dp(6));
         LinearLayout row = new LinearLayout(activity);
@@ -125,14 +125,17 @@ public final class VgramAudioService {
         artworkView = cover;
         cover.setImageResource(android.R.drawable.ic_media_play);
         cover.setBackground(background());
-        cover.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        row.addView(cover, new LinearLayout.LayoutParams(AndroidUtilities.dp(38), AndroidUtilities.dp(38)));
+        cover.setClipToOutline(true);
+        cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        row.addView(cover, new LinearLayout.LayoutParams(AndroidUtilities.dp(40), AndroidUtilities.dp(40)));
         TextView track = new TextView(activity);
         titleView = track;
         track.setTextColor(0xfff4f0e5);
         track.setTextSize(13);
         track.setSingleLine(true);
-        track.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        track.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        track.setMarqueeRepeatLimit(-1);
+        track.setSelected(true);
         LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, -2, 1);
         textParams.leftMargin = AndroidUtilities.dp(10);
         textParams.rightMargin = AndroidUtilities.dp(6);
@@ -150,15 +153,12 @@ public final class VgramAudioService {
         close.setGravity(Gravity.CENTER);
         row.addView(close, new LinearLayout.LayoutParams(AndroidUtilities.dp(34), AndroidUtilities.dp(40)));
         miniBar.addView(row, new FrameLayout.LayoutParams(-1, -1));
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-1, AndroidUtilities.dp(54), Gravity.BOTTOM);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-1, AndroidUtilities.dp(56), Gravity.BOTTOM);
         lp.leftMargin = AndroidUtilities.dp(12);
         lp.rightMargin = AndroidUtilities.dp(12);
         lp.bottomMargin = AndroidUtilities.dp(76);
         root.addView(miniBar, lp);
-        miniBar.setOnClickListener(v -> {
-            VgramMotion.applySpringTouch(v);
-            activity.startActivity(new Intent(activity, VgramPlayer.class));
-        });
+        miniBar.setOnClickListener(v -> activity.startActivity(new Intent(activity, VgramPlayer.class)));
         play.setOnClickListener(v -> toggle(activity));
         close.setOnClickListener(v -> stop(activity));
         VgramMotion.applySpringTouch(miniBar);
@@ -190,6 +190,9 @@ public final class VgramAudioService {
         }
         if (titleView != null) titleView.setText(active && !title.isEmpty() ? title : "VGRAM Player");
         if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");
-        if (artworkView != null) artworkView.setImageResource(android.R.drawable.ic_media_play);
+        if (artworkView != null) {
+            artworkView.setImageResource(android.R.drawable.ic_media_play);
+            artworkView.setContentDescription(active ? "Обложка: " + title : "VGRAM Player");
+        }
     }
 }
