@@ -101,6 +101,7 @@ public final class VgramPlayer extends VgramBaseActivity {
 
         results = new LinearLayout(this);
         results.setOrientation(LinearLayout.VERTICAL);
+        VgramMotion.applyOverscroll(results);
         body.addView(results, new LinearLayout.LayoutParams(-1, -2));
 
         waveform = new WaveView();
@@ -123,7 +124,10 @@ public final class VgramPlayer extends VgramBaseActivity {
         close.setGravity(Gravity.CENTER);
         miniPlayer.addView(close, new LinearLayout.LayoutParams(dp(38), dp(42)));
         body.addView(miniPlayer, margin(0, dp(8), 0, 0));
-        miniPlay.setOnClickListener(v -> togglePlayback());
+        VgramMotion.applySpringTouch(miniPlay);
+        VgramMotion.applySpringTouch(close);
+        VgramMotion.applySpringTouch(miniPlayer);
+        miniPlay.setOnClickListener(v -> { v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY); togglePlayback(); });
         close.setOnClickListener(v -> stopPlayback());
         miniPlayer.setOnClickListener(v -> {
             body.setAlpha(0.7f);
@@ -218,6 +222,8 @@ public final class VgramPlayer extends VgramBaseActivity {
             row.addView(play, new LinearLayout.LayoutParams(dp(42), dp(42)));
             results.addView(row, margin(0, 0, 0, dp(7)));
             View.OnClickListener start = v -> playTrack(title, artist, stream, artwork, row);
+            VgramMotion.applySpringTouch(row);
+            VgramMotion.applySpringTouch(play);
             row.setOnClickListener(start);
             play.setOnClickListener(start);
             bindSpring(row);
