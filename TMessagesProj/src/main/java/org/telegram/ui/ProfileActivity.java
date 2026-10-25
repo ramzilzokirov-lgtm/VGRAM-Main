@@ -623,6 +623,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int channelDividerRow;
     private int numberSectionRow;
     private int numberRow;
+    private int idRow;
     public int birthdayRow;
     private int setUsernameRow;
     private int bioRow;
@@ -10594,6 +10595,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         setAvatarSectionRow = -1;
         numberSectionRow = -1;
         numberRow = -1;
+        idRow = -1;
         birthdayRow = -1;
         setUsernameRow = -1;
         bioRow = -1;
