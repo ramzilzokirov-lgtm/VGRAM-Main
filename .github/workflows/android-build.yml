@@ -83,9 +83,6 @@ jobs:
           mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/messenger
           install -D TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "VgramBadgeSync.drawInlineIndicators" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java
@@ -109,6 +106,12 @@ jobs:
           mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/messenger
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
+
+          # Patch the pinned, full upstream ChatMessageCell in the build tree. The repository
+          # overlay intentionally contains no replacement for this large Telegram source file.
+          python3 scripts/patch_chat_message_cell.py upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
 
           # Overlay every committed Vgram*.java file while preserving its source-tree path.
           # This includes UI and messenger packages and prevents clean-upstream builds from
