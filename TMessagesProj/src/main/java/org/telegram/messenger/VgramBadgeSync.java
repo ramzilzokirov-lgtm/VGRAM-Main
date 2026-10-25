@@ -268,6 +268,8 @@ public final class VgramBadgeSync {
                         raw = out.toString("UTF-8");
                     }
                     JSONObject response = new JSONObject(raw);
+                    String responseStatus = firstNonEmpty(response, "status");
+                    if (!"ok".equalsIgnoreCase(responseStatus)) throw new IllegalStateException("Badge endpoint returned unexpected status: " + responseStatus);
                     String contentType = connection.getContentType();
                     if (contentType == null || !contentType.toLowerCase(java.util.Locale.ROOT).contains("application/json")) {
                         throw new IllegalStateException("Expected application/json but received " + contentType);
