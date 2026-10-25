@@ -1,5 +1,5 @@
 name: VGRAM Android Build
-# Badge-sync package alignment: org.telegram.messenger
+# VGRAM source overlay includes player, profile rows, badge roles, and explicit launcher aliases
 
 on:
   workflow_dispatch:
