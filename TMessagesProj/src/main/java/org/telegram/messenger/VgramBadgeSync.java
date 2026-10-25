@@ -164,7 +164,7 @@ public final class VgramBadgeSync {
                 HttpURLConnection connection = null;
                 boolean updated = false;
                 try {
-                    connection = (HttpURLConnection) new URL(API + "/users/telegram/" + id + "/profile").openConnection();
+                    connection = (HttpURLConnection) new URL(API + "/api/user/" + id + "/badge").openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
                     connection.setReadTimeout(12000);
