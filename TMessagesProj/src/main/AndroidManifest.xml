@@ -158,6 +158,8 @@
         </activity-alias>
 
 
+        <activity android:name="org.telegram.ui.VgramPlayer" android:exported="false" android:screenOrientation="unspecified" />
+
         <activity
             android:name="org.telegram.ui.LaunchActivity"
             android:theme="@style/Theme.TMessages.Start"
