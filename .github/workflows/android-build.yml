@@ -145,6 +145,12 @@ jobs:
             install -D "$resource" "upstream/TMessagesProj/src/main/res/$relative"
           done < <(find TMessagesProj/src/main/res -type f \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
 
+      - name: Integrate VGRAM indicators into clean upstream ChatMessageCell
+        run: |
+          python3 scripts/patch_chat_message_cell.py upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+
       - name: Apply VGRAM bootstrap branding
         env:
           TG_API_ID: ${{ secrets.TG_API_ID }}
