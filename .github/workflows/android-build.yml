@@ -13,6 +13,8 @@ on:
       - "VGRAM_ICON.png"
       - "TELEGRAM_UPSTREAM_COMMIT.txt"
       - "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/Vgram*.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
@@ -93,6 +95,10 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+          grep -q "^package org.telegram.ui;" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+          grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+          grep -q "import org.telegram.ui.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           install -D TMessagesProj/src/main/AndroidManifest.xml upstream/TMessagesProj/src/main/AndroidManifest.xml
           install -D TMessagesProj/build.gradle upstream/TMessagesProj/build.gradle
           install -D TMessagesProj/src/main/res/values/strings.xml upstream/TMessagesProj/src/main/res/values/strings.xml
