@@ -460,23 +460,17 @@ jobs:
           # synchronous Premium gate here rather than relying on an unoverlaid source file.
           user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
           text = user_config.read_text(encoding="utf-8")
-          old_premium_method = """    public boolean isPremium() {
-                  TLRPC.User user = currentUser;
-                  if (user == null) {
-                      return false;
-                  }
-                  return user.premium;
-              }"""
-          new_premium_method = """    public boolean isPremium() {
+          pattern = r"(?m)^    public boolean isPremium\\(\\) \\{\\n        TLRPC\\.User user = currentUser;\\n        if \\(user == null\\) \\{\\n            return false;\\n        \\}\\n        return user\\.premium;\\n    \\}"
+          replacement = """    public boolean isPremium() {
                   TLRPC.User user = currentUser;
                   if (user == null) {
                       return false;
                   }
                   return VgramPremiumManager.isPremium(ApplicationLoader.applicationContext, user.id, user.premium);
               }"""
-          if old_premium_method not in text:
+          text, patched = re.subn(pattern, lambda _match: replacement, text, count=1)
+          if patched != 1:
               raise SystemExit("VGRAM Premium patch failed: UserConfig.isPremium() signature/body changed upstream")
-          text = text.replace(old_premium_method, new_premium_method, 1)
           user_config.write_text(text, encoding="utf-8")
           print("Patched UserConfig.isPremium() to combine Telegram Premium with cached VGRAM Premium.")
           PY
