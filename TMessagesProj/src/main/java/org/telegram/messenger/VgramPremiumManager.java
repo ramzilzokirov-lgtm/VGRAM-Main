@@ -2,8 +2,6 @@ package org.telegram.messenger;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
 
 import org.json.JSONObject;
 
@@ -26,7 +24,6 @@ public final class VgramPremiumManager {
         t.setDaemon(true);
         return t;
     });
-    private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private VgramPremiumManager() {}
 
@@ -47,7 +44,6 @@ public final class VgramPremiumManager {
         Context app = context.getApplicationContext();
         String id = Long.toString(telegramId);
         SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String inFlightKey = "inflight_" + id;
         synchronized (VgramPremiumManager.class) {
             if (IN_FLIGHT.containsKey(id)) return;
             IN_FLIGHT.put(id, Boolean.TRUE);
@@ -75,9 +71,6 @@ public final class VgramPremiumManager {
                 boolean premium = json.optBoolean("premium", false);
                 prefs.edit().putBoolean("premium_" + id, premium)
                         .putLong("time_" + id, System.currentTimeMillis()).apply();
-                // VGRAM Premium is a local client entitlement; refresh UI-facing config observers.
-                MAIN.post(() -> NotificationCenter.getGlobalInstance().postNotificationName(
-                        NotificationCenter.vgramPremiumStatusChanged, telegramId, premium));
             } catch (Exception ignored) {
                 // Keep the last known value; transient network failure must not strip Premium.
                 prefs.edit().putLong("time_" + id, System.currentTimeMillis() - (TTL_MS - 30000L)).apply();
