@@ -95,9 +95,25 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+
+          # Overlay every committed Vgram*.java file while preserving its source-tree path.
+          # This includes UI and messenger packages and prevents clean-upstream builds from
+          # silently compiling against missing VGRAM classes.
+          while IFS= read -r -d "" source_file; do
+            relative="${source_file#TMessagesProj/src/main/java/}"
+            install -D "$source_file" "upstream/TMessagesProj/src/main/java/$relative"
+          done < <(find TMessagesProj/src/main/java -type f -name "Vgram*.java" -print0 | sort -z)
+
+          # DialogCell and ChatMessageCell are modified Telegram upstream classes and must
+          # be overlaid explicitly before Java compilation.
+          install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "^package org.telegram.ui;" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           grep -q "public final class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           grep -q "import org.telegram.ui.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q "class VgramBadgeSync" upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
+          echo "Validated all Vgram*.java sources and both chat cell overlays before compilation."
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgeSync.java
           install -D TMessagesProj/src/main/AndroidManifest.xml upstream/TMessagesProj/src/main/AndroidManifest.xml
           install -D TMessagesProj/build.gradle upstream/TMessagesProj/build.gradle
