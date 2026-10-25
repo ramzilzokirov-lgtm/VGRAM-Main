@@ -4776,6 +4776,17 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 storyParams.forceState = s;
             }
 
+            if (user != null && user.id > 0 && VgramBadgeSync.isPremium(user.id)) {
+                float ringSize = dp(51);
+                float cx = avatarImage.getCenterX();
+                float cy = avatarImage.getCenterY();
+                float phase = (android.os.SystemClock.uptimeMillis() % 6000L) * 360f / 6000f;
+                VgramGlassDrawable.drawPremiumRing(canvas,
+                        new android.graphics.RectF(cx - ringSize / 2f, cy - ringSize / 2f,
+                                cx + ringSize / 2f, cy + ringSize / 2f), phase, dp(2));
+                postInvalidateOnAnimation();
+            }
+
             if (!insideCommunityList && (chat != null && chat.linked_community_id != 0 || user != null && user.linked_community_id != 0) && !drawCommunityAvatar && isDialogCell && !isDialogFolder()) {
                 final float ccx = storyParams.originalAvatarRect.centerX() + dp(20.33f);
                 final float ccy = storyParams.originalAvatarRect.centerY() + dp(19);
