@@ -93,19 +93,15 @@ public final class VgramPlayer extends VgramBaseActivity {
         search.setHintTextColor(0xff999da4);
         search.setHint("Название трека или исполнитель");
         search.setPadding(dp(14), dp(10), dp(14), dp(10));
-        search.setBackground(panel(0x202ffffff, 0x40ffffff, 18));
+        search.setBackground(panel(0x20ffffff, 0x40ffffff, 18));
         body.addView(search, margin(0, 0, 0, 8));
 
         status = label("Введите запрос для поиска.", 12, 0xffb5b5b0, false);
         body.addView(status, margin(0, 0, 0, 8));
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(false);
-        scroll.setClipToPadding(false);
         results = new LinearLayout(this);
         results.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(results, new ScrollView.LayoutParams(-1, -2));
-        body.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        body.addView(results, new LinearLayout.LayoutParams(-1, -2));
 
         waveform = new WaveView();
         body.addView(waveform, margin(0, dp(8), 0, dp(6)));
