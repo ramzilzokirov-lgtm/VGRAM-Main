@@ -102,7 +102,8 @@ public final class VgramBadgeSync {
         boolean verified = isVerified(context, telegramId);
         boolean hasBadge = hasBadge(context, telegramId);
         if (!verified && !hasBadge) return;
-        float nextX = x;
+        // Keep verification and VGRAM status marks visually separated from the sender name.
+        float nextX = x + AndroidUtilities.dp(6);
         float radius = AndroidUtilities.dp(6.5f);
         if (verified) {
             INDICATOR_PAINT.setStyle(Paint.Style.FILL);
