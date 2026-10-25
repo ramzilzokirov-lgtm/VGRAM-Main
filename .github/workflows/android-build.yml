@@ -122,7 +122,7 @@ jobs:
           cp -f TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           CHAT_CELL="TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
           test -s "$CHAT_CELL"
-          grep -q "VgramBadgeSync.isVerified" "$CHAT_CELL"
+          grep -q "VgramBadgeSync.drawInlineIndicators" "$CHAT_CELL"
           cp -f "$CHAT_CELL" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "^package org.telegram.messenger;" upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
