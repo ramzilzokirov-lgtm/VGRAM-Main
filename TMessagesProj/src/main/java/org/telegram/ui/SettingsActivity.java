@@ -747,10 +747,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
 
         items.add(UItem.asHeader(getString(R.string.SettingsHelp)));
-        items.add(SettingCell.Factory.of(17, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_ask, getString(R.string.AskAQuestion)));
-        items.add(SettingCell.Factory.of(18, IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom, R.drawable.settings_faq, getString(R.string.TelegramFAQ)));
-        items.add(SettingCell.Factory.of(23, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, getString(R.string.TelegramFeatures)));
-        items.add(SettingCell.Factory.of(19, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_policy, getString(R.string.PrivacyPolicy)));
+        items.add(SettingCell.Factory.of(17, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_ask, "Поддержка VGRAM"));
+        items.add(SettingCell.Factory.of(18, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_faq, "Вопросы о VGRAM"));
+        items.add(SettingCell.Factory.of(23, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_features, "Возможности VGRAM"));
+        items.add(SettingCell.Factory.of(19, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_policy, "Конфиденциальность VGRAM"));
 
         if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION) && SharedSettings.experimentalSettingsAllowed.get()) {
             items.add(UItem.asShadow(null));
