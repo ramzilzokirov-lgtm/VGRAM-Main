@@ -77,7 +77,8 @@ public final class VgramPlaybackManager {
     }
 
     private VgramPlaybackManager(@NonNull Context appContext) {
-        player = new ExoPlayer.Builder(appContext).build();
+        // Share the application-scoped engine owned by VgramAudioService. Never create a second ExoPlayer.
+        player = org.telegram.ui.VgramAudioService.getPlayer(appContext);
         mediaSession = new MediaSession.Builder(appContext, player).build();
         player.addListener(new Player.Listener() {
             @Override public void onIsPlayingChanged(boolean isPlaying) { notifyListeners(); }
