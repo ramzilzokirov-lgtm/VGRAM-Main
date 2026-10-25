@@ -54,6 +54,14 @@ public class VgramSettingsActivity extends VgramBaseActivity {
 
         addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
 
+        LinearLayout playerCard = card("VGRAM Player", "Поиск музыки и потоковое воспроизведение без сохранения аудиофайлов.");
+        TextView openPlayer = label("Открыть плеер  →", 14, accent(), true);
+        openPlayer.setGravity(Gravity.CENTER);
+        openPlayer.setPadding(dp(12), dp(13), dp(12), dp(13));
+        openPlayer.setBackground(panel(0x20ffffff, 0x40ffffff, 18));
+        playerCard.addView(openPlayer, margin(0, dp(12), 0, 0));
+        openPlayer.setOnClickListener(v -> startActivity(new Intent(this, VgramPlayer.class)));
+
         LinearLayout icons = card("Иконка приложения", "10 вариантов V в стиле «Дронов-убийц». Выбор применяется сразу.");
         LinearLayout iconGrid = new LinearLayout(this);
         iconGrid.setOrientation(LinearLayout.VERTICAL);
