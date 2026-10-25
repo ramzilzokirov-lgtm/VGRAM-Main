@@ -10760,6 +10760,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 numberSectionRow = rowCount++;
                 numberRow = rowCount++;
+                idRow = rowCount++;
                 setUsernameRow = rowCount++;
                 bioRow = rowCount++;
 
@@ -10988,6 +10989,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 sharedMediaRow = rowCount++;
             }
         } else if (chatId != 0) {
+            idRow = rowCount++;
             if (chatInfo != null && (!TextUtils.isEmpty(chatInfo.about) || chatInfo.location instanceof TLRPC.TL_channelLocation) || ChatObject.isPublic(currentChat)) {
                 if (emptyRow < 0 && emptyRow2 < 0) {
                     if (hasMusic || peerColor != null || actionsView == null) {
