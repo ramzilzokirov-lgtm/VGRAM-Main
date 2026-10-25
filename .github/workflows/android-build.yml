@@ -76,8 +76,14 @@ jobs:
 
       - name: Overlay committed VGRAM profile and resource sources
         run: |
+          # Explicit package directories make source overlays deterministic and auditable.
+          mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells
+          mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/ui
+          mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/messenger
           install -D TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBadgesActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
@@ -96,7 +102,9 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramQuestionsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramQuestionsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java
+          mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/messenger
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
+          test -s upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
 
           # Overlay every committed Vgram*.java file while preserving its source-tree path.
           # This includes UI and messenger packages and prevents clean-upstream builds from
@@ -543,10 +551,12 @@ jobs:
           if missing_drawables:
               raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
           print("All compatibility drawables needed by the build are present.")
-          for source_name in ["VgramTheme.java", "VgramBaseActivity.java", "VgramSupportActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramBadgeSync.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]:
-              source_root = "org/telegram/messenger" if source_name == "VgramBadgeSync.java" else "org/telegram/ui"
-    if not (Path("TMessagesProj/src/main/java") / source_root / source_name).is_file():
-                  raise SystemExit("VGRAM screen source missing: " + source_name)
+          ui_sources = ["VgramTheme.java", "VgramBaseActivity.java", "VgramSupportActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]
+          for source_name in ui_sources:
+              if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
+                  raise SystemExit("VGRAM UI source missing: " + source_name)
+          if not (Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java")).is_file():
+              raise SystemExit("VGRAM messenger source missing: VgramBadgeSync.java")
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
           if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
               raise SystemExit("VGRAM Android manifest integration incomplete")
