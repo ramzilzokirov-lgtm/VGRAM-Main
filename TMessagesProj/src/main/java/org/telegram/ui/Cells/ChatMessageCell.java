@@ -18918,7 +18918,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             long vgramSenderId = currentUser != null ? currentUser.id : (currentChat != null ? currentChat.id : 0L);
             if (vgramSenderId > 0 && !messageObject.isOutOwner()) {
                 VgramBadgeSync.requestRefresh(getContext(), vgramSenderId, this::invalidate);
-                nameStringFinal = VgramBadgeSync.withBadges(getContext(), vgramSenderId, nameStringFinal);
+                if (VgramBadgeSync.hasBadge(getContext(), vgramSenderId)
+                        || VgramBadgeSync.isVerified(getContext(), vgramSenderId)) {
+                    nameStringFinal = VgramBadgeSync.withBadges(getContext(), vgramSenderId, nameStringFinal);
+                }
             }
             try {
                 nameStringFinal = Emoji.replaceEmoji(nameStringFinal, Theme.chat_namePaint.getFontMetricsInt(), false);
