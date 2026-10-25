@@ -3,13 +3,7 @@ package org.telegram.ui;
 import android.content.Intent;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Icon;
-import android.os.Build;
 import android.graphics.Color;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,11 +12,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.InputStream;
 
 public class VgramSettingsActivity extends VgramBaseActivity {
     private static final int PICK_PROFILE_BACKGROUND = 741;
-    private static final int PICK_CUSTOM_ICON = 742;
     private final int[] colors = { 0xffc5b878, 0xffa8a0c7, 0xff7eaaa5, 0xffbd858d };
     private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
@@ -81,8 +73,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
             iconGrid.addView(line);
         }
         icons.addView(iconGrid);
-        addButton(icons, "Своя картинка → ярлык", this::chooseCustomIcon);
-        TextView note = label("Своя картинка создаёт отдельный ярлык на рабочем столе. Основная иконка приложения не меняется. Поддержка зависит от launcher.", 12, 0xffb9bbc1, false);
+        TextView note = label("Выбор заменяет системную иконку установленного приложения. Дополнительные ярлыки не создаются.", 12, 0xffb9bbc1, false);
         note.setPadding(dp(2), dp(8), dp(2), dp(2));
         icons.addView(note);
         addToggle("Мягкие анимации", "Небольшие анимации на элементах VGRAM.", "animations", true);
@@ -136,7 +127,6 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
-        if (requestCode == PICK_CUSTOM_ICON) { createCustomShortcut(uri); return; }
         if (requestCode != PICK_PROFILE_BACKGROUND) return;
         try {
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -150,61 +140,24 @@ public class VgramSettingsActivity extends VgramBaseActivity {
 
 
     private void applyLauncherIcon(int index) {
+        if (index < 1 || index > 10) return;
         PackageManager pm = getPackageManager();
-        ComponentName defaultAlias = new ComponentName(this, "org.telegram.messenger.DefaultIcon");
+        ComponentName fallback = new ComponentName(this, "org.telegram.messenger.DefaultIcon");
+        ComponentName selected = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", index));
+        ComponentName[] aliases = new ComponentName[10];
+        for (int i=1;i<=10;i++) aliases[i-1] = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", i));
         try {
-            ComponentName chosen = new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", index));
-            pm.setComponentEnabledSetting(chosen, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-            for (int i = 1; i <= 10; i++) if (i != index)
-                pm.setComponentEnabledSetting(new ComponentName(this, String.format(java.util.Locale.US, "org.telegram.messenger.VgramIcon%02d", i)), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-            for (String old : new String[]{"VintageIcon", "AquaIcon", "PremiumIcon", "TurboIcon", "NoxIcon"})
-                pm.setComponentEnabledSetting(new ComponentName(this, "org.telegram.messenger." + old), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-            pm.setComponentEnabledSetting(defaultAlias, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-            getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("launcher_icon", index).apply();
-            Toast.makeText(this, "Иконка VGRAM изменена", Toast.LENGTH_SHORT).show();
+            for (ComponentName alias : aliases) pm.setComponentEnabledSetting(alias, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+            pm.setComponentEnabledSetting(fallback, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+            for (String old : new String[]{"VintageIcon","AquaIcon","PremiumIcon","TurboIcon","NoxIcon"})
+                pm.setComponentEnabledSetting(new ComponentName(this,"org.telegram.messenger."+old),PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP);
+            pm.setComponentEnabledSetting(selected, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+            getSharedPreferences("vgram_ui",MODE_PRIVATE).edit().putInt("launcher_icon",index).apply();
+            Toast.makeText(this,"Иконка VGRAM изменена",Toast.LENGTH_SHORT).show();
             recreate();
         } catch (Exception error) {
-            try { pm.setComponentEnabledSetting(defaultAlias, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP); } catch (Exception ignored) { }
-            Toast.makeText(this, "Не удалось сменить иконку; основная восстановлена", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void chooseCustomIcon() {
-        Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        pick.addCategory(Intent.CATEGORY_OPENABLE);
-        pick.setType("image/*");
-        try { startActivityForResult(pick, PICK_CUSTOM_ICON); }
-        catch (Exception error) { Toast.makeText(this, "Не удалось открыть выбор изображения", Toast.LENGTH_LONG).show(); }
-    }
-
-    private void createCustomShortcut(Uri uri) {
-        if (Build.VERSION.SDK_INT < 26) {
-            Toast.makeText(this, "Ярлыки с собственной иконкой требуют Android 8.0 или новее.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        ShortcutManager manager = getSystemService(ShortcutManager.class);
-        if (manager == null || !manager.isRequestPinShortcutSupported()) {
-            Toast.makeText(this, "Ваш launcher не поддерживает закрепление ярлыков.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        try (InputStream input = getContentResolver().openInputStream(uri)) {
-            if (input == null) throw new IllegalStateException("empty image");
-            Bitmap source = BitmapFactory.decodeStream(input);
-            if (source == null) throw new IllegalArgumentException("invalid image");
-            int side = Math.min(source.getWidth(), source.getHeight());
-            Bitmap square = Bitmap.createBitmap(source, (source.getWidth()-side)/2, (source.getHeight()-side)/2, side, side);
-            Bitmap scaled = Bitmap.createScaledBitmap(square, 512, 512, true);
-            if (square != source) square.recycle();
-            if (source != scaled) source.recycle();
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(this, "vgram_custom_icon_" + System.currentTimeMillis())
-                .setShortLabel("VGRAM")
-                .setIcon(Icon.createWithBitmap(scaled))
-                .setIntent(new Intent(this, LaunchActivity.class).setAction(Intent.ACTION_VIEW))
-                .build();
-            manager.requestPinShortcut(shortcut, null);
-            Toast.makeText(this, "Подтверди добавление ярлыка на рабочем столе.", Toast.LENGTH_LONG).show();
-        } catch (Exception error) {
-            Toast.makeText(this, "Не удалось создать ярлык из этой картинки.", Toast.LENGTH_LONG).show();
+            try { for(ComponentName alias:aliases) pm.setComponentEnabledSetting(alias,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP); pm.setComponentEnabledSetting(fallback,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP); } catch(Exception ignored) {}
+            Toast.makeText(this,"Не удалось сменить иконку; восстановлена основная иконка VGRAM",Toast.LENGTH_LONG).show();
         }
     }
 

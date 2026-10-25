@@ -751,22 +751,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(19, 0xFFC7B96F, 0xFF8E8247, R.drawable.settings_policy, "Конфиденциальность VGRAM"));
         items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
         items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
-
-        if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION) && SharedSettings.experimentalSettingsAllowed.get()) {
-            items.add(UItem.asShadow(null));
-            items.add(UItem.asHeader("Experimental"));
-            items.add(SettingCell.Factory.of(24, 0xFFF45255, 0xFFDF3955, 0, getString(R.string.RoundVideoSettings)));
-            items.add(SettingCell.Factory.of(26, 0xFF55CA47, 0xFF27B434, 0, getString(R.string.AudioRecorderSettings)));
-        }
-
-        if ((BuildVars.DEBUG_VERSION || BuildVars.DEBUG_PRIVATE_VERSION)
-                && (BuildVars.LOGS_ENABLED || BuildVars.DEBUG_PRIVATE_VERSION)) {
-            items.add(UItem.asShadow(null));
-            items.add(UItem.asHeader(getString(R.string.SettingsDebug)));
-            items.add(SettingCell.Factory.of(20, 0xFF55CA47, 0xFF27B434, 0, getString(R.string.DebugSendLogs)));
-            items.add(SettingCell.Factory.of(21, 0xFF55CA47, 0xFF27B434, 0, getString(R.string.DebugSendLastLogs)));
-            items.add(SettingCell.Factory.of(22, 0xFFF45255, 0xFFDF3955, 0, getString(R.string.DebugClearLogs)));
-        }
+        items.add(SettingCell.Factory.of(32, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, "Аудиоплеер VGRAM", "Потоковое воспроизведение по прямой ссылке"));
 
         items.add(UItem.asCustomShadow(versionView));
     }
@@ -875,7 +860,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
 
             case 17:
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramSupportActivity.class));
+                MessagesController.getInstance(currentAccount).openByUserName("Money_fun", this, 1);
                 break;
             case 18:
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramQuestionsActivity.class));
@@ -884,26 +869,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramPrivacyActivity.class));
                 break;
 
-            case 20:
-                ProfileActivity.sendLogs(getParentActivity(), false);
-                break;
-            case 21:
-                ProfileActivity.sendLogs(getParentActivity(), true);
-                break;
-            case 22:
-                FileLog.cleanupLogs();
-                break;
             case 23:
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramFeaturesActivity.class));
                 break;
-            case 24: {
-                presentFragment(new RoundVideoSettingsActivity());
-                break;
-            }
-            case 26: {
-                presentFragment(new AudioRecorderSettingsActivity());
-                break;
-            }
             case 27: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramSettingsActivity.class));
                 break;
@@ -922,6 +890,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             }
             case 31: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class));
+                break;
+            }
+            case 32: {
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramAudioPlayerActivity.class));
                 break;
             }
         }

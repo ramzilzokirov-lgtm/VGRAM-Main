@@ -557,8 +557,10 @@ jobs:
                   raise SystemExit("VGRAM UI source missing: " + source_name)
           if not (Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java")).is_file():
               raise SystemExit("VGRAM messenger source missing: VgramBadgeSync.java")
+          if not (Path("TMessagesProj/src/main/java/org/telegram/ui/VgramAudioPlayerActivity.java")).is_file():
+              raise SystemExit("VGRAM UI source missing: VgramAudioPlayerActivity.java")
           manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
-          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "vgram_launcher_icon"]):
+          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "VgramAudioPlayerActivity", "vgram_launcher_icon"]):
               raise SystemExit("VGRAM Android manifest integration incomplete")
           api_diagnostics = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java")
           if not api_diagnostics.is_file():
