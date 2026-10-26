@@ -33,13 +33,10 @@ public final class VgramSoundLab {
         @Override public void run() {
             if (!enabled || preset != Preset.SPATIAL_8D || player == null || !player.isPlaying()) return;
             attachEffectsIfNeeded();
-            if (virtualizer != null) {
-                double phase = (System.currentTimeMillis() - spatialStartMs) / 1250.0;
-                int strength = (int) (350 + 350 * (0.5 + 0.5 * Math.sin(phase)));
-                try { virtualizer.setStrength((short) Math.max(0, Math.min(1000, strength))); }
-                catch (RuntimeException error) { Log.w(TAG, "Unable to update spatial effect", error); }
-            }
-            handler.postDelayed(this, 60L);
+            double phase = (System.currentTimeMillis() - spatialStartMs) / 2500.0;
+            float panPhase = (float) (0.5 + 0.5 * Math.sin(phase));
+            if (stereoPanProcessor != null) stereoPanProcessor.setPhase(panPhase);
+            handler.postDelayed(this, 50L);
         }
     };
 
@@ -128,7 +125,8 @@ public final class VgramSoundLab {
                     player.setPlaybackParameters(PlaybackParameters.DEFAULT);
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, false);
-                    setEnabled(virtualizer, true);
+                    setEnabled(virtualizer, false);
+                    if (stereoPanProcessor != null) stereoPanProcessor.resetPan();
                     spatialStartMs = System.currentTimeMillis();
                     handler.post(spatialSweep);
                     break;
@@ -138,6 +136,7 @@ public final class VgramSoundLab {
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, false);
                     setEnabled(virtualizer, false);
+                    if (stereoPanProcessor != null) stereoPanProcessor.resetPan();
                     break;
             }
         } catch (RuntimeException error) {
