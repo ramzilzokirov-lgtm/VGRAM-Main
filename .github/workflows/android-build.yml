@@ -4,7 +4,6 @@ name: VGRAM Android Build
 on:
   push:
     branches: [main, vgram-dev]
-  workflow_dispatch:
     paths:
       - ".github/workflows/android-build.yml"
       - "README.md"
@@ -33,6 +32,8 @@ on:
       - "TMessagesProj/build.gradle"
       - "TMessagesProj/src/main/res/drawable/vgram_*.xml"
       - "TMessagesProj/src/main/res/values/strings.xml"
+
+  workflow_dispatch:
 
 permissions:
   contents: write
