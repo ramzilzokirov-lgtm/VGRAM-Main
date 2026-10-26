@@ -3,7 +3,6 @@ package org.telegram.ui.VgramModules.Audio;
 import android.content.Context;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.PresetReverb;
-import android.media.audiofx.Virtualizer;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -23,7 +22,6 @@ public final class VgramSoundLab {
     private int attachedSessionId = -1;
     private BassBoost bassBoost;
     private PresetReverb reverb;
-    private Virtualizer virtualizer;
     private VgramStereoPanAudioProcessor stereoPanProcessor;
     private Preset preset = Preset.NORMAL;
     private int bassStrength = 650;
@@ -109,7 +107,6 @@ public final class VgramSoundLab {
                     player.setPlaybackParameters(PlaybackParameters.DEFAULT);
                     setEnabled(bassBoost, true);
                     setEnabled(reverb, false);
-                    setEnabled(virtualizer, false);
                     if (bassBoost != null) bassBoost.setStrength((short) bassStrength);
                     break;
                 case SLOWED_REVERB:
@@ -158,7 +155,6 @@ public final class VgramSoundLab {
         attachedSessionId = sessionId;
         try { bassBoost = new BassBoost(0, sessionId); } catch (Exception error) { Log.w(TAG, "BassBoost unavailable", error); }
         try { reverb = new PresetReverb(0, sessionId); } catch (Exception error) { Log.w(TAG, "PresetReverb unavailable", error); }
-        try { virtualizer = new Virtualizer(0, sessionId); } catch (Exception error) { Log.w(TAG, "Virtualizer unavailable", error); }
         if (bassBoost != null) try { bassBoost.setStrength((short) bassStrength); } catch (RuntimeException ignored) { }
     }
 
@@ -171,7 +167,6 @@ public final class VgramSoundLab {
         handler.removeCallbacks(spatialSweep);
         release(bassBoost); bassBoost = null;
         release(reverb); reverb = null;
-        release(virtualizer); virtualizer = null;
         attachedSessionId = -1;
     }
 
