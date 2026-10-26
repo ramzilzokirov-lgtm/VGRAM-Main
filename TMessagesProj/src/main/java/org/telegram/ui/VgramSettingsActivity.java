@@ -12,7 +12,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.EditText;
-import android.widget.SeekBar;\nimport org.telegram.ui.VgramModules.Audio.VgramSoundLab;
+import android.widget.SeekBar;
+import org.telegram.ui.VgramModules.Audio.VgramSoundLab;
 
 import android.widget.Toast;
 
