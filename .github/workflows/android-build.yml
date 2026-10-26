@@ -389,7 +389,8 @@ jobs:
                   launch_source, count=1
               )
               if launch_count != 1:
-                  raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")              launch.write_text(launch_source, encoding="utf-8")
+                  raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")
+              launch.write_text(launch_source, encoding="utf-8")
           # Apply VGRAM colors before Telegram constructs the phone-number / login screens.
           # LaunchActivity alone is too late for some login fragments restored during startup.
           login_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
