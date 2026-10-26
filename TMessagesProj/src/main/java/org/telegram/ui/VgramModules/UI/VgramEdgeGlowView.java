@@ -7,6 +7,9 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.SystemClock;
+import android.os.Build;
+import android.view.WindowInsets;
+import android.view.RoundedCorner;
 import android.view.View;
 
 import org.telegram.ui.VgramTheme;
@@ -28,11 +31,13 @@ public final class VgramEdgeGlowView extends View implements SharedPreferences.O
     private long pulseUntil;
     private long animationStart = SystemClock.uptimeMillis();
     private float density;
+    private float cornerRadius;
     private boolean attached;
 
     public VgramEdgeGlowView(Context context) {
         super(context);
         density = getResources().getDisplayMetrics().density;
+        cornerRadius = dp(28);
         preferences = context.getApplicationContext().getSharedPreferences("vgram_ui", Context.MODE_PRIVATE);
         mode = preferences.getInt("edge_glow_mode", MODE_OFF);
         accent = VgramTheme.accent(context);
@@ -86,6 +91,23 @@ public final class VgramEdgeGlowView extends View implements SharedPreferences.O
         accent = VgramTheme.accent(getContext());
     }
 
+    @Override public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            float radius = 0;
+            RoundedCorner[] corners = {
+                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_TOP_LEFT),
+                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_TOP_RIGHT),
+                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_BOTTOM_LEFT),
+                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_BOTTOM_RIGHT)
+            };
+            for (RoundedCorner corner : corners) {
+                if (corner != null) radius = Math.max(radius, corner.getRadius());
+            }
+            if (radius > 0) cornerRadius = radius;
+        }
+        return super.onApplyWindowInsets(insets);
+    }
+
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mode == MODE_OFF || getWidth() <= 0 || getHeight() <= 0) return;
@@ -99,7 +121,7 @@ public final class VgramEdgeGlowView extends View implements SharedPreferences.O
         int color = (alpha << 24) | (accent & 0x00ffffff);
         bounds.set(dp(8), dp(8), getWidth() - dp(8), getHeight() - dp(8));
         edgePath.reset();
-        float corner = Math.min(dp(32), Math.min(bounds.width(), bounds.height()) / 5f);
+        float corner = Math.min(cornerRadius, Math.min(bounds.width(), bounds.height()) / 5f);
         edgePath.addRoundRect(bounds, corner, corner, Path.Direction.CW);
         paint.setColor(color);
         paint.setStrokeWidth(dp(2.4f + (pulsing ? 1.2f : 0f)));
