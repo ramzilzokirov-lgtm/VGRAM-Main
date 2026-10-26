@@ -14,4 +14,8 @@ final class VgramGlassDrawable {
     static void drawPremiumRing(Canvas canvas, RectF bounds, float phase, float strokeWidth) {
         org.telegram.ui.VgramGlassDrawable.drawPremiumRing(canvas, bounds, phase, strokeWidth);
     }
+
+    static void drawPremiumRing(Canvas canvas, float centerX, float centerY, float size, float phase, float strokeWidth) {
+        org.telegram.ui.VgramGlassDrawable.drawPremiumRing(canvas, centerX, centerY, size, phase, strokeWidth);
+    }
 }
