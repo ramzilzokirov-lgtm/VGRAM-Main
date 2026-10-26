@@ -172,7 +172,6 @@ public class ScrollSlidingTextTabStrip extends HorizontalScrollView implements T
         setWillNotDraw(false);
         setPadding(dp(16), getPaddingTop(), dp(16), getPaddingBottom());
         setClipToPadding(false);
-        tabsContainer.setClipToPadding(false);
 
         setHorizontalScrollBarEnabled(false);
         tabsContainer = new LinearLayout(context) {
