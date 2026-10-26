@@ -16,6 +16,8 @@ import android.widget.SeekBar;
 import org.telegram.ui.VgramModules.Audio.VgramSoundLab;
 import org.telegram.ui.VgramModules.UI.VgramEdgeGlowView;
 import org.telegram.ui.VgramModules.UI.VgramGlassStyle;
+import org.telegram.ui.VgramModules.Privacy.VgramGhostController;
+import org.telegram.ui.VgramModules.Privacy.VgramVaultManager;
 
 import android.widget.Toast;
 
@@ -34,6 +36,17 @@ public class VgramSettingsActivity extends VgramBaseActivity {
     private void build() {
         setupScreen("PERSONALIZATION", "VGRAM Studio", "Настрой интерфейс под себя. Изменения сохраняются на устройстве.");
         card("DARK LIQUID GLASS", "Графитовые поверхности, приглушённые цвета, тонкие контуры и собственные элементы управления.");
+
+        LinearLayout privacy = card("ПРИВАТНОСТЬ И СТЕЛС", "Локальные переключатели приватности VGRAM. Сетевые эффекты применяются только там, где политика вызвана сетевым слоем.");
+        addPrivacyToggle(privacy, "Phantom Ghost", "Подавление исходящих read-history запросов.", VgramGhostController.PHANTOM_GHOST);
+        addPrivacyToggle(privacy, "Ghost Typing", "Не отправлять статус набора текста через setTyping.", VgramGhostController.GHOST_TYPING);
+        addPrivacyToggle(privacy, "Incognito Media", "Не отправлять отчёты read-message-contents.", VgramGhostController.INCOGNITO_MEDIA);
+        addPrivacyToggle(privacy, "Freeze Last Seen", "Не отправлять запрос установки статуса online.", VgramGhostController.FREEZE_LAST_SEEN);
+        addButton(privacy, "Заблокировать сейф", () -> {
+            VgramVaultManager.lock(this);
+            Toast.makeText(this, "Сейф VGRAM заблокирован", Toast.LENGTH_SHORT).show();
+        });
+        addButton(privacy, "Настроить PIN сейфа", () -> showVaultPinSetup());
 
         LinearLayout palette = card("Акцент интерфейса", "Цвет выделения применяется к основным цветам Telegram и экранам VGRAM.");
         LinearLayout swatches = new LinearLayout(this);
@@ -355,6 +368,57 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         }
     }
 
+
+    private void addPrivacyToggle(LinearLayout parent, String title, String description, String key) {
+        LinearLayout item = card(title, description);
+        boolean enabled = VgramGhostController.isEnabled(this, key);
+        TextView state = label(enabled ? "ВКЛ  ●" : "ВЫКЛ  ○", 12, accent(), true);
+        state.setGravity(Gravity.CENTER);
+        state.setPadding(dp(12), dp(10), dp(12), dp(10));
+        state.setBackground(panel(0xff292c31, enabled ? accent() : 0xff454951, 14));
+        item.addView(state, margin(0, dp(10), 0, 0));
+        item.setOnClickListener(v -> {
+            VgramGhostController.setEnabled(this, key, !VgramGhostController.isEnabled(this, key));
+            recreate();
+        });
+        state.setOnClickListener(v -> item.performClick());
+        parent.addView(item);
+    }
+
+    private void showVaultPinSetup() {
+        LinearLayout fields = new LinearLayout(this);
+        fields.setOrientation(LinearLayout.VERTICAL);
+        EditText primary = new EditText(this);
+        primary.setSingleLine(true);
+        primary.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        primary.setHint("Основной PIN (4–12 цифр)");
+        EditText decoy = new EditText(this);
+        decoy.setSingleLine(true);
+        decoy.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        decoy.setHint("Decoy PIN (4–12 цифр)");
+        fields.addView(primary);
+        fields.addView(decoy);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("PIN сейфа VGRAM")
+            .setMessage("PIN-коды хранятся как PBKDF2-хеши. Decoy PIN открывает отдельное пустое состояние; фильтрация чатов должна быть подключена к списку диалогов.")
+            .setView(fields)
+            .setNegativeButton("Отмена", null)
+            .setPositiveButton("Сохранить", (dialog, which) -> {
+                char[] p = primary.getText().toString().toCharArray();
+                char[] d = decoy.getText().toString().toCharArray();
+                try {
+                    VgramVaultManager.configurePins(this, p, d);
+                    Toast.makeText(this, "PIN сейфа сохранены", Toast.LENGTH_LONG).show();
+                } catch (Exception error) {
+                    Toast.makeText(this, error.getMessage() == null ? "Не удалось сохранить PIN" : error.getMessage(), Toast.LENGTH_LONG).show();
+                } finally {
+                    java.util.Arrays.fill(p, '\\0');
+                    java.util.Arrays.fill(d, '\\0');
+                    primary.setText("");
+                    decoy.setText("");
+                }
+            }).show();
+    }
 
     private void applyLauncherIcon(int index) {
         if (index < 1 || index > 10) return;
