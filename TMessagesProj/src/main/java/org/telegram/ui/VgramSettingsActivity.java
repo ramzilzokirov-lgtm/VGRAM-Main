@@ -20,6 +20,7 @@ import android.widget.Toast;
 public class VgramSettingsActivity extends VgramBaseActivity {
     private static final int PICK_PROFILE_BACKGROUND = 741;
     private static final int CROP_PROFILE_BACKGROUND = 742;
+    private static final int REQUEST_HAPTIC_AUDIO_PERMISSION = 743;
     private final int[] colors = { 0xffc5b878, 0xffa8a0c7, 0xff7eaaa5, 0xffbd858d };
     private final String[] names = { "ЗОЛОТО", "ЛАВАНДА", "МЯТА", "РОЗОВЫЙ" };
 
@@ -182,6 +183,11 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         soundLab.addView(hapticToggle, margin(0, dp(8), 0, 0));
         hapticToggle.setOnClickListener(v -> {
             boolean next = !getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("haptic_bass", false);
+            if (next && android.os.Build.VERSION.SDK_INT >= 23
+                    && checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] { android.Manifest.permission.RECORD_AUDIO }, REQUEST_HAPTIC_AUDIO_PERMISSION);
+                return;
+            }
             getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("haptic_bass", next).apply();
             VgramAudioService.setHapticBassEnabled(getApplicationContext(), next);
             recreate();
@@ -264,6 +270,20 @@ public class VgramSettingsActivity extends VgramBaseActivity {
           android.net.Uri.parse("https://github.com/ramzilzokirov-lgtm/VGRAM-Main/blob/main/PLUGIN_API.md")));
   } catch (Exception ignored) { }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_HAPTIC_AUDIO_PERMISSION) return;
+        boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (granted) {
+            getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("haptic_bass", true).apply();
+            VgramAudioService.setHapticBassEnabled(getApplicationContext(), true);
+            recreate();
+        } else {
+            Toast.makeText(this, "Для анализа баса Visualizer требуется разрешение на захват аудио.", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
