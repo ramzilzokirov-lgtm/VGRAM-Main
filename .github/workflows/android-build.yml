@@ -439,16 +439,7 @@ jobs:
           # Never mutate this integration during CI; fail with an actionable message if absent.
           profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
           profile_source = profile_activity.read_text(encoding="utf-8")
-          required_banner_code = [
-              "Prefer the owner's local image",
-              "/users/telegram/",
-              "vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP)",
-              "canvas.clipRect(0, 0, getWidth(), Math.max(0, Math.min(getHeight(), headerBottom)))",
-          ]
-          missing_banner_code = [item for item in required_banner_code if item not in profile_source]
-          if missing_banner_code:
-              raise SystemExit("Committed VGRAM profile banner source is incomplete: " + ", ".join(missing_banner_code))
-          print("Using committed VGRAM profile banner implementation.")
+          print("VGRAM profile banner overlay is intentionally disabled; checking badge integration only.")
           print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
           print("Committed extended VGRAM palette is ready.")
 
@@ -577,11 +568,13 @@ jobs:
                   raise SystemExit("VGRAM Material 3 activity theme missing")
           print("VGRAM custom screens, API diagnostics and Material 3 dependencies are registered.")
           profile_source = Path("TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java").read_text(encoding="utf-8")
-          required_profile_hooks = ["Prefer the owner's local image", "/users/telegram/", "vgramBannerImage.setScaleType(ImageView.ScaleType.CENTER_CROP)", "VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
+          required_profile_hooks = ["VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
           missing_profile_hooks = [hook for hook in required_profile_hooks if hook not in profile_source]
           if missing_profile_hooks:
-              raise SystemExit("VGRAM profile integration incomplete: " + ", ".join(missing_profile_hooks))
-          print("Server profile banner layer and server-synced badge name hook are present.")
+              raise SystemExit("VGRAM profile badge integration incomplete: " + ", ".join(missing_profile_hooks))
+          if "vgramBannerLayer" in profile_source or "vgramBannerImage" in profile_source:
+              raise SystemExit("Unexpected VGRAM profile banner overlay remains in ProfileActivity.java")
+          print("Profile badge hook is present and profile banner overlays are absent.")
           PY
 
       - name: Prepare stable VGRAM signing key
