@@ -5252,25 +5252,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         topView = new TopView(context);
         topView.setBackgroundColorId(peerColor, false);
         topView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
-        TextView vgramVerificationLabel = new TextView(context);
-        vgramVerificationLabel.setGravity(Gravity.CENTER);
-        vgramVerificationLabel.setTextColor(0xFFFFFFFF);
-        vgramVerificationLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        vgramVerificationLabel.setTypeface(AndroidUtilities.bold());
-        vgramVerificationLabel.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[] {0xFF287DE0, 0xFF2466C5}));
-        vgramVerificationLabel.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(3), AndroidUtilities.dp(10), AndroidUtilities.dp(3));
-        vgramVerificationLabel.setVisibility(View.GONE);
-        topView.addView(vgramVerificationLabel, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 24, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 12, 164, 12, 0));
-        // VGRAM verification is independent of the profile title. Telegram ID is a list row below contact details.
-        if (userId > 0) {
-            VgramBadgeSync.requestRefresh(context, userId, () -> {
-                String role = VgramBadgeSync.getVerificationLabel(context, userId);
-                if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
-                else vgramVerificationLabel.setVisibility(View.GONE);
-            });
-            String role = VgramBadgeSync.getVerificationLabel(context, userId);
-            if (!TextUtils.isEmpty(role)) { vgramVerificationLabel.setText(role); vgramVerificationLabel.setVisibility(View.VISIBLE); }
-        }
+        // VGRAM verification is rendered inline with the profile name; do not overlay a duplicate banner.
         // The profile header intentionally has no custom banner overlay; keep ActionBar clean.
         frameLayout.addView(topView);
         contentView.blurBehindViews.add(topView);

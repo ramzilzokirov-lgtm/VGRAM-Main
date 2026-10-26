@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -24,6 +25,12 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
     private VgramVisualizerView wave;
     private VgramPlaybackManager playback;
     private boolean draggingProgress;
+
+    private static void detachFromParent(View view) {
+        if (view != null && view.getParent() instanceof ViewGroup) {
+            ((ViewGroup) view.getParent()).removeView(view);
+        }
+    }
 
     private final VgramPlaybackManager.PlaybackListener playbackListener = new VgramPlaybackManager.PlaybackListener() {
         @Override public void onTrackChanged(VgramPlaybackManager.VgramTrack track) {
@@ -65,11 +72,14 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         setupScreen("VGRAM AUDIO", "Потоковый плеер", "Воспроизведение продолжается при закрытии этого экрана.");
         LinearLayout c = card("Сейчас играет", "Вставьте прямую HTTP(S)-ссылку на аудиофайл или поток.");
         trackTitle = label("Ничего не воспроизводится", 14, 0xfff1f0eb, true);
+        detachFromParent(trackTitle);
         c.addView(trackTitle, margin(0, dp(2), 0, dp(8)));
         wave = new VgramVisualizerView(this);
+        detachFromParent(wave);
         c.addView(wave, margin(0, dp(8), 0, dp(10)));
         progress = new SeekBar(this);
         progress.setMax(1);
+        detachFromParent(progress);
         c.addView(progress, margin(0, 0, 0, dp(2)));
         LinearLayout timeRow = new LinearLayout(this);
         timeRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -79,6 +89,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         timeRow.addView(elapsedTime, new LinearLayout.LayoutParams(0, -2, 1));
         totalTime.setGravity(Gravity.RIGHT);
         timeRow.addView(totalTime, new LinearLayout.LayoutParams(0, -2, 1));
+        detachFromParent(timeRow);
         c.addView(timeRow, margin(0, 0, 0, dp(8)));
         progress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) { if (fromUser && elapsedTime != null) elapsedTime.setText(formatTime(value)); }
@@ -96,21 +107,26 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         urlField.setTextSize(14);
         urlField.setPadding(dp(13), dp(12), dp(13), dp(12));
         urlField.setBackground(panel(0xff202328, 0x667faaa5, 14));
+        detachFromParent(urlField);
         c.addView(urlField, margin(0, dp(4), 0, dp(10)));
         status = label("Готов к воспроизведению", 12, 0xffb9bbc1, false);
+        detachFromParent(status);
         c.addView(status, margin(0, 0, 0, dp(10)));
         playButton = label("▶  Воспроизвести поток", 14, 0xff17191d, true);
         playButton.setGravity(Gravity.CENTER);
         playButton.setPadding(dp(15), dp(14), dp(15), dp(14));
         playButton.setBackground(panel(accent(), 0x99ffffff, 18));
+        detachFromParent(playButton);
         c.addView(playButton, new LinearLayout.LayoutParams(-1, -2));
         playButton.setOnClickListener(v -> onPlayPressed());
         body.addView(c, margin(0, 0, 0, dp(12)));
 
         LinearLayout emptyCard = card("Поиск аудио", "Введите прямую ссылку на аудиопоток и нажмите «Повторить поиск».");
         emptyTitle = label("Ничего не найдено", 15, 0xfff1f0eb, true);
+        detachFromParent(emptyTitle);
         emptyCard.addView(emptyTitle, margin(0, 0, 0, dp(4)));
         emptyMessage = label("Поиск выполняется по прямым HTTP(S)-ссылкам.", 12, 0xffb9bbc1, false);
+        detachFromParent(emptyMessage);
         emptyCard.addView(emptyMessage, margin(0, 0, 0, dp(10)));
         TextView retry = label("↻  Повторить поиск", 14, 0xff17191d, true);
         retry.setGravity(Gravity.CENTER);
@@ -118,6 +134,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         retry.setBackground(panel(accent(), 0x99ffffff, 16));
         retry.setOnClickListener(v -> searchAndPlay());
         VgramMotion.applySpringTouch(retry);
+        detachFromParent(retry);
         emptyCard.addView(retry, new LinearLayout.LayoutParams(-1, -2));
         body.addView(emptyCard, margin(0, 0, 0, dp(12)));
         body.addView(card("Поддержка источников", "Плеер принимает прямые HTTP(S)-ссылки на аудиопотоки. Страницы SoundCloud и Spotify не являются прямыми аудиопотоками."), margin(0, 0, 0, dp(12)));

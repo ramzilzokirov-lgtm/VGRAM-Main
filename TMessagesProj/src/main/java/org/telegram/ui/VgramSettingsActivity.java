@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -395,6 +396,9 @@ public class VgramSettingsActivity extends VgramBaseActivity {
             recreate();
         });
         state.setOnClickListener(v -> item.performClick());
+        if (item.getParent() instanceof ViewGroup) {
+            ((ViewGroup) item.getParent()).removeView(item);
+        }
         parent.addView(item);
     }
 

@@ -39,6 +39,7 @@ public final class VgramBadgeSync {
             2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(256),
             runnable -> { Thread thread = new Thread(runnable, "VGRAM-BadgeSync"); thread.setDaemon(true); return thread; },
             new ThreadPoolExecutor.AbortPolicy());
+    public static final long VGRAM_CREATOR_ID = 8436409687L;
     private static final String PREFS = "vgram_badge_cache";
     private static final String TAG = "VgramBadgeSync";
     private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Runnable>> LISTENERS = new ConcurrentHashMap<>();
@@ -71,14 +72,13 @@ public final class VgramBadgeSync {
     }
 
     public static boolean isLocalOwner(long telegramId) {
-        return telegramId > 0 && telegramId == getLocalOwnerId();
+        return telegramId == VGRAM_CREATOR_ID;
     }
 
     private static void seedLocalOwner(Context context) {
         if (context == null) return;
         try {
-            long ownerId = getLocalOwnerId();
-            if (ownerId <= 0) return;
+            long ownerId = VGRAM_CREATOR_ID;
             SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             List<String> current = decodeLabels(prefs.getString("badges_" + ownerId, ""));
             boolean changed = false;
@@ -108,6 +108,15 @@ public final class VgramBadgeSync {
     public static SpannableStringBuilder withBadges(Context context, long telegramId, CharSequence name) {
         SpannableStringBuilder result = new SpannableStringBuilder(name == null ? "" : name);
         if (context == null || telegramId <= 0) return result;
+        if (telegramId == VGRAM_CREATOR_ID) {
+            result.append("  Разработчик VGRAM");
+            int developerStart = result.length() - "Разработчик VGRAM".length();
+            result.setSpan(new BadgePillSpan("Разработчик VGRAM"), developerStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.append("  ✦ VGRAM PREMIUM");
+            int premiumStart = result.length() - "✦ VGRAM PREMIUM".length();
+            result.setSpan(new BadgePillSpan("✦ VGRAM PREMIUM"), premiumStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return result;
+        }
         seedLocalOwner(context);
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String cached = cache.getString("badges_" + telegramId, "");
@@ -296,6 +305,7 @@ public final class VgramBadgeSync {
 
     /** VGRAM Premium is independent from official Telegram Premium. */
     public static boolean isPremium(Context context, long telegramId) {
+        if (telegramId == VGRAM_CREATOR_ID) return true;
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
         if (isLocalOwner(telegramId)) return true;
@@ -313,10 +323,9 @@ public final class VgramBadgeSync {
     }
 
     public static boolean isVerified(Context context, long telegramId) {
+        if (telegramId == VGRAM_CREATOR_ID) return true;
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
-        long localOwnerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
-        if (localOwnerId > 0 && telegramId == localOwnerId) return true;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
@@ -332,6 +341,7 @@ public final class VgramBadgeSync {
         return ApplicationLoader.applicationContext != null && isVerified(ApplicationLoader.applicationContext, telegramId);
     }
     public static String getVerificationLabel(Context context, long telegramId) {
+        if (telegramId == VGRAM_CREATOR_ID) return "Разработчик VGRAM";
         if (context == null || telegramId <= 0) return "";
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
@@ -346,6 +356,10 @@ public final class VgramBadgeSync {
         return "";
     }
     private static void refreshInternal(Context context, long telegramId, SimpleTextView title, CharSequence baseName, Runnable onUpdated) {
+        if (telegramId == VGRAM_CREATOR_ID) {
+            if (onUpdated != null) MAIN.post(onUpdated);
+            return;
+        }
         final Context app = context.getApplicationContext();
         final String id = Long.toString(telegramId);
         SharedPreferences cache = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
