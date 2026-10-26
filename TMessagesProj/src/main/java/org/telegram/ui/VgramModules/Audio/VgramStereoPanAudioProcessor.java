@@ -31,6 +31,7 @@ public final class VgramStereoPanAudioProcessor extends BaseAudioProcessor {
     }
 
     @Override protected void onQueueInput(ByteBuffer inputBuffer) {
+        inputBuffer.order(ByteOrder.LITTLE_ENDIAN);
         int remaining = inputBuffer.remaining();
         ByteBuffer output = replaceOutputBuffer(remaining).order(ByteOrder.LITTLE_ENDIAN);
         float left = leftGain;
