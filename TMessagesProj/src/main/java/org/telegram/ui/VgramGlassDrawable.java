@@ -54,6 +54,12 @@ public final class VgramGlassDrawable {
         if (view != null && Build.VERSION.SDK_INT >= 31) view.setRenderEffect(null);
     }
 
+    public static void drawPremiumRing(Canvas canvas, float centerX, float centerY, float size, float phase, float strokeWidth) {
+        if (size <= 0f) return;
+        RING_BOUNDS.set(centerX - size / 2f, centerY - size / 2f, centerX + size / 2f, centerY + size / 2f);
+        drawPremiumRing(canvas, RING_BOUNDS, phase, strokeWidth);
+    }
+
     public static void drawPremiumRing(Canvas canvas, RectF bounds, float phase, float strokeWidth) {
         if (canvas == null || bounds == null || bounds.isEmpty()) return;
         RING_BOUNDS.set(bounds);
