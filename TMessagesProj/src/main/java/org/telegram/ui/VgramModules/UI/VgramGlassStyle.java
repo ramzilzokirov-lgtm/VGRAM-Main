@@ -17,13 +17,11 @@ public final class VgramGlassStyle {
     private VgramGlassStyle() { }
 
     public static int opacityPercent(Context context) {
-        return Math.max(20, Math.min(90, context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
-                .getInt("glass_bubble_opacity", 58)));
+        return VgramTheme.glassBubbleOpacity(context);
     }
 
     public static int bubbleColor(Context context, int baseColor) {
-        int alpha = Math.round(255f * opacityPercent(context) / 100f);
-        return Color.argb(alpha, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
+        return VgramTheme.glassBubbleColor(context, baseColor);
     }
 
     public static int edgeColor(Context context) {
