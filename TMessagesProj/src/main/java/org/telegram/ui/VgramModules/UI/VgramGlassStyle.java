@@ -31,6 +31,21 @@ public final class VgramGlassStyle {
         return Color.argb(150, Color.red(accent), Color.green(accent), Color.blue(accent));
     }
 
+    public static void drawDrawableWithGlass(Canvas canvas, Drawable drawable, Context context) {
+        if (canvas == null || drawable == null || context == null) return;
+        SharedPreferences preferences = context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE);
+        if (!preferences.getBoolean("glass", true)) {
+            drawable.draw(canvas);
+            return;
+        }
+        int originalAlpha = drawable.getAlpha();
+        int opacity = opacityPercent(context);
+        drawable.setAlpha(Math.round(originalAlpha * opacity / 100f));
+        drawable.draw(canvas);
+        drawable.setAlpha(originalAlpha);
+        drawDrawableBorder(canvas, drawable, context);
+    }
+
     public static void drawDrawableBorder(Canvas canvas, Drawable drawable, Context context) {
         if (canvas == null || drawable == null || context == null) return;
         SharedPreferences preferences = context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE);
