@@ -22,7 +22,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
     private TextView elapsedTime, totalTime;
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private final Runnable progressTicker = new Runnable() { @Override public void run() { if (playback != null && progress != null && !draggingProgress) playbackListener.onProgress(playback.getCurrentPosition(), playback.getDuration()); progressHandler.postDelayed(this, 200L); } };
-    private WaveView wave;
+    private VgramVisualizerView wave;
     private VgramPlaybackManager playback;
     private boolean draggingProgress;
 
@@ -186,29 +186,5 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         return String.format(java.util.Locale.US, "%02d:%02d", seconds / 60L, seconds % 60L);
     }
 
-    private final class WaveView extends View {
-        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final RectF r = new RectF();
-        private boolean playing;
-        private long start = System.currentTimeMillis();
-        WaveView() { super(VgramAudioPlayerActivity.this); setLayerType(View.LAYER_TYPE_HARDWARE, null); }
-        @Override protected void onMeasure(int ws, int hs) { setMeasuredDimension(MeasureSpec.getSize(ws), dp(112)); }
-        void setPlaying(boolean value) { playing = value; if (value) start = System.currentTimeMillis(); invalidate(); }
-        @Override protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            float w = getWidth(), h = getHeight(), mid = h / 2;
-            p.setColor(0x442c3036); r.set(0, 0, w, h); canvas.drawRoundRect(r, dp(18), dp(18), p);
-            int n = 44; float gap = dp(3), bw = Math.max(dp(2), (w - gap * (n - 1) - dp(24)) / n);
-            float t = (System.currentTimeMillis() - start) / 220f;
-            for (int i = 0; i < n; i++) {
-                float signal = (float) (Math.sin(i * .49f + (playing ? t : 0)) * .5 + .5);
-                float bh = dp(10) + signal * (playing ? dp(65) : dp(28));
-                float left = dp(12) + i * (bw + gap);
-                r.set(left, mid - bh / 2, left + bw, mid + bh / 2);
-                p.setColor(i % 5 == 0 ? accent() : 0xffb8c4c3);
-                canvas.drawRoundRect(r, bw, bw, p);
-            }
-            if (playing) postInvalidateDelayed(45);
-        }
-    }
+
 }
