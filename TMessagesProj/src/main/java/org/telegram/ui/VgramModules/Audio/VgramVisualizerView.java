@@ -57,6 +57,7 @@ public final class VgramVisualizerView extends View {
         super.onDraw(canvas);
         float width = getWidth(), height = getHeight();
         if (width <= 0 || height <= 0) return;
+        if (levels == null || levels.length == 0) return;
         float gap = dp(3);
         float barWidth = Math.max(dp(2), (width - gap * (BAR_COUNT - 1)) / BAR_COUNT);
         float baseline = height * 0.5f;
