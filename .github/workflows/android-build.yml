@@ -97,13 +97,8 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramUpdateActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramUpdateActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramQuestionsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramQuestionsActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramFeaturesActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPrivacyActivity.java
+          # Vgram*.java overlays are copied by the path-preserving find loop below.
+          # Do not hard-code optional UI class paths here: absent files must not abort the build.
           mkdir -p upstream/TMessagesProj/src/main/java/org/telegram/messenger
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
           test -s upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java
