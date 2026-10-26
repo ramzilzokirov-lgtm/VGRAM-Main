@@ -56,9 +56,19 @@ public final class VgramAuroraDrawable extends Drawable {
         float x3 = w * (0.48f + 0.16f * (float) Math.sin(t * 0.61f + 1.4f));
         float y3 = h * (0.90f + 0.06f * (float) Math.cos(t * 0.77f));
         canvas.drawColor(0xff17191d);
-        canvas.drawCircle(x1, y1, Math.max(w, h) * 0.56f, paints[0]);
-        canvas.drawCircle(x2, y2, Math.max(w, h) * 0.49f, paints[1]);
-        canvas.drawCircle(x3, y3, Math.max(w, h) * 0.40f, paints[2]);
+        float radius = 520f * density;
+        int save = canvas.save();
+        canvas.translate(x1, y1);
+        canvas.drawCircle(0, 0, radius, paints[0]);
+        canvas.restoreToCount(save);
+        save = canvas.save();
+        canvas.translate(x2, y2);
+        canvas.drawCircle(0, 0, radius * 0.88f, paints[1]);
+        canvas.restoreToCount(save);
+        save = canvas.save();
+        canvas.translate(x3, y3);
+        canvas.drawCircle(0, 0, radius * 0.72f, paints[2]);
+        canvas.restoreToCount(save);
         if (running) scheduleSelf(frame, SystemClock.uptimeMillis() + 32);
     }
 
@@ -66,7 +76,7 @@ public final class VgramAuroraDrawable extends Drawable {
         int soft = withAlpha(accent, 92);
         int dim = withAlpha(accent, 38);
         int mint = withAlpha(mix(accent, 0xff76c8c0, 0.42f), 58);
-        paints[0].setShader(new RadialGradient(0, 0, 1, new int[]{soft, dim, Color.TRANSPARENT},
+        paints[0].setShader(new RadialGradient(0, 0, 520f * density, new int[]{soft, dim, Color.TRANSPARENT},
                 new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP));
         paints[1].setShader(new RadialGradient(0, 0, 1, new int[]{mint, dim, Color.TRANSPARENT},
                 new float[]{0f, 0.50f, 1f}, Shader.TileMode.CLAMP));
