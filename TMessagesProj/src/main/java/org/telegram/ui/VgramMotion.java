@@ -19,6 +19,8 @@ public final class VgramMotion {
         if (view == null) return;
         synchronized (ATTACHED) { if (!ATTACHED.add(view)) return; }
         view.setOnTouchListener((v, event) -> {
+            if (!v.getContext().getSharedPreferences("vgram_ui", android.content.Context.MODE_PRIVATE)
+                    .getBoolean("animations", true)) return false;
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
                 animateScale(v, 0.955f, false);
