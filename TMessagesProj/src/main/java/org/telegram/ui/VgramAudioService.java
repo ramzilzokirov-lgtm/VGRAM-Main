@@ -148,6 +148,7 @@ public final class VgramAudioService {
         if (player == null || appContext == null) return;
         try {
             VgramSoundLab.get(appContext).connect(appContext, player);
+            VgramSoundLab.get(appContext).setStereoPanAudioProcessor(getStereoPanAudioProcessor());
             boolean hapticEnabled = appContext.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
                     .getBoolean("haptic_bass", false);
             if (hapticSubwoofer == null && hapticEnabled) hapticSubwoofer = VgramHapticSubwoofer.get(appContext);
