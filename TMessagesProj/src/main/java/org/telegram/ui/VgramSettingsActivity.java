@@ -12,7 +12,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.EditText;
-import android.widget.SeekBar;
+import android.widget.SeekBar;\nimport org.telegram.ui.VgramModules.Audio.VgramSoundLab;
 
 import android.widget.Toast;
 
@@ -124,6 +124,68 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         });
 
         addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
+
+        LinearLayout soundLab = card("Звук и DSP", "Пресеты обрабатывают звук текущего VGRAM Player через его audio session. Эффекты зависят от поддержки AudioFX устройством.");
+        VgramSoundLab soundEngine = VgramSoundLab.get(getApplicationContext());
+        soundEngine.connect(getApplicationContext(), VgramAudioService.getPlayer(getApplicationContext()));
+        int savedPreset = getSharedPreferences("vgram_ui", MODE_PRIVATE).getInt("soundlab_preset", 0);
+        String[] presetNames = { "Обычный звук", "Bass Boost", "Slowed + Reverb", "Nightcore", "8D Audio" };
+        VgramSoundLab.Preset[] presets = VgramSoundLab.Preset.values();
+        LinearLayout presetGrid = new LinearLayout(this);
+        presetGrid.setOrientation(LinearLayout.VERTICAL);
+        for (int row = 0; row < 3; row++) {
+            LinearLayout presetRow = new LinearLayout(this);
+            presetRow.setOrientation(LinearLayout.HORIZONTAL);
+            for (int col = 0; col < 2; col++) {
+                final int index = row * 2 + col;
+                if (index >= presetNames.length) break;
+                TextView presetButton = label((savedPreset == index ? "✓  " : "") + presetNames[index], 12, accent(), true);
+                presetButton.setGravity(Gravity.CENTER);
+                presetButton.setPadding(dp(5), dp(12), dp(5), dp(12));
+                presetButton.setBackground(panel(0xff22252a, savedPreset == index ? accent() : 0xff454951, 13));
+                LinearLayout.LayoutParams presetParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+                presetParams.setMargins(dp(3), dp(3), dp(3), dp(3));
+                presetRow.addView(presetButton, presetParams);
+                presetButton.setOnClickListener(v -> {
+                    getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("soundlab_preset", index).apply();
+                    VgramSoundLab engine = VgramSoundLab.get(getApplicationContext());
+                    engine.connect(getApplicationContext(), VgramAudioService.getPlayer(getApplicationContext()));
+                    engine.applyPreset(presets[index]);
+                    recreate();
+                });
+                VgramMotion.applySpringTouch(presetButton);
+            }
+            presetGrid.addView(presetRow);
+        }
+        soundLab.addView(presetGrid, margin(0, dp(8), 0, dp(5)));
+        TextView bassLabel = label("Bass Boost · усиление 0–1000", 12, 0xffb9bbc1, false);
+        soundLab.addView(bassLabel, margin(0, dp(7), 0, dp(2)));
+        SeekBar bassStrength = new SeekBar(this);
+        bassStrength.setMax(1000);
+        bassStrength.setProgress(getSharedPreferences("vgram_ui", MODE_PRIVATE).getInt("soundlab_bass_strength", 650));
+        soundLab.addView(bassStrength, margin(0, 0, 0, dp(8)));
+        bassStrength.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (!fromUser) return;
+                getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("soundlab_bass_strength", value).apply();
+                VgramSoundLab.get(getApplicationContext()).setBassStrength(value);
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
+        boolean hapticEnabled = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("haptic_bass", false);
+        TextView hapticToggle = label((hapticEnabled ? "ВКЛ  ●" : "ВЫКЛ  ○") + "   Haptic Bass", 13, accent(), true);
+        hapticToggle.setGravity(Gravity.CENTER);
+        hapticToggle.setPadding(dp(12), dp(12), dp(12), dp(12));
+        hapticToggle.setBackground(panel(0xff22252a, accent(), 14));
+        soundLab.addView(hapticToggle, margin(0, dp(8), 0, 0));
+        hapticToggle.setOnClickListener(v -> {
+            boolean next = !getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("haptic_bass", false);
+            getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean("haptic_bass", next).apply();
+            VgramAudioService.setHapticBassEnabled(getApplicationContext(), next);
+            recreate();
+        });
+        VgramMotion.applySpringTouch(hapticToggle);
 
         LinearLayout playerCard = card("VGRAM Player", "Поиск музыки и потоковое воспроизведение без сохранения аудиофайлов.");
         TextView openPlayer = label("Открыть плеер  →", 14, accent(), true);
