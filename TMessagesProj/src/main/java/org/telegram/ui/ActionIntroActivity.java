@@ -45,6 +45,7 @@ import org.telegram.messenger.LocationController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.VgramMotion;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -118,6 +119,7 @@ public class ActionIntroActivity extends BaseFragment implements LocationControl
 
     @Override
     public View createView(Context context) {
+        VgramTheme.apply(context.getApplicationContext());
         if (actionBar != null) {
             actionBar.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
 
@@ -376,7 +378,7 @@ public class ActionIntroActivity extends BaseFragment implements LocationControl
                 }
             }
         };
-        fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        fragmentView.setBackground(VgramGlassDrawable.card(context));
         ViewGroup viewGroup = (ViewGroup) fragmentView;
         viewGroup.setOnTouchListener((v, event) -> true);
 
@@ -520,6 +522,7 @@ public class ActionIntroActivity extends BaseFragment implements LocationControl
         buttonTextView.setTypeface(AndroidUtilities.bold());
         buttonTextView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(24), Color.TRANSPARENT, Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
         viewGroup.addView(buttonTextView);
+        VgramMotion.applySpringTouch(buttonTextView);
         buttonTextView.setOnClickListener(v -> {
             if (getParentActivity() == null) {
                 return;
