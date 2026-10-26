@@ -295,7 +295,8 @@ public abstract class BaseFragment {
 
     private void applyVgramLoginMotion(View view) {
         if (view == null || view instanceof android.widget.EditText) return;
-        if (view.isClickable() || view.isLongClickable()) {
+        if (view instanceof android.widget.Button
+                || (view instanceof android.widget.TextView && view.isClickable())) {
             org.telegram.ui.VgramMotion.applySpringTouch(view);
         }
         if (view instanceof ViewGroup) {
