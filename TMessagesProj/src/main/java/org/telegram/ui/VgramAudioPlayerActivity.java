@@ -2,6 +2,8 @@ package org.telegram.ui;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
@@ -17,6 +19,9 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
     private EditText urlField;
     private TextView status, playButton, trackTitle, emptyTitle, emptyMessage;
     private SeekBar progress;
+    private TextView elapsedTime, totalTime;
+    private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private final Runnable progressTicker = new Runnable() { @Override public void run() { if (playback != null && progress != null && !draggingProgress) playbackListener.onProgress(playback.getCurrentPosition(), playback.getDuration()); progressHandler.postDelayed(this, 200L); } };
     private WaveView wave;
     private VgramPlaybackManager playback;
     private boolean draggingProgress;
@@ -43,6 +48,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
             if (progress == null || draggingProgress) return;
             progress.setMax((int) Math.min(Integer.MAX_VALUE, Math.max(1L, totalMs)));
             progress.setProgress((int) Math.min(progress.getMax(), currentMs));
+            if (elapsedTime != null) elapsedTime.setText(formatTime(currentMs));
+            if (totalTime != null) totalTime.setText(formatTime(totalMs));
         }
         @Override public void onError(String message) {
             if (status != null) status.setText("Ошибка воспроизведения");
@@ -63,9 +70,18 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         c.addView(wave, margin(0, dp(8), 0, dp(10)));
         progress = new SeekBar(this);
         progress.setMax(1);
-        c.addView(progress, margin(0, 0, 0, dp(8)));
+        c.addView(progress, margin(0, 0, 0, dp(2)));
+        LinearLayout timeRow = new LinearLayout(this);
+        timeRow.setOrientation(LinearLayout.HORIZONTAL);
+        timeRow.setGravity(Gravity.CENTER_VERTICAL);
+        elapsedTime = label("00:00", 11, 0xffc5b878, true);
+        totalTime = label("00:00", 11, 0xffb9bbc1, false);
+        timeRow.addView(elapsedTime, new LinearLayout.LayoutParams(0, -2, 1));
+        totalTime.setGravity(Gravity.RIGHT);
+        timeRow.addView(totalTime, new LinearLayout.LayoutParams(0, -2, 1));
+        c.addView(timeRow, margin(0, 0, 0, dp(8)));
         progress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {}
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) { if (fromUser && elapsedTime != null) elapsedTime.setText(formatTime(value)); }
             @Override public void onStartTrackingTouch(SeekBar bar) { draggingProgress = true; }
             @Override public void onStopTrackingTouch(SeekBar bar) {
                 draggingProgress = false;
@@ -148,17 +164,26 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         super.onResume();
         if (playback == null) playback = VgramPlaybackManager.getInstance(getApplicationContext());
         playback.addListener(playbackListener);
+        progressHandler.removeCallbacks(progressTicker);
+        progressHandler.post(progressTicker);
     }
 
     @Override protected void onPause() {
         if (playback != null) playback.removeListener(playbackListener);
+        progressHandler.removeCallbacks(progressTicker);
         super.onPause();
     }
 
     @Override protected void onDestroy() {
         // Deliberately do not stop/release playback: the manager owns the player.
         if (playback != null) playback.removeListener(playbackListener);
+        progressHandler.removeCallbacks(progressTicker);
         super.onDestroy();
+    }
+
+    private static String formatTime(long millis) {
+        long seconds = Math.max(0L, millis) / 1000L;
+        return String.format(java.util.Locale.US, "%02d:%02d", seconds / 60L, seconds % 60L);
     }
 
     private final class WaveView extends View {
