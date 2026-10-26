@@ -20,7 +20,11 @@ import android.widget.TextView;
 
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
-import androidx.media3.exoplayer.ExoPlayer;\n\nimport org.telegram.ui.VgramModules.Audio.VgramHapticSubwoofer;\nimport org.telegram.ui.VgramModules.Audio.VgramSoundLab;\nimport org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
+import androidx.media3.exoplayer.ExoPlayer;
+
+import org.telegram.ui.VgramModules.Audio.VgramHapticSubwoofer;
+import org.telegram.ui.VgramModules.Audio.VgramSoundLab;
+import org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -42,7 +46,9 @@ public final class VgramAudioService {
     private static FrameLayout miniBar;
     private static TextView titleView;
     private static TextView playView;
-    private static ImageView artworkView;\n    private static VgramVisualizerView miniVisualizer;\n    private static VgramHapticSubwoofer hapticSubwoofer;
+    private static ImageView artworkView;
+    private static VgramVisualizerView miniVisualizer;
+    private static VgramHapticSubwoofer hapticSubwoofer;
     private static Context appContext;
     private static boolean lifecycleHookInstalled;
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -385,7 +391,8 @@ public final class VgramAudioService {
             }).start();
         }
         if (titleView != null) titleView.setText(active && !title.isEmpty() ? title : "VGRAM Player");
-        if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");\n        if (miniVisualizer != null) miniVisualizer.setPlaying(active && player != null && player.isPlaying());
+        if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");
+        if (miniVisualizer != null) miniVisualizer.setPlaying(active && player != null && player.isPlaying());
         if (artworkView != null) {
             String requestedArtwork = active ? artworkUrl : "";
             artworkView.setContentDescription(active ? "Обложка: " + title : "VGRAM Player");
