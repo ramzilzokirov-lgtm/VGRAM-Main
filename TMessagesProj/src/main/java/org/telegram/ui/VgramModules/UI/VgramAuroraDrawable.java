@@ -98,7 +98,6 @@ public final class VgramAuroraDrawable extends Drawable {
         int bl = Math.round(Color.blue(a) + (Color.blue(b) - Color.blue(a)) * f);
         return Color.rgb(r, g, bl);
     }
-    @Override protected void onBoundsChange(Rect bounds) { rebuildShaders(); }
     @Override public void setAlpha(int alpha) { for (Paint paint : paints) paint.setAlpha(alpha); invalidateSelf(); }
     @Override public void setColorFilter(ColorFilter colorFilter) { for (Paint paint : paints) paint.setColorFilter(colorFilter); invalidateSelf(); }
     @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
