@@ -53,20 +53,75 @@ public final class VgramAudioService {
 
     private VgramAudioService() {}
 
-    public static synchronized ExoPlayer getPlayer(Context context) {
+    public static ExoPlayer getPlayer(Context context) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return getPlayerOnUiThread(context);
+        }
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final ExoPlayer[] result = new ExoPlayer[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                result[0] = getPlayerOnUiThread(context);
+            } catch (RuntimeException error) {
+                failure[0] = error;
+            } finally {
+                latch.countDown();
+            }
+        });
+        try {
+            if (!latch.await(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for the VGRAM player UI thread");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while creating the VGRAM player", interrupted);
+        }
+        if (failure[0] != null) throw failure[0];
+        if (result[0] == null) throw new IllegalStateException("VGRAM player is unavailable");
+        return result[0];
+    }
+
+    private static ExoPlayer getPlayerOnUiThread(Context context) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            throw new IllegalStateException("ExoPlayer must only be accessed on the main thread");
+        }
         if (player == null) {
-            appContext = context.getApplicationContext();
-            player = new ExoPlayer.Builder(appContext).build();
-            installLaunchActivityMiniPlayerHook(context.getApplicationContext());
-            player.addListener(new Player.Listener() {
-                @Override public void onIsPlayingChanged(boolean isPlaying) { refreshMiniPlayer(); }
-                @Override public void onMediaItemTransition(MediaItem item, int reason) { refreshMiniPlayer(); }
-                @Override public void onPlaybackStateChanged(int state) { refreshMiniPlayer(); }
-            });
+            Context safeContext = context != null ? context.getApplicationContext() : appContext;
+            if (safeContext == null) {
+                safeContext = ApplicationLoader.applicationContext;
+            }
+            if (safeContext == null) throw new IllegalStateException("No application context available for VGRAM player");
+            appContext = safeContext;
+            try {
+                player = new ExoPlayer.Builder(appContext).build();
+                installLaunchActivityMiniPlayerHook(appContext);
+                player.addListener(new Player.Listener() {
+                    @Override public void onIsPlayingChanged(boolean isPlaying) { refreshMiniPlayerSafely(); }
+                    @Override public void onMediaItemTransition(MediaItem item, int reason) { refreshMiniPlayerSafely(); }
+                    @Override public void onPlaybackStateChanged(int state) { refreshMiniPlayerSafely(); }
+                    @Override public void onPlayerError(androidx.media3.common.PlaybackException error) {
+                        android.util.Log.w("VgramAudioService", "Playback failed; keeping the app alive", error);
+                        refreshMiniPlayerSafely();
+                    }
+                });
+            } catch (RuntimeException error) {
+                player = null;
+                android.util.Log.e("VgramAudioService", "Unable to initialize ExoPlayer", error);
+                throw error;
+            }
         }
         return player;
     }
 
+    private static void refreshMiniPlayerSafely() {
+        try {
+            if (Looper.myLooper() == Looper.getMainLooper()) refreshMiniPlayer();
+            else AndroidUtilities.runOnUIThread(VgramAudioService::refreshMiniPlayer);
+        } catch (RuntimeException error) {
+            android.util.Log.w("VgramAudioService", "Unable to refresh mini-player UI", error);
+        }
+    }
     private static void installLaunchActivityMiniPlayerHook(Context context) {
         if (lifecycleHookInstalled || !(context instanceof Application)) return;
         lifecycleHookInstalled = true;
@@ -91,34 +146,72 @@ public final class VgramAudioService {
         });
     }
 
-    public static synchronized void setTrack(Context context, String trackTitle, String stream, String coverUrl) {
-        ExoPlayer p = getPlayer(context);
-        title = trackTitle == null ? "" : trackTitle;
-        artworkUrl = coverUrl == null ? "" : coverUrl;
-        p.setMediaItem(MediaItem.fromUri(stream));
-        p.prepare();
-        p.play();
-        refreshMiniPlayer();
+    public static void setTrack(Context context, String trackTitle, String stream, String coverUrl) {
+        final Context safeContext = context == null ? appContext : context.getApplicationContext();
+        final String safeStream = stream == null ? "" : stream.trim();
+        if (safeStream.isEmpty()) {
+            android.util.Log.w("VgramAudioService", "Ignoring track with an empty stream URL");
+            return;
+        }
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                ExoPlayer p = getPlayerOnUiThread(safeContext);
+                MediaItem item = MediaItem.fromUri(safeStream);
+                p.setMediaItem(item);
+                title = trackTitle == null ? "" : trackTitle;
+                artworkUrl = coverUrl == null ? "" : coverUrl;
+                p.prepare();
+                p.play();
+                refreshMiniPlayerSafely();
+            } catch (RuntimeException error) {
+                android.util.Log.e("VgramAudioService", "Unable to start or switch track", error);
+                refreshMiniPlayerSafely();
+            }
+        });
     }
 
-    public static synchronized void toggle(Context context) {
-        ExoPlayer p = getPlayer(context);
-        if (p.getMediaItemCount() == 0) return;
-        if (p.isPlaying()) p.pause(); else p.play();
-        refreshMiniPlayer();
+    public static void toggle(Context context) {
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                ExoPlayer p = getPlayerOnUiThread(context);
+                if (p.getMediaItemCount() == 0) return;
+                if (p.isPlaying()) p.pause(); else p.play();
+                refreshMiniPlayerSafely();
+            } catch (RuntimeException error) {
+                android.util.Log.e("VgramAudioService", "Unable to toggle playback", error);
+            }
+        });
     }
 
-    public static synchronized void stop(Context context) {
-        ExoPlayer p = getPlayer(context);
-        p.stop();
-        p.clearMediaItems();
-        title = "";
-        artworkUrl = "";
-        refreshMiniPlayer();
+    public static void stop(Context context) {
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                ExoPlayer p = getPlayerOnUiThread(context);
+                p.stop();
+                p.clearMediaItems();
+                title = "";
+                artworkUrl = "";
+                refreshMiniPlayerSafely();
+            } catch (RuntimeException error) {
+                android.util.Log.w("VgramAudioService", "Unable to stop playback cleanly", error);
+            }
+        });
     }
 
-    public static synchronized boolean hasTrack() {
-        return player != null && player.getMediaItemCount() > 0;
+    public static boolean hasTrack() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            try { return player != null && player.getMediaItemCount() > 0; }
+            catch (RuntimeException error) { return false; }
+        }
+        final boolean[] result = new boolean[1];
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        AndroidUtilities.runOnUIThread(() -> {
+            try { result[0] = player != null && player.getMediaItemCount() > 0; }
+            catch (RuntimeException ignored) { result[0] = false; }
+            finally { latch.countDown(); }
+        });
+        try { return latch.await(2, java.util.concurrent.TimeUnit.SECONDS) && result[0]; }
+        catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); return false; }
     }
 
     public static synchronized String getTitle() { return title; }
