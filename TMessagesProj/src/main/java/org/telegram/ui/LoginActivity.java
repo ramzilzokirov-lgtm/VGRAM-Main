@@ -753,6 +753,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 finishFragment();
             }
         });
+        org.telegram.ui.VgramMotion.applySpringTouch(backButtonView);
         backButtonView.setContentDescription(getString(R.string.AccDescrGoBack));
         int padding = AndroidUtilities.dp(4);
         backButtonView.setPadding(padding, padding, padding, padding);
@@ -773,7 +774,6 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 }
                 finishFragment();
             });
-        org.telegram.ui.VgramMotion.applySpringTouch(backButtonView);
         }
 
         proxyButtonView = new ImageView(context);
