@@ -8,6 +8,8 @@
 
 package org.telegram.ui;
 
+import org.telegram.ui.VgramModules.UI.VgramAuroraDrawable;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
 import static org.telegram.messenger.AndroidUtilities.ilerp;

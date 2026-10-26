@@ -1,5 +1,7 @@
 package org.telegram.ui.VgramModules.Privacy;
 
+import org.telegram.tgnet.TLRPC;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 

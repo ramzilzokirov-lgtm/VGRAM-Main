@@ -1,5 +1,7 @@
 package org.telegram.ui;
 
+import org.telegram.ui.VgramModules.UI.VgramVisualizerView;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;

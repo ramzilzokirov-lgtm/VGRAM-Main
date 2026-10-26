@@ -29,11 +29,8 @@ public final class VgramStereoPanAudioProcessor extends BaseAudioProcessor {
         return AudioFormat.NOT_SET;
     }
 
-    @Override public void queueInput(ByteBuffer inputBuffer) {
-        onQueueInput(inputBuffer);
-    }
-
-    @Override protected void onQueueInput(ByteBuffer inputBuffer) {
+    @Override
+    public void queueInput(ByteBuffer inputBuffer) {
         inputBuffer.order(ByteOrder.LITTLE_ENDIAN);
         int remaining = inputBuffer.remaining();
         ByteBuffer output = replaceOutputBuffer(remaining).order(ByteOrder.LITTLE_ENDIAN);
