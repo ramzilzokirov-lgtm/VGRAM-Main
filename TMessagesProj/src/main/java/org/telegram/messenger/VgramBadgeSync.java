@@ -70,6 +70,10 @@ public final class VgramBadgeSync {
         }
     }
 
+    public static boolean isLocalOwner(long telegramId) {
+        return telegramId > 0 && telegramId == getLocalOwnerId();
+    }
+
     private static void seedLocalOwner(Context context) {
         if (context == null) return;
         try {
@@ -292,8 +296,7 @@ public final class VgramBadgeSync {
     public static boolean isPremium(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
-        long localOwnerId = getLocalOwnerId();
-        if (localOwnerId > 0 && telegramId == localOwnerId) return true;
+        if (isLocalOwner(telegramId)) return true;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
