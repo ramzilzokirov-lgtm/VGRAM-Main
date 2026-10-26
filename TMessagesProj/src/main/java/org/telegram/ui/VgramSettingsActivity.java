@@ -11,6 +11,9 @@ import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.SeekBar;
+
 import android.widget.Toast;
 
 public class VgramSettingsActivity extends VgramBaseActivity {
@@ -51,6 +54,52 @@ public class VgramSettingsActivity extends VgramBaseActivity {
   });
         }
         palette.addView(swatches);
+
+        LinearLayout custom = card("Свой цвет · HSV / HEX", "Выбери оттенок ползунком или введи любой цвет в формате HEX. Изменения применяются сразу.");
+        TextView colorPreview = label("●  Пользовательский акцент", 14, accent(), true);
+        colorPreview.setGravity(Gravity.CENTER_VERTICAL);
+        colorPreview.setPadding(dp(10), dp(10), dp(10), dp(10));
+        colorPreview.setBackground(panel(0xff22252a, accent(), 14));
+        custom.addView(colorPreview, margin(0, dp(8), 0, dp(8)));
+        EditText hexInput = new EditText(this);
+        hexInput.setSingleLine(true);
+        hexInput.setTextColor(0xfff1f0eb);
+        hexInput.setHintTextColor(0xff9b9da3);
+        hexInput.setHint("#RRGGBB или #AARRGGBB");
+        hexInput.setText(String.format(java.util.Locale.US, "#%06X", 0xFFFFFF & accent()));
+        hexInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        hexInput.setPadding(dp(12), dp(10), dp(12), dp(10));
+        hexInput.setBackground(panel(0xff202328, 0x667faaa5, 12));
+        custom.addView(hexInput, margin(0, 0, 0, dp(8)));
+        SeekBar hue = new SeekBar(this);
+        hue.setMax(360);
+        float[] initialHsv = new float[3];
+        Color.colorToHSV(accent(), initialHsv);
+        hue.setProgress(Math.round(initialHsv[0]));
+        custom.addView(hue, margin(0, 0, 0, dp(6)));
+        hue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (!fromUser) return;
+                float[] hsv = new float[]{value, 0.58f, 0.88f};
+                int picked = Color.HSVToColor(hsv);
+                hexInput.setText(String.format(java.util.Locale.US, "#%06X", 0xFFFFFF & picked));
+                colorPreview.setTextColor(picked);
+                colorPreview.setBackground(panel(0xff22252a, picked, 14));
+                persistCustomAccent(picked);
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { recreate(); }
+        });
+        addButton(custom, "Применить HEX", () -> {
+            String raw = hexInput.getText() == null ? "" : hexInput.getText().toString().trim();
+            try {
+                int picked = Color.parseColor(raw.startsWith("#") ? raw : "#" + raw);
+                persistCustomAccent(picked);
+                recreate();
+            } catch (IllegalArgumentException invalid) {
+                Toast.makeText(this, "Введите корректный HEX, например #C5B878", Toast.LENGTH_LONG).show();
+            }
+        });
 
         addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
 
@@ -178,6 +227,14 @@ public class VgramSettingsActivity extends VgramBaseActivity {
             try { for(ComponentName alias:aliases) pm.setComponentEnabledSetting(alias,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP); pm.setComponentEnabledSetting(fallback,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP); } catch(Exception ignored) {}
             Toast.makeText(this,"Не удалось сменить иконку; восстановлена основная иконка VGRAM",Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void persistCustomAccent(int color) {
+        getSharedPreferences("vgram_ui", MODE_PRIVATE).edit()
+                .putInt("vgram_custom_accent", color)
+                .putInt("accent", color)
+                .apply();
+        VgramTheme.apply(this);
     }
 
     private void addToggle(String title, String description, String key, boolean fallback) {
