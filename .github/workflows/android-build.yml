@@ -689,7 +689,8 @@ jobs:
             set -eu
             adb install output/VGRAM-debug.apk
             adb logcat -c
-            adb shell monkey -p org.vgram.messenger 1            sleep 20
+            adb shell monkey -p org.vgram.messenger 1
+            sleep 20
             adb shell pidof org.vgram.messenger >/dev/null
             adb logcat -d -s AndroidRuntime:E | tee output/runtime-smoke-logcat.txt
             if grep -q "FATAL EXCEPTION" output/runtime-smoke-logcat.txt; then
