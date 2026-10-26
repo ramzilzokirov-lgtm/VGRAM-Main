@@ -97,8 +97,7 @@ jobs:
           install -D TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java upstream/TMessagesProj/src/main/java/org/telegram/messenger/VgramPremiumManager.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramTheme.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramBaseActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java
-          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
+          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSupportActivity.java          install -D TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramSettingsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramPluginsActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramDevelopersActivity.java
           install -D TMessagesProj/src/main/java/org/telegram/ui/VgramUpdateActivity.java upstream/TMessagesProj/src/main/java/org/telegram/ui/VgramUpdateActivity.java
@@ -197,8 +196,7 @@ jobs:
               (drawable / (name + ".xml")).write_text(
                   '<?xml version="1.0" encoding="utf-8"?>\\n'
                   '<vector xmlns:android="http://schemas.android.com/apk/res/android" '
-                  'android:width="48dp" android:height="48dp" android:viewportWidth="44" android:viewportHeight="44">'
-                  f'<path android:fillColor="{hair}" android:pathData="M9,17 C8,4 36,5 35,17 L31,14 L28,9 L20,13 L14,10 Z"/>'
+                  'android:width="48dp" android:height="48dp" android:viewportWidth="44" android:viewportHeight="44">'                  f'<path android:fillColor="{hair}" android:pathData="M9,17 C8,4 36,5 35,17 L31,14 L28,9 L20,13 L14,10 Z"/>'
                   f'<path android:fillColor="#00000000" android:strokeColor="{accent}" android:strokeWidth="3.1" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="{glyph.replace("M", "M", 1)}"/>'
                   f'<path android:fillColor="{accent}" android:pathData="M13.6,20 a2.4,2.4 0,1 0,4.8 0 a2.4,2.4 0,1 0,-4.8 0 M25.6,20 a2.4,2.4 0,1 0,4.8 0 a2.4,2.4 0,1 0,-4.8 0"/>'
                   '<path android:fillColor="#00000000" android:strokeColor="#D9D9D9" android:strokeWidth="1.2" android:pathData="M17,27 Q22,30 27,27"/>'
@@ -297,7 +295,6 @@ jobs:
           # AndroidManifest points to @drawable/vgram_launcher_icon, so place the vector
           # in drawable (not only drawable-nodpi) to satisfy resource linking.
           (drawable_res / "vgram_launcher_icon.xml").write_text(icon_xml.read_text(encoding="utf-8"), encoding="utf-8")
-
           # SettingsActivity is committed with VGRAM entries; no build-time Java patching.
 
 
@@ -397,8 +394,7 @@ jobs:
                   launch_source, count=1
               )
               if launch_count != 1:
-                  raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")
-              launch.write_text(launch_source, encoding="utf-8")
+                  raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")              launch.write_text(launch_source, encoding="utf-8")
           # Apply VGRAM colors before Telegram constructs the phone-number / login screens.
           # LaunchActivity alone is too late for some login fragments restored during startup.
           login_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
@@ -497,8 +493,7 @@ jobs:
           # synchronous Premium gate here rather than relying on an unoverlaid source file.
           user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
           text = user_config.read_text(encoding="utf-8")
-          pattern = r"(?m)^    public boolean isPremium\(\) \{\n        TLRPC\.User user = currentUser;\n        if \(user == null\) \{\n            return false;\n        \}\n        return user\.premium;\n    \}"
-          replacement = """    public boolean isPremium() {
+          pattern = r"(?m)^    public boolean isPremium\(\) \{\n        TLRPC\.User user = currentUser;\n        if \(user == null\) \{\n            return false;\n        \}\n        return user\.premium;\n    \}"          replacement = """    public boolean isPremium() {
                   TLRPC.User user = currentUser;
                   if (user == null) {
                       return false;
@@ -597,8 +592,7 @@ jobs:
         run: |
           mkdir -p "$HOME/.android"
           if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"          fi
 
       - name: Restore stable VGRAM signing key
         uses: actions/cache@v4
@@ -694,11 +688,10 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            set -euo pipefail
+            set -eu
             adb install output/VGRAM-debug.apk
             adb logcat -c
-            adb shell monkey -p org.vgram.messenger 1
-            sleep 20
+            adb shell monkey -p org.vgram.messenger 1            sleep 20
             adb shell pidof org.vgram.messenger >/dev/null
             adb logcat -d -s AndroidRuntime:E | tee output/runtime-smoke-logcat.txt
             if grep -q "FATAL EXCEPTION" output/runtime-smoke-logcat.txt; then
@@ -725,4 +718,3 @@ jobs:
           TAG="v${VERSION}"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
           gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
-
