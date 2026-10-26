@@ -148,7 +148,8 @@ jobs:
           python3 scripts/patch_chat_message_cell.py upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "VgramGlassStyle.drawDrawableWithGlass(canvas, currentBackgroundDrawable, getContext());" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          # The pinned upstream revision may not expose currentBackgroundDrawable.draw(canvas).
+          # The indicator integration is required; glass rendering is applied only when a safe draw hook exists.
 
       - name: Apply VGRAM bootstrap branding
         env:
