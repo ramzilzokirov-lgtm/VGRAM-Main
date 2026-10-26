@@ -20,7 +20,7 @@ import android.widget.TextView;
 
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
-import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.ExoPlayer;\n\nimport org.telegram.ui.VgramModules.Audio.VgramHapticSubwoofer;\nimport org.telegram.ui.VgramModules.Audio.VgramSoundLab;\nimport org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -42,7 +42,7 @@ public final class VgramAudioService {
     private static FrameLayout miniBar;
     private static TextView titleView;
     private static TextView playView;
-    private static ImageView artworkView;
+    private static ImageView artworkView;\n    private static VgramVisualizerView miniVisualizer;\n    private static VgramHapticSubwoofer hapticSubwoofer;
     private static Context appContext;
     private static boolean lifecycleHookInstalled;
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -116,6 +116,37 @@ public final class VgramAudioService {
         return player;
     }
 
+    public static void setHapticBassEnabled(Context context, boolean enabled) {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (context != null) {
+                hapticSubwoofer = VgramHapticSubwoofer.get(context.getApplicationContext());
+                hapticSubwoofer.setEnabled(enabled);
+            }
+            if (player != null) syncAudioModules();
+        });
+    }
+
+    private static void syncAudioModules() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            AndroidUtilities.runOnUIThread(VgramAudioService::syncAudioModules);
+            return;
+        }
+        if (player == null || appContext == null) return;
+        try {
+            VgramSoundLab.get(appContext).connect(appContext, player);
+            boolean hapticEnabled = appContext.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
+                    .getBoolean("haptic_bass", false);
+            if (hapticSubwoofer == null && hapticEnabled) hapticSubwoofer = VgramHapticSubwoofer.get(appContext);
+            if (hapticSubwoofer != null) {
+                hapticSubwoofer.setEnabled(hapticEnabled);
+                if (hapticEnabled && player.isPlaying()) hapticSubwoofer.start(player);
+                else hapticSubwoofer.stop();
+            }
+        } catch (RuntimeException error) {
+            android.util.Log.w("VgramAudioService", "Audio module synchronization failed", error);
+        }
+    }
+
     private static void refreshMiniPlayerSafely() {
         try {
             if (Looper.myLooper() == Looper.getMainLooper()) refreshMiniPlayer();
@@ -142,7 +173,7 @@ public final class VgramAudioService {
             @Override public void onActivityDestroyed(Activity activity) {
                 if (activity instanceof LaunchActivity && miniBar != null && miniBar.getParent() instanceof android.view.ViewGroup) {
                     ((android.view.ViewGroup) miniBar.getParent()).removeView(miniBar);
-                    miniBar = null; titleView = null; playView = null; artworkView = null;
+                    miniBar = null; titleView = null; playView = null; artworkView = null; miniVisualizer = null;
                 }
             }
         });
@@ -265,6 +296,10 @@ public final class VgramAudioService {
         close.setGravity(Gravity.CENTER);
         row.addView(close, new LinearLayout.LayoutParams(AndroidUtilities.dp(34), AndroidUtilities.dp(40)));
         miniBar.addView(row, new FrameLayout.LayoutParams(-1, -1));
+        miniVisualizer = new VgramVisualizerView(activity);
+        miniVisualizer.setAccentColor(VgramTheme.accent(activity));
+        FrameLayout.LayoutParams visualizerParams = new FrameLayout.LayoutParams(AndroidUtilities.dp(32), AndroidUtilities.dp(20), Gravity.CENTER);
+        miniBar.addView(miniVisualizer, visualizerParams);
         titleView.setVisibility(View.GONE);
         close.setVisibility(View.GONE);
         cover.setLayoutParams(new LinearLayout.LayoutParams(AndroidUtilities.dp(32), AndroidUtilities.dp(32)));
@@ -350,7 +385,7 @@ public final class VgramAudioService {
             }).start();
         }
         if (titleView != null) titleView.setText(active && !title.isEmpty() ? title : "VGRAM Player");
-        if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");
+        if (playView != null) playView.setText(player != null && player.isPlaying() ? "Ⅱ" : "▶");\n        if (miniVisualizer != null) miniVisualizer.setPlaying(active && player != null && player.isPlaying());
         if (artworkView != null) {
             String requestedArtwork = active ? artworkUrl : "";
             artworkView.setContentDescription(active ? "Обложка: " + title : "VGRAM Player");
