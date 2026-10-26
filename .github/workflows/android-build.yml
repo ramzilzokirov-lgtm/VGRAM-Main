@@ -683,6 +683,29 @@ jobs:
           }
           echo "APK archive, Android package metadata, and signing verification passed."
 
+      - name: Smoke test VGRAM startup in Android emulator
+        if: success()
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 32
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            adb install output/VGRAM-debug.apk
+            adb logcat -c
+            adb shell monkey -p org.vgram.messenger 1
+            sleep 20
+            adb shell pidof org.vgram.messenger >/dev/null
+            adb logcat -d -s AndroidRuntime:E | tee output/runtime-smoke-logcat.txt
+            if grep -q "FATAL EXCEPTION" output/runtime-smoke-logcat.txt; then
+              echo "ERROR: AndroidRuntime reported a fatal exception during startup smoke test."
+              exit 1
+            fi
+            echo "VGRAM startup smoke test passed on Android API 32 emulator."
+
       - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
