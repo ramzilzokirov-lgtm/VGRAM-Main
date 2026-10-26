@@ -95,11 +95,11 @@ abstract class VgramBaseActivity extends Activity {
 
     private LinearLayout createCard(String title, String description, boolean expandable) {
         boolean glass = getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("glass", true);
-        int fill = glass ? 0x20ffffff : 0xff22252a;
-        int stroke = glass ? 0x40ffffff : Color.argb(45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
+        int fill = glass ? 0x26ffffff : 0xff22252a;
+        int stroke = glass ? 0x26ffffff : Color.argb(45, Color.red(accent()), Color.green(accent()), Color.blue(accent()));
         com.google.android.material.card.MaterialCardView surface = new com.google.android.material.card.MaterialCardView(this);
         surface.setCardBackgroundColor(fill);
-        surface.setRadius(dp(glass ? 18 : 14));
+        surface.setRadius(dp(glass ? 20 : 14));
         surface.setStrokeColor(stroke);
         surface.setStrokeWidth(dp(1));
         surface.setCardElevation(dp(glass ? 5 : 1));
