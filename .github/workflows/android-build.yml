@@ -35,7 +35,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: vgram-android-build-${{ github.ref }}
+  group: vgram-android-build-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
