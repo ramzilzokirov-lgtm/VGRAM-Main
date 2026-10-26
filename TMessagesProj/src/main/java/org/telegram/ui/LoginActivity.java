@@ -739,6 +739,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         floatingAutoAnimator = VerticalPositionAutoAnimator.attach(floatingButton);
         sizeNotifierFrameLayout.addView(floatingButton, FragmentFloatingButton.createDefaultLayoutParamsBig());
         floatingButton.setOnClickListener(view -> onDoneButtonPressed());
+        org.telegram.ui.VgramMotion.applySpringTouch(floatingButton);
         floatingAutoAnimator.addUpdateListener((animation, value, velocity) -> {
             if (phoneNumberConfirmView != null) {
                 phoneNumberConfirmView.updateFabPosition();
@@ -772,6 +773,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 }
                 finishFragment();
             });
+        org.telegram.ui.VgramMotion.applySpringTouch(backButtonView);
         }
 
         proxyButtonView = new ImageView(context);
@@ -927,6 +929,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     @Override
     public void onResume() {
         super.onResume();
+        if (getParentActivity() != null) VgramTheme.apply(getParentActivity());
         if (newAccount) {
             ConnectionsManager.getInstance(currentAccount).setAppPaused(false, false);
         }
