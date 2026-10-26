@@ -52,10 +52,15 @@ public final class VgramGlassStyle {
         if (bounds == null || bounds.isEmpty()) return;
         BUBBLE_BORDER_BOUNDS.set(bounds.left, bounds.top, bounds.right, bounds.bottom);
         BUBBLE_BORDER_PAINT.setStyle(Paint.Style.STROKE);
-        BUBBLE_BORDER_PAINT.setStrokeWidth(context.getResources().getDisplayMetrics().density);
+        float density = context.getResources().getDisplayMetrics().density;
+        float radius = 12f * density;
+        int accent = VgramTheme.accent(context);
+        BUBBLE_BORDER_PAINT.setStrokeWidth(3f * density);
+        BUBBLE_BORDER_PAINT.setColor(Color.argb(48, Color.red(accent), Color.green(accent), Color.blue(accent)));
+        canvas.drawRoundRect(BUBBLE_BORDER_BOUNDS, radius, radius, BUBBLE_BORDER_PAINT);
+        BUBBLE_BORDER_PAINT.setStrokeWidth(density);
         BUBBLE_BORDER_PAINT.setColor(edgeColor(context));
-        canvas.drawRoundRect(BUBBLE_BORDER_BOUNDS, 12f * context.getResources().getDisplayMetrics().density,
-                12f * context.getResources().getDisplayMetrics().density, BUBBLE_BORDER_PAINT);
+        canvas.drawRoundRect(BUBBLE_BORDER_BOUNDS, radius, radius, BUBBLE_BORDER_PAINT);
         BUBBLE_BORDER_PAINT.setStyle(Paint.Style.FILL);
     }
 
