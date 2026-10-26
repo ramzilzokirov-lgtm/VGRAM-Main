@@ -24,6 +24,7 @@ public final class VgramSoundLab {
     private BassBoost bassBoost;
     private PresetReverb reverb;
     private Virtualizer virtualizer;
+    private VgramStereoPanAudioProcessor stereoPanProcessor;
     private Preset preset = Preset.NORMAL;
     private int bassStrength = 650;
     private boolean enabled;
@@ -90,6 +91,10 @@ public final class VgramSoundLab {
     }
 
     public Preset getPreset() { return preset; }
+
+    public void setStereoPanAudioProcessor(VgramStereoPanAudioProcessor processor) {
+        runOnMain(() -> { stereoPanProcessor = processor; if (preset != Preset.SPATIAL_8D && stereoPanProcessor != null) stereoPanProcessor.resetPan(); });
+    }
 
     private void applyPresetInternal(Preset value) {
         preset = value;
