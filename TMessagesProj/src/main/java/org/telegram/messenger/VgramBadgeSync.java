@@ -61,10 +61,19 @@ public final class VgramBadgeSync {
      * Only the Telegram account currently configured on this installation is seeded; no guessed
      * numeric/test IDs are shipped into the cache.
      */
+    private static long getLocalOwnerId() {
+        try {
+            return UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        } catch (RuntimeException error) {
+            Log.w(TAG, "Unable to read the current VGRAM owner account", error);
+            return 0L;
+        }
+    }
+
     private static void seedLocalOwner(Context context) {
         if (context == null) return;
         try {
-            long ownerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+            long ownerId = getLocalOwnerId();
             if (ownerId <= 0) return;
             SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             List<String> current = decodeLabels(prefs.getString("badges_" + ownerId, ""));
@@ -283,7 +292,7 @@ public final class VgramBadgeSync {
     public static boolean isPremium(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
-        long localOwnerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        long localOwnerId = getLocalOwnerId();
         if (localOwnerId > 0 && telegramId == localOwnerId) return true;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
