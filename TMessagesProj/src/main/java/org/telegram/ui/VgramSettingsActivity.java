@@ -412,8 +412,8 @@ public class VgramSettingsActivity extends VgramBaseActivity {
                 } catch (Exception error) {
                     Toast.makeText(this, error.getMessage() == null ? "Не удалось сохранить PIN" : error.getMessage(), Toast.LENGTH_LONG).show();
                 } finally {
-                    java.util.Arrays.fill(p, '\\0');
-                    java.util.Arrays.fill(d, '\\0');
+                    java.util.Arrays.fill(p, (char) 0);
+                    java.util.Arrays.fill(d, (char) 0);
                     primary.setText("");
                     decoy.setText("");
                 }
