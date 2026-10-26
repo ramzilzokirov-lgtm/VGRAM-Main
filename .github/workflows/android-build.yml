@@ -575,6 +575,21 @@ jobs:
           if "vgramBannerLayer" in profile_source or "vgramBannerImage" in profile_source:
               raise SystemExit("Unexpected VGRAM profile banner overlay remains in ProfileActivity.java")
           print("Profile badge hook is present and profile banner overlays are absent.")
+          audio_source = Path("TMessagesProj/src/main/java/org/telegram/ui/VgramAudioService.java").read_text(encoding="utf-8")
+          for hook in ["getPlayerOnUiThread", "Ignoring track with an empty stream URL", "AndroidUtilities.runOnUIThread", "onPlayerError"]:
+              if hook not in audio_source:
+                  raise SystemExit("VGRAM playback safety integration incomplete: " + hook)
+          badge_source = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java").read_text(encoding="utf-8")
+          for hook in ["seedLocalOwner", "INDICATOR_PATH", "CELL_MATRIX_VALUES", "getLocalOwnerId"]:
+              if hook not in badge_source:
+                  raise SystemExit("VGRAM badge integration incomplete: " + hook)
+          dialog_source = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java").read_text(encoding="utf-8")
+          if "VgramBadgeSync.drawInlineIndicators(canvas, currentDialogId" not in dialog_source:
+              raise SystemExit("VGRAM dialog-cell indicator hook is missing")
+          glass_source = Path("TMessagesProj/src/main/java/org/telegram/ui/VgramGlassDrawable.java").read_text(encoding="utf-8")
+          if "RING_GRADIENT" not in glass_source or "drawPremiumRing(Canvas canvas, float centerX" not in glass_source:
+              raise SystemExit("VGRAM cached Premium ring renderer is missing")
+          print("VGRAM playback, badge, Premium ring, and dialog indicator guards passed.")
           PY
 
       - name: Prepare stable VGRAM signing key
