@@ -42,7 +42,14 @@ public final class VgramSoundLab {
         }
     };
 
-    private VgramSoundLab(Context context) { appContext = context.getApplicationContext(); }
+    private VgramSoundLab(Context context) {
+        appContext = context.getApplicationContext();
+        android.content.SharedPreferences preferences = appContext.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE);
+        bassStrength = Math.max(0, Math.min(1000, preferences.getInt("soundlab_bass_strength", 650)));
+        int storedPreset = preferences.getInt("soundlab_preset", 0);
+        Preset[] presets = Preset.values();
+        preset = storedPreset >= 0 && storedPreset < presets.length ? presets[storedPreset] : Preset.NORMAL;
+    }
 
     public static synchronized VgramSoundLab get(Context context) {
         if (instance == null) instance = new VgramSoundLab(context);
@@ -53,13 +60,15 @@ public final class VgramSoundLab {
     public void connect(Context context, ExoPlayer existingPlayer) {
         runOnMain(() -> {
             if (appContext == null && context != null) appContext = context.getApplicationContext();
-            if (player != existingPlayer) {
+            boolean playerChanged = player != existingPlayer;
+            int oldSession = attachedSessionId;
+            if (playerChanged) {
                 releaseEffects();
                 player = existingPlayer;
                 attachedSessionId = -1;
             }
             attachEffectsIfNeeded();
-            applyPresetInternal(preset);
+            if (playerChanged || oldSession != attachedSessionId) applyPresetInternal(preset);
         });
     }
 
