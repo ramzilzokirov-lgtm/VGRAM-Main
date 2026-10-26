@@ -15,13 +15,19 @@ public final class VgramAuroraDrawable extends Drawable {
     private final Paint[] paints = { new Paint(Paint.ANTI_ALIAS_FLAG), new Paint(Paint.ANTI_ALIAS_FLAG), new Paint(Paint.ANTI_ALIAS_FLAG) };
     private final float density;
     private int accent;
+    private final boolean drawBase;
     private long startTime = SystemClock.uptimeMillis();
     private boolean running = true;
     private final Runnable frame = this::invalidateSelf;
 
     public VgramAuroraDrawable(float density, int accent) {
+        this(density, accent, true);
+    }
+
+    public VgramAuroraDrawable(float density, int accent, boolean drawBase) {
         this.density = Math.max(0.5f, density);
         this.accent = accent;
+        this.drawBase = drawBase;
         rebuildShaders();
     }
 
@@ -55,7 +61,7 @@ public final class VgramAuroraDrawable extends Drawable {
         float y2 = h * (0.56f + 0.13f * (float) Math.sin(t * 0.91f));
         float x3 = w * (0.48f + 0.16f * (float) Math.sin(t * 0.61f + 1.4f));
         float y3 = h * (0.90f + 0.06f * (float) Math.cos(t * 0.77f));
-        canvas.drawColor(0xff17191d);
+        if (drawBase) canvas.drawColor(0xff17191d);
         float radius = 520f * density;
         int save = canvas.save();
         canvas.translate(x1, y1);
