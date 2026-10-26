@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import org.telegram.tgnet.TLObject;
-import org.telegram.tgnet.TLRPC;
 
 /**
  * Central policy for VGRAM privacy modes.
@@ -46,8 +45,13 @@ public final class VgramGhostController {
             return true;
         }
         if (isEnabled(context, FREEZE_LAST_SEEN)
-                && request instanceof TLRPC.TL_account_updateStatus) {
-            return !((TLRPC.TL_account_updateStatus) request).offline;
+                && "TL_account_updateStatus".equals(request.getClass().getSimpleName())) {
+            try {
+                java.lang.reflect.Field offline = request.getClass().getField("offline");
+                return !offline.getBoolean(request);
+            } catch (ReflectiveOperationException ignored) {
+                // Unknown schema shape: do not block an unverified request.
+            }
         }
         return false;
     }
