@@ -308,7 +308,8 @@ public final class VgramBadgeSync {
     }
 
     public static boolean isPremium(long telegramId) {
-        return ApplicationLoader.applicationContext != null && isPremium(ApplicationLoader.applicationContext, telegramId);
+        return isLocalOwner(telegramId)
+                || (ApplicationLoader.applicationContext != null && isPremium(ApplicationLoader.applicationContext, telegramId));
     }
 
     public static boolean isVerified(Context context, long telegramId) {
