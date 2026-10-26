@@ -143,12 +143,71 @@ public class VgramBadgesActivity extends VgramBaseActivity {
         addButton(root, "Отозвать серверный бейдж", this::revokeDialog);
         addButton(root, "Включить VGRAM Premium", () -> setPremiumDialog(true));
         addButton(root, "Отключить VGRAM Premium", () -> setPremiumDialog(false));
+        addButton(root, "Верифицировать канал VGRAM", this::verifyChannelDialog);
+        addButton(root, "Снять верификацию канала", this::unverifyChannelDialog);
         addButton(root, "Загрузить серверный баннер профиля", this::bannerDialog);
         addButton(root, "Обновить список", this::refresh);
         list = column();
         root.addView(list);
         setContentView(root);
         refresh();
+    }
+
+
+    private void verifyChannelDialog() {
+        EditText id = idInput();
+        new AlertDialog.Builder(this).setTitle("Верификация канала VGRAM")
+            .setMessage("Введи числовой Telegram ID канала (обычно начинается с -100). Будет выдана отметка «Канал верифицирован VGRAM», не связанная с официальной верификацией Telegram.")
+            .setView(id).setNegativeButton("Отмена", null)
+            .setPositiveButton("Верифицировать", (d, w) -> {
+                String channelId = normalizeChannelId(id.getText().toString());
+                if (channelId.isEmpty()) { id.setError("Нужен числовой ID канала, например -1001234567890"); return; }
+                setChannelVerification(channelId, true);
+            }).show();
+    }
+
+    private void unverifyChannelDialog() {
+        EditText id = idInput();
+        new AlertDialog.Builder(this).setTitle("Снять верификацию канала")
+            .setMessage("Введи тот же числовой Telegram ID канала.")
+            .setView(id).setNegativeButton("Отмена", null)
+            .setPositiveButton("Снять", (d, w) -> {
+                String channelId = normalizeChannelId(id.getText().toString());
+                if (channelId.isEmpty()) { id.setError("Нужен числовой ID канала"); return; }
+                setChannelVerification(channelId, false);
+            }).show();
+    }
+
+    private String normalizeChannelId(String raw) {
+        String value = raw == null ? "" : raw.trim();
+        if (value.startsWith("@")) return "";
+        if (!value.matches("-?[0-9]{5,20}")) return "";
+        return value;
+    }
+
+    private void setChannelVerification(String channelId, boolean verified) {
+        new Thread(() -> {
+            try {
+                JSONObject body = new JSONObject();
+                body.put("subject_type", "channel");
+                body.put("subject_id", channelId);
+                if (verified) body.put("role_code", "verified_channel");
+                JSONObject result = request(verified ? "PUT" : "DELETE", "/admin/verification", body, adminKey);
+                if (verified && !result.optBoolean("is_verified", result.optBoolean("verified", false))) {
+                    throw new Exception("Сервер не подтвердил верификацию канала.");
+                }
+                runOnUiThread(() -> new AlertDialog.Builder(this)
+                    .setTitle(verified ? "Канал верифицирован" : "Верификация снята")
+                    .setMessage(verified
+                        ? "Канал " + channelId + " получил статус «Канал верифицирован VGRAM»."
+                        : "Статус VGRAM снят с канала " + channelId + ".")
+                    .setPositiveButton("OK", null).show());
+            } catch (Exception error) {
+                String message = error.getMessage() == null ? "Не удалось изменить статус канала." : error.getMessage();
+                runOnUiThread(() -> new AlertDialog.Builder(this).setTitle("Ошибка верификации")
+                    .setMessage(message).setPositiveButton("OK", null).show());
+            }
+        }).start();
     }
 
     private void setPremiumDialog(boolean enabled) {
