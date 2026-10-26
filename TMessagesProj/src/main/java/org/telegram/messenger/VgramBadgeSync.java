@@ -155,7 +155,7 @@ public final class VgramBadgeSync {
 
     /** Draw a blue verification check and a compact VGRAM badge using only the local cache. */
     public static void drawInlineIndicators(Canvas canvas, long telegramId, float x, float centerY, float alpha) {
-        if (canvas == null || telegramId <= 0 || ApplicationLoader.applicationContext == null) return;
+        if (canvas == null || telegramId <= 0 || alpha <= 0f || ApplicationLoader.applicationContext == null) return;
         Context context = ApplicationLoader.applicationContext;
         boolean verified = isVerified(context, telegramId);
         boolean hasBadge = hasBadge(context, telegramId);
