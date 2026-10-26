@@ -11,9 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
 
 public class VgramAudioPlayerActivity extends VgramBaseActivity {
     private EditText urlField;
@@ -66,7 +63,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         LinearLayout c = card("Сейчас играет", "Вставьте прямую HTTP(S)-ссылку на аудиофайл или поток.");
         trackTitle = label("Ничего не воспроизводится", 14, 0xfff1f0eb, true);
         c.addView(trackTitle, margin(0, dp(2), 0, dp(8)));
-        wave = new WaveView();
+        wave = new VgramVisualizerView(this);
         c.addView(wave, margin(0, dp(8), 0, dp(10)));
         progress = new SeekBar(this);
         progress.setMax(1);
