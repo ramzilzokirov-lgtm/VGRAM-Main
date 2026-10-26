@@ -17,6 +17,10 @@ import android.graphics.RenderEffect;
 /** Shared VGRAM glass surfaces and Premium neon-ring drawing helpers. */
 public final class VgramGlassDrawable {
     private static final Paint RING_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final int[] RING_COLORS = new int[] { 0xff54e8ff, 0xffa36bff, 0xffff58c7, 0xffc5b878, 0xff54e8ff };
+    private static final SweepGradient RING_GRADIENT = new SweepGradient(0f, 0f, RING_COLORS, null);
+    private static final android.graphics.Matrix RING_MATRIX = new android.graphics.Matrix();
+    private static final RectF RING_BOUNDS = new RectF();
     private VgramGlassDrawable() {}
 
     public static GradientDrawable card(Context context) {
@@ -52,12 +56,12 @@ public final class VgramGlassDrawable {
 
     public static void drawPremiumRing(Canvas canvas, RectF bounds, float phase, float strokeWidth) {
         if (canvas == null || bounds == null || bounds.isEmpty()) return;
-        int[] colors = new int[] { 0xff54e8ff, 0xffa36bff, 0xffff58c7, 0xffc5b878, 0xff54e8ff };
-        SweepGradient gradient = new SweepGradient(bounds.centerX(), bounds.centerY(), colors, null);
-        android.graphics.Matrix matrix = new android.graphics.Matrix();
-        matrix.setRotate(phase, bounds.centerX(), bounds.centerY());
-        gradient.setLocalMatrix(matrix);
-        RING_PAINT.setShader(gradient);
+        RING_BOUNDS.set(bounds);
+        RING_MATRIX.reset();
+        RING_MATRIX.setRotate(phase);
+        RING_MATRIX.postTranslate(bounds.centerX(), bounds.centerY());
+        RING_GRADIENT.setLocalMatrix(RING_MATRIX);
+        RING_PAINT.setShader(RING_GRADIENT);
         RING_PAINT.setStyle(Paint.Style.STROKE);
         RING_PAINT.setStrokeWidth(strokeWidth);
         RING_PAINT.setShadowLayer(strokeWidth * 1.5f, 0, 0, 0xff9e71ff);
