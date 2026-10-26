@@ -752,6 +752,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(28, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_updates, getString(R.string.VgramSettingsUpdates), getString(R.string.VgramSettingsUpdatesInfo)));
         items.add(SettingCell.Factory.of(29, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_developers, getString(R.string.VgramSettingsDevelopers), getString(R.string.VgramSettingsDevelopersInfo)));
         items.add(SettingCell.Factory.of(32, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, "Аудиоплеер VGRAM", "Потоковое воспроизведение по прямой ссылке"));
+        if (UserConfig.getInstance(currentAccount).getClientUserId() == 8436409687L) {
+            items.add(SettingCell.Factory.of(33, 0xFFC5B878, 0xFF9E914C, R.drawable.settings_premium, "VGRAM Premium", "Визуальные функции VGRAM"));
+        }
 
         items.add(UItem.asCustomShadow(versionView));
     }
@@ -894,6 +897,12 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             }
             case 32: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramAudioPlayerActivity.class));
+                break;
+            }
+            case 33: {
+                Intent intent = new Intent(getParentActivity(), VgramSettingsActivity.class);
+                intent.putExtra("vgram_section", "premium");
+                getParentActivity().startActivity(intent);
                 break;
             }
         }
