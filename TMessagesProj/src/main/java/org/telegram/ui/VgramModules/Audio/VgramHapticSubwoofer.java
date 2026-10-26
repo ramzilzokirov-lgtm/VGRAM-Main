@@ -33,12 +33,13 @@ public final class VgramHapticSubwoofer {
     }
 
     public synchronized boolean start(ExoPlayer player) {
-        stop();
-        if (!enabled || player == null || !player.isPlaying()) return false;
+        if (!enabled || player == null || !player.isPlaying()) { stop(); return false; }
         int session;
         try { session = player.getAudioSessionId(); }
         catch (RuntimeException error) { return false; }
         if (session <= 0 || vibrator == null || !vibrator.hasVibrator()) return false;
+        if (visualizer != null && activeSessionId == session) return true;
+        stop();
         try {
             visualizer = new Visualizer(session);
             int[] range = Visualizer.getCaptureSizeRange();
@@ -59,10 +60,12 @@ public final class VgramHapticSubwoofer {
                         lastPulseMs = now;
                         pulse();
                         VgramEdgeGlowView.pulse(appContext, Math.min(1f, bass / 255f));
+                        VgramEdgeGlowView.pulse(appContext, Math.min(1f, bass / 255f));
                     }
                 }
             }, Visualizer.getMaxCaptureRate() / 2, false, true);
             visualizer.setEnabled(true);
+            activeSessionId = session;
             return true;
         } catch (RuntimeException error) {
             Log.w(TAG, "Visualizer permission or audio session unavailable", error);
@@ -88,6 +91,7 @@ public final class VgramHapticSubwoofer {
             try { visualizer.release(); } catch (RuntimeException ignored) { }
             visualizer = null;
         }
+        activeSessionId = -1;
         if (vibrator != null) {
             try { vibrator.cancel(); } catch (RuntimeException ignored) { }
         }
