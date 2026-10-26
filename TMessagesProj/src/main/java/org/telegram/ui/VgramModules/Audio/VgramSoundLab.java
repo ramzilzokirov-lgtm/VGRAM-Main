@@ -31,7 +31,11 @@ public final class VgramSoundLab {
     private long spatialStartMs;
     private final Runnable spatialSweep = new Runnable() {
         @Override public void run() {
-            if (!enabled || preset != Preset.SPATIAL_8D || player == null || !player.isPlaying()) return;
+            if (!enabled || preset != Preset.SPATIAL_8D || player == null) return;
+            if (!player.isPlaying()) {
+                handler.postDelayed(this, 150L);
+                return;
+            }
             attachEffectsIfNeeded();
             double phase = (System.currentTimeMillis() - spatialStartMs) / 2500.0;
             float panPhase = (float) (0.5 + 0.5 * Math.sin(phase));
