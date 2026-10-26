@@ -169,6 +169,7 @@ import org.telegram.ui.ActionBar.DrawerLayoutContainer;
 import org.telegram.ui.ActionBar.INavigationLayout;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.VgramModules.UI.VgramEdgeGlowView;
 import org.telegram.ui.Cells.LanguageCell;
 import org.telegram.ui.Components.ActivityWindowEmptyBackgroundDrawable;
 import org.telegram.ui.Components.AlertsCreator;
@@ -312,6 +313,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private SizeNotifierFrameLayout backgroundTablet;
     public FrameLayout frameLayout;
     private FireworksOverlay fireworksOverlay;
+    private VgramEdgeGlowView vgramEdgeGlowView;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
     public DrawerLayoutContainer drawerLayoutContainer;
     private PasscodeViewDialog passcodeDialog;
@@ -462,6 +464,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipToPadding(false);
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
+        vgramEdgeGlowView = new VgramEdgeGlowView(this);
+        frameLayout.addView(vgramEdgeGlowView, new FrameLayout.LayoutParams(-1, -1));
         rootAnimatedInsetsListener = new WindowAnimatedInsetsProvider(frameLayout);
         pipActivityController.addPipListener(new IPipActivityListener() {
             final ActivityVisibilityController activityVisibilityController = createActivityVisibilityController(false);
@@ -6860,6 +6864,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onDestroy() {
+        if (vgramEdgeGlowView != null) {
+            if (vgramEdgeGlowView.getParent() instanceof ViewGroup) ((ViewGroup) vgramEdgeGlowView.getParent()).removeView(vgramEdgeGlowView);
+            vgramEdgeGlowView = null;
+        }
         GramWalletStorageAuth.onActivityDestroyed(this);
         isActive = false;
         activeInstanceCount--;
