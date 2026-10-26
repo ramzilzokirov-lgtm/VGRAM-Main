@@ -16,6 +16,7 @@ on:
       - "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/Cells/VgramGlassDrawable.java"
       - "scripts/patch_chat_message_cell.py"
       - "TMessagesProj/src/main/java/org/telegram/ui/Vgram*.java"
       - "TMessagesProj/src/main/java/org/telegram/messenger/Vgram*.java"
