@@ -25,6 +25,8 @@ import androidx.media3.exoplayer.ExoPlayer;
 import org.telegram.ui.VgramModules.Audio.VgramHapticSubwoofer;
 import org.telegram.ui.VgramModules.Audio.VgramSoundLab;
 import org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
+import org.telegram.ui.VgramModules.Audio.VgramRenderersFactory;
+import org.telegram.ui.VgramModules.Audio.VgramStereoPanAudioProcessor;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -49,6 +51,7 @@ public final class VgramAudioService {
     private static ImageView artworkView;
     private static VgramVisualizerView miniVisualizer;
     private static VgramHapticSubwoofer hapticSubwoofer;
+    private static VgramRenderersFactory renderersFactory;
     private static Context appContext;
     private static boolean lifecycleHookInstalled;
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -102,7 +105,8 @@ public final class VgramAudioService {
             if (safeContext == null) throw new IllegalStateException("No application context available for VGRAM player");
             appContext = safeContext;
             try {
-                player = new ExoPlayer.Builder(appContext).build();
+                renderersFactory = new VgramRenderersFactory(appContext);
+                player = new ExoPlayer.Builder(appContext, renderersFactory).build();
                 installLaunchActivityMiniPlayerHook(appContext);
                 player.addListener(new Player.Listener() {
                     @Override public void onIsPlayingChanged(boolean isPlaying) { refreshMiniPlayerSafely(); }
@@ -120,6 +124,10 @@ public final class VgramAudioService {
             }
         }
         return player;
+    }
+
+    public static VgramStereoPanAudioProcessor getStereoPanAudioProcessor() {
+        return renderersFactory == null ? null : renderersFactory.getStereoPanProcessor();
     }
 
     public static void setHapticBassEnabled(Context context, boolean enabled) {
