@@ -1384,7 +1384,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     backgroundPaint.setAlpha((int) (0xFF * progressToGradient));
                     canvas.drawRect(0, 0, getMeasuredWidth(), y1, backgroundPaint);
                     if (vgramAuroraDrawable != null) {
-                        vgramAuroraDrawable.setAccentColor(VgramTheme.accent(getContext()));
                         vgramAuroraDrawable.setBounds(0, 0, getMeasuredWidth(), y1);
                         vgramAuroraDrawable.draw(canvas);
                     }
