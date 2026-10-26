@@ -119,6 +119,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         detachFromParent(playButton);
         c.addView(playButton, new LinearLayout.LayoutParams(-1, -2));
         playButton.setOnClickListener(v -> onPlayPressed());
+        detachFromParent(c);
         body.addView(c, margin(0, 0, 0, dp(12)));
 
         LinearLayout emptyCard = card("Поиск аудио", "Введите прямую ссылку на аудиопоток и нажмите «Повторить поиск».");
@@ -136,8 +137,11 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         VgramMotion.applySpringTouch(retry);
         detachFromParent(retry);
         emptyCard.addView(retry, new LinearLayout.LayoutParams(-1, -2));
+        detachFromParent(emptyCard);
         body.addView(emptyCard, margin(0, 0, 0, dp(12)));
-        body.addView(card("Поддержка источников", "Плеер принимает прямые HTTP(S)-ссылки на аудиопотоки. Страницы SoundCloud и Spotify не являются прямыми аудиопотоками."), margin(0, 0, 0, dp(12)));
+        LinearLayout sourceCard = card("Поддержка источников", "Плеер принимает прямые HTTP(S)-ссылки на аудиопотоки. Страницы SoundCloud и Spotify не являются прямыми аудиопотоками.");
+        detachFromParent(sourceCard);
+        body.addView(sourceCard, margin(0, 0, 0, dp(12)));
         VgramMotion.applySpringTouch(playButton);
         renderCurrentTrack();
         } catch (Throwable t) {
