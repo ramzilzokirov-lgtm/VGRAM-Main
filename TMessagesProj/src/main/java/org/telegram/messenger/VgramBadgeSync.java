@@ -67,16 +67,25 @@ public final class VgramBadgeSync {
             long ownerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
             if (ownerId <= 0) return;
             SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            if (prefs.getBoolean("vgram_local_owner_seeded", false)) return;
-            JSONArray labels = new JSONArray();
-            labels.put("Разработчик VGRAM");
-            labels.put("✓ Разработчик VGRAM");
-            labels.put("✦ VGRAM PREMIUM");
-            prefs.edit()
-                    .putString("badges_" + ownerId, labels.toString())
-                    .putBoolean("premium_" + ownerId, true)
-                    .putBoolean("vgram_local_owner_seeded", true)
-                    .apply();
+            List<String> current = decodeLabels(prefs.getString("badges_" + ownerId, ""));
+            boolean changed = false;
+            String[] defaults = new String[] {"Разработчик VGRAM", "✓ Разработчик VGRAM", "✦ VGRAM PREMIUM"};
+            for (String label : defaults) {
+                if (!current.contains(label)) {
+                    current.add(label);
+                    changed = true;
+                }
+            }
+            if (changed || !prefs.getBoolean("vgram_local_owner_seeded", false)
+                    || !prefs.getBoolean("premium_" + ownerId, false)) {
+                JSONArray labels = new JSONArray();
+                for (String label : current) labels.put(label);
+                prefs.edit()
+                        .putString("badges_" + ownerId, labels.toString())
+                        .putBoolean("premium_" + ownerId, true)
+                        .putBoolean("vgram_local_owner_seeded", true)
+                        .apply();
+            }
         } catch (RuntimeException error) {
             Log.w(TAG, "Unable to seed local owner defaults", error);
         }
