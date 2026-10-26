@@ -35,6 +35,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         LinearLayout swatches = new LinearLayout(this);
         swatches.setOrientation(LinearLayout.HORIZONTAL);
         swatches.setGravity(Gravity.CENTER_VERTICAL);
+        VgramMotion.applySpringTouch(swatches);
         swatches.setPadding(0, dp(15), 0, 0);
         int active = accent();
         for (int i = 0; i < colors.length; i++) {
@@ -47,6 +48,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(70), 1);
   lp.setMargins(dp(3), 0, dp(3), 0);
   swatches.addView(swatch, lp);
+  VgramMotion.applySpringTouch(swatch);
   swatch.setOnClickListener(v -> {
       getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("accent", color).apply();
       VgramTheme.apply(this);
@@ -71,25 +73,45 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         hexInput.setPadding(dp(12), dp(10), dp(12), dp(10));
         hexInput.setBackground(panel(0xff202328, 0x667faaa5, 12));
         custom.addView(hexInput, margin(0, 0, 0, dp(8)));
-        SeekBar hue = new SeekBar(this);
-        hue.setMax(360);
         float[] initialHsv = new float[3];
         Color.colorToHSV(accent(), initialHsv);
+        SeekBar hue = new SeekBar(this);
+        hue.setMax(360);
         hue.setProgress(Math.round(initialHsv[0]));
+        custom.addView(label("Оттенок (Hue)", 12, 0xffb9bbc1, false));
         custom.addView(hue, margin(0, 0, 0, dp(6)));
-        hue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
-                if (!fromUser) return;
-                float[] hsv = new float[]{value, 0.58f, 0.88f};
+        SeekBar saturation = new SeekBar(this);
+        saturation.setMax(100);
+        saturation.setProgress(Math.round(initialHsv[1] * 100f));
+        custom.addView(label("Насыщенность (Saturation)", 12, 0xffb9bbc1, false));
+        custom.addView(saturation, margin(0, 0, 0, dp(6)));
+        SeekBar brightness = new SeekBar(this);
+        brightness.setMax(100);
+        brightness.setProgress(Math.round(initialHsv[2] * 100f));
+        custom.addView(label("Яркость (Value)", 12, 0xffb9bbc1, false));
+        custom.addView(brightness, margin(0, 0, 0, dp(6)));
+        final float[] hsv = initialHsv.clone();
+        SeekBar.OnSeekBarChangeListener hsvListener = new SeekBar.OnSeekBarChangeListener() {
+            private void applyColor() {
                 int picked = Color.HSVToColor(hsv);
                 hexInput.setText(String.format(java.util.Locale.US, "#%06X", 0xFFFFFF & picked));
                 colorPreview.setTextColor(picked);
                 colorPreview.setBackground(panel(0xff22252a, picked, 14));
                 persistCustomAccent(picked);
             }
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (!fromUser) return;
+                if (bar == hue) hsv[0] = value;
+                else if (bar == saturation) hsv[1] = value / 100f;
+                else hsv[2] = value / 100f;
+                applyColor();
+            }
             @Override public void onStartTrackingTouch(SeekBar bar) { }
-            @Override public void onStopTrackingTouch(SeekBar bar) { recreate(); }
-        });
+            @Override public void onStopTrackingTouch(SeekBar bar) { VgramTheme.apply(VgramSettingsActivity.this); }
+        };
+        hue.setOnSeekBarChangeListener(hsvListener);
+        saturation.setOnSeekBarChangeListener(hsvListener);
+        brightness.setOnSeekBarChangeListener(hsvListener);
         addButton(custom, "Применить HEX", () -> {
             String raw = hexInput.getText() == null ? "" : hexInput.getText().toString().trim();
             try {
@@ -110,6 +132,7 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         openPlayer.setBackground(panel(0x20ffffff, 0x40ffffff, 18));
         playerCard.addView(openPlayer, margin(0, dp(12), 0, 0));
         openPlayer.setOnClickListener(v -> startActivity(new Intent(this, VgramPlayer.class)));
+        VgramMotion.applySpringTouch(openPlayer);
 
         LinearLayout icons = card("Иконка приложения", "10 вариантов V в стиле «Дронов-убийц». Выбор применяется сразу.");
         LinearLayout iconGrid = new LinearLayout(this);
@@ -246,6 +269,8 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         state.setBackground(panel(0xff292c31, Color.argb(100, Color.red(accent()), Color.green(accent()), Color.blue(accent())), 14));
         item.addView(state, margin(0, dp(13), 0, 0));
         item.setClickable(true);
+        VgramMotion.applySpringTouch(item);
+        VgramMotion.applySpringTouch(state);
         item.setOnClickListener(v -> {
   boolean next = !getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean(key, fallback);
   getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putBoolean(key, next).apply();
