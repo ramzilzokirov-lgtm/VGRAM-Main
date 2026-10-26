@@ -13,6 +13,7 @@ public final class VgramVisualizerView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
     private final float[] levels = new float[BAR_COUNT];
+    private final float[] displayedLevels = new float[BAR_COUNT];
     private boolean playing;
     private long animationStart = SystemClock.uptimeMillis();
     private int accent = 0xffc5b878;
@@ -60,16 +61,22 @@ public final class VgramVisualizerView extends View {
         float barWidth = Math.max(dp(2), (width - gap * (BAR_COUNT - 1)) / BAR_COUNT);
         float baseline = height * 0.5f;
         float t = (SystemClock.uptimeMillis() - animationStart) / 180.0f;
+        boolean needsFrame = false;
         for (int i = 0; i < BAR_COUNT; i++) {
-            float target = playing ? (0.18f + 0.72f * (float) (0.5 + 0.5 * Math.sin(t + i * 0.88))) : 0.06f;
+            float target = playing ? (0.18f + 0.72f * (float) (0.5 + 0.5 * Math.sin(t + i * 0.88))) : 0.025f;
             if (levels[i] > 0f && playing) target = Math.max(target * 0.45f, levels[i]);
-            float barHeight = Math.max(dp(2), (height - dp(4)) * target);
+            float current = displayedLevels[i];
+            current += (target - current) * (playing ? 0.38f : 0.22f);
+            if (Math.abs(target - current) > 0.008f) needsFrame = true;
+            displayedLevels[i] = current;
+            float barHeight = Math.max(dp(2), (height - dp(4)) * current);
             float left = i * (barWidth + gap);
             rect.set(left, baseline - barHeight / 2f, Math.min(width, left + barWidth), baseline + barHeight / 2f);
             paint.setColor(i == BAR_COUNT / 2 ? accent : blend(accent, 0xffd9e2e0, i / (float) (BAR_COUNT - 1)));
             canvas.drawRoundRect(rect, barWidth, barWidth, paint);
         }
         if (playing) postInvalidateDelayed(32L);
+        else if (needsFrame) postInvalidateDelayed(16L);
     }
 
     private int dp(float value) {
