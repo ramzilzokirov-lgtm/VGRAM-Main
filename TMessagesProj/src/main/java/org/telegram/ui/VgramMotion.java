@@ -51,6 +51,29 @@ public final class VgramMotion {
         }
     }
 
+    /** VGRAM's own launch motion: short fade + upward spring, disabled by the user's motion toggle. */
+    public static void playEntrance(android.content.Context context, View view) {
+        if (context == null || view == null) return;
+        if (!context.getSharedPreferences("vgram_ui", android.content.Context.MODE_PRIVATE)
+                .getBoolean("animations", true)
+                || android.os.Build.VERSION.SDK_INT >= 26
+                && android.provider.Settings.Global.getFloat(context.getContentResolver(),
+                        android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f) {
+            view.setAlpha(1f);
+            view.setTranslationY(0f);
+            view.setScaleX(1f);
+            view.setScaleY(1f);
+            return;
+        }
+        view.setAlpha(0f);
+        view.setTranslationY(24f * context.getResources().getDisplayMetrics().density);
+        view.setScaleX(0.985f);
+        view.setScaleY(0.985f);
+        view.animate().cancel();
+        view.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
+                .setDuration(420L).setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
+    }
+
     public static void crossfadeIn(View view) {
         if (view == null) return;
         view.setAlpha(0f);
