@@ -8,6 +8,7 @@ import android.os.Vibrator;
 import android.util.Log;
 
 import androidx.media3.exoplayer.ExoPlayer;
+import org.telegram.ui.VgramModules.UI.VgramEdgeGlowView;
 
 /** Low-bin FFT bass detector with rate-limited, short haptic pulses. */
 public final class VgramHapticSubwoofer {
@@ -57,6 +58,7 @@ public final class VgramHapticSubwoofer {
                     if (bass >= threshold && now - lastPulseMs >= 85L) {
                         lastPulseMs = now;
                         pulse();
+                        VgramEdgeGlowView.pulse(appContext, Math.min(1f, bass / 255f));
                     }
                 }
             }, Visualizer.getMaxCaptureRate() / 2, false, true);
