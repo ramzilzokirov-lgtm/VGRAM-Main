@@ -99,7 +99,11 @@ def main() -> None:
     glass_match = GLASS_DRAW.search(source)
     if glass_match:
         if GLASS_IMPORT not in source:
-            source = source[:glass_match.start()] + GLASS_IMPORT + "\n" + source[glass_match.start():]
+            messenger_import = re.search(r"(?m)^import org\.telegram\.messenger\.[^;]+;\s*$", source)
+            if not messenger_import:
+                fail("no safe messenger import anchor found for VgramGlassStyle", source)
+            insert_at = messenger_import.end()
+            source = source[:insert_at] + "\n" + GLASS_IMPORT + source[insert_at:]
             glass_match = GLASS_DRAW.search(source)
         if glass_match and GLASS_CALL not in source:
             source = source[:glass_match.start()] + glass_match.group("indent") + GLASS_CALL + source[glass_match.end():]
