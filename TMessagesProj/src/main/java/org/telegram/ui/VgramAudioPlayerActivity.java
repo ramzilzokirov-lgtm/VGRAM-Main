@@ -1,6 +1,6 @@
 package org.telegram.ui;
 
-import org.telegram.ui.VgramModules.UI.VgramVisualizerView;
+import org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -61,6 +61,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         playback = VgramPlaybackManager.getInstance(getApplicationContext());
+        try {
         setupScreen("VGRAM AUDIO", "Потоковый плеер", "Воспроизведение продолжается при закрытии этого экрана.");
         LinearLayout c = card("Сейчас играет", "Вставьте прямую HTTP(S)-ссылку на аудиофайл или поток.");
         trackTitle = label("Ничего не воспроизводится", 14, 0xfff1f0eb, true);
@@ -122,6 +123,18 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         body.addView(card("Поддержка источников", "Плеер принимает прямые HTTP(S)-ссылки на аудиопотоки. Страницы SoundCloud и Spotify не являются прямыми аудиопотоками."), margin(0, 0, 0, dp(12)));
         VgramMotion.applySpringTouch(playButton);
         renderCurrentTrack();
+        } catch (Throwable t) {
+            org.telegram.messenger.FileLog.e("VGRAM audio player UI", t);
+            LinearLayout fallback = new LinearLayout(this);
+            fallback.setOrientation(LinearLayout.VERTICAL);
+            fallback.setPadding(dp(16), dp(16), dp(16), dp(16));
+            TextView error = new TextView(this);
+            error.setTextColor(0xffff5555);
+            error.setTextSize(12);
+            error.setText("VGRAM Audio Player Error:\n" + android.util.Log.getStackTraceString(t));
+            fallback.addView(error, new LinearLayout.LayoutParams(-1, -2));
+            setContentView(fallback);
+        }
     }
 
     private void onPlayPressed() {
