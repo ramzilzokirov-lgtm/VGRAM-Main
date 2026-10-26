@@ -429,7 +429,20 @@ public final class VgramBadgeSync {
                     if (badges != null) for (int i = 0; i < badges.length(); i++) {
                         JSONObject item = badges.optJSONObject(i);
                         if (item == null) {
-                            Log.w(TAG, "Ignoring non-object badge for Telegram user " + id);
+                            // Some deployed API versions return badges as string arrays
+                            // (e.g. ["TESTER", "OG"]) instead of objects.
+                            String rawLabel = badges.optString(i, "").trim();
+                            if (!rawLabel.isEmpty() && !"null".equalsIgnoreCase(rawLabel)) {
+                                String rendered = verificationLabelForRole(rawLabel);
+                                if (isVerificationRole(rawLabel) || !rendered.isEmpty()) {
+                                    labels.put("✓ " + (rendered.isEmpty() ? verificationLabelForRole(rawLabel) : rendered));
+                                } else if ("premium".equalsIgnoreCase(rawLabel) || "vgram_premium".equalsIgnoreCase(rawLabel)
+                                        || "✦ VGRAM PREMIUM".equalsIgnoreCase(rawLabel)) {
+                                    labels.put("✦ VGRAM PREMIUM");
+                                } else {
+                                    labels.put(rawLabel);
+                                }
+                            }
                             continue;
                         }
                         String label = firstNonEmpty(item, "label", "badge_code", "code", "name", "badge", "title", "badge_type");
@@ -439,6 +452,8 @@ public final class VgramBadgeSync {
                             String verifiedLabel = firstNonEmpty(item, "label", "role", "role_code", "badge_type", "badge_code");
                             String rendered = verificationLabelForRole(verifiedLabel);
                             if (rendered != null && !rendered.isEmpty()) labels.put("✓ " + rendered);
+                        } else if ("premium".equalsIgnoreCase(label) || "vgram_premium".equalsIgnoreCase(label)) {
+                            labels.put("✦ VGRAM PREMIUM");
                         } else if (!label.isEmpty() && !"VGRAM PREMIUM".equalsIgnoreCase(label)) {
                             labels.put(label);
                         }
