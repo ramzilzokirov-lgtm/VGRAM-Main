@@ -44,13 +44,49 @@ public final class VgramBadgeSync {
     private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Runnable>> LISTENERS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<WeakReference<View>>> VIEWS = new ConcurrentHashMap<>();
     private static final long CACHE_TTL = 300000L;
+    private static final Path INDICATOR_PATH = new Path();
+    private static final RectF INDICATOR_RECT = new RectF();
+    private static final android.graphics.Matrix CELL_MATRIX = new android.graphics.Matrix();
+    private static final float[] CELL_MATRIX_VALUES = new float[9];
+
+    static {
+        Context context = ApplicationLoader.applicationContext;
+        if (context != null) seedLocalOwner(context);
+    }
 
     private VgramBadgeSync() {}
+
+    /**
+     * Local-first owner defaults keep the owner build visibly branded before the backend wakes.
+     * Only the Telegram account currently configured on this installation is seeded; no guessed
+     * numeric/test IDs are shipped into the cache.
+     */
+    private static void seedLocalOwner(Context context) {
+        if (context == null) return;
+        try {
+            long ownerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+            if (ownerId <= 0) return;
+            SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (prefs.getBoolean("vgram_local_owner_seeded", false)) return;
+            JSONArray labels = new JSONArray();
+            labels.put("Разработчик VGRAM");
+            labels.put("✓ Разработчик VGRAM");
+            labels.put("✦ VGRAM PREMIUM");
+            prefs.edit()
+                    .putString("badges_" + ownerId, labels.toString())
+                    .putBoolean("premium_" + ownerId, true)
+                    .putBoolean("vgram_local_owner_seeded", true)
+                    .apply();
+        } catch (RuntimeException error) {
+            Log.w(TAG, "Unable to seed local owner defaults", error);
+        }
+    }
 
     /** Returns a styled name using only the local cache; never performs network I/O. */
     public static SpannableStringBuilder withBadges(Context context, long telegramId, CharSequence name) {
         SpannableStringBuilder result = new SpannableStringBuilder(name == null ? "" : name);
         if (context == null || telegramId <= 0) return result;
+        seedLocalOwner(context);
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String cached = cache.getString("badges_" + telegramId, "");
         for (String label : decodeLabels(cached)) {
@@ -115,11 +151,11 @@ public final class VgramBadgeSync {
             INDICATOR_PAINT.setStrokeCap(Paint.Cap.ROUND);
             INDICATOR_PAINT.setStrokeJoin(Paint.Join.ROUND);
             INDICATOR_PAINT.setColor(0xFFFFFFFF);
-            Path check = new Path();
-            check.moveTo(nextX + AndroidUtilities.dp(3.2f), centerY);
-            check.lineTo(nextX + AndroidUtilities.dp(5.5f), centerY + AndroidUtilities.dp(2.2f));
-            check.lineTo(nextX + AndroidUtilities.dp(9.7f), centerY - AndroidUtilities.dp(2.6f));
-            canvas.drawPath(check, INDICATOR_PAINT);
+            INDICATOR_PATH.rewind();
+            INDICATOR_PATH.moveTo(nextX + AndroidUtilities.dp(3.2f), centerY);
+            INDICATOR_PATH.lineTo(nextX + AndroidUtilities.dp(5.5f), centerY + AndroidUtilities.dp(2.2f));
+            INDICATOR_PATH.lineTo(nextX + AndroidUtilities.dp(9.7f), centerY - AndroidUtilities.dp(2.6f));
+            canvas.drawPath(INDICATOR_PATH, INDICATOR_PAINT);
             INDICATOR_PAINT.setStyle(Paint.Style.FILL);
             nextX += AndroidUtilities.dp(17);
         }
@@ -131,11 +167,11 @@ public final class VgramBadgeSync {
             float padding = AndroidUtilities.dp(5);
             float width = Math.min(AndroidUtilities.dp(66), INDICATOR_TEXT.measureText(label) + padding * 2);
             float height = AndroidUtilities.dp(14);
-            RectF pill = new RectF(nextX, centerY - height / 2, nextX + width, centerY + height / 2);
+            INDICATOR_RECT.set(nextX, centerY - height / 2, nextX + width, centerY + height / 2);
             INDICATOR_PAINT.setStyle(Paint.Style.FILL);
             INDICATOR_PAINT.setColor(0xFFE2BE68);
             INDICATOR_PAINT.setAlpha(Math.max(0, Math.min(255, (int) (255 * alpha))));
-            canvas.drawRoundRect(pill, AndroidUtilities.dp(4), AndroidUtilities.dp(4), INDICATOR_PAINT);
+            canvas.drawRoundRect(INDICATOR_RECT, AndroidUtilities.dp(4), AndroidUtilities.dp(4), INDICATOR_PAINT);
             INDICATOR_TEXT.setColor(0xFF25221A);
             INDICATOR_TEXT.setAlpha(Math.max(0, Math.min(255, (int) (255 * alpha))));
             float textWidth = INDICATOR_TEXT.measureText(label);
@@ -162,15 +198,13 @@ public final class VgramBadgeSync {
         if (senderId < 0) senderId = -senderId;
         if (senderId == 0 || cell.getMeasuredWidth() <= 0) return;
 
-        android.graphics.Matrix matrix = new android.graphics.Matrix();
-        canvas.getMatrix(matrix);
-        float[] values = new float[9];
-        matrix.getValues(values);
-        float scaleX = Math.abs(values[android.graphics.Matrix.MSCALE_X]);
-        float scaleY = Math.abs(values[android.graphics.Matrix.MSCALE_Y]);
+        canvas.getMatrix(CELL_MATRIX);
+        CELL_MATRIX.getValues(CELL_MATRIX_VALUES);
+        float scaleX = Math.abs(CELL_MATRIX_VALUES[android.graphics.Matrix.MSCALE_X]);
+        float scaleY = Math.abs(CELL_MATRIX_VALUES[android.graphics.Matrix.MSCALE_Y]);
         if (scaleX < 0.01f) scaleX = 1f;
         if (scaleY < 0.01f) scaleY = 1f;
-        float translatedX = values[android.graphics.Matrix.MTRANS_X];
+        float translatedX = CELL_MATRIX_VALUES[android.graphics.Matrix.MTRANS_X];
         float x = Math.max(0f, (cell.getMeasuredWidth() - translatedX - AndroidUtilities.dp(88)) / scaleX);
         float centerY = AndroidUtilities.dp(9) / scaleY;
         drawInlineIndicators(canvas, senderId, x, centerY, 1f);
@@ -239,6 +273,9 @@ public final class VgramBadgeSync {
     /** VGRAM Premium is independent from official Telegram Premium. */
     public static boolean isPremium(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
+        seedLocalOwner(context);
+        long localOwnerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        if (localOwnerId > 0 && telegramId == localOwnerId) return true;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
@@ -253,6 +290,9 @@ public final class VgramBadgeSync {
 
     public static boolean isVerified(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
+        seedLocalOwner(context);
+        long localOwnerId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        if (localOwnerId > 0 && telegramId == localOwnerId) return true;
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             String value = label.toUpperCase(java.util.Locale.ROOT);
@@ -487,6 +527,7 @@ public final class VgramBadgeSync {
         private final TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint textDrawPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF spanRect = new RectF();
 
         BadgePillSpan(String label) {
             this.label = label;
@@ -518,8 +559,8 @@ public final class VgramBadgeSync {
             Paint.FontMetrics fm = textPaint.getFontMetrics();
             float height = Math.max(dp(16), fm.descent - fm.ascent + dp(4));
             float centerY = (top + bottom) / 2f;
-            RectF rect = new RectF(x, centerY - height / 2f, x + width, centerY + height / 2f);
-            canvas.drawRoundRect(rect, dp(6), dp(6), backgroundPaint);
+            spanRect.set(x, centerY - height / 2f, x + width, centerY + height / 2f);
+            canvas.drawRoundRect(spanRect, dp(6), dp(6), backgroundPaint);
             canvas.drawText(label, x + dp(6), centerY - (fm.ascent + fm.descent) / 2f, textDrawPaint);
         }
 
