@@ -54,7 +54,7 @@ def main() -> None:
                 if GLASS_IMPORT in source and match_glass:
                     source = source[:match_glass.start()] + match_glass.group("indent") + GLASS_CALL + source[match_glass.end():]
                     SOURCE.write_text(source, encoding="utf-8")
-                    print(f"Added liquid-glass border to {SOURCE}")
+                    print(f"Enabled liquid-glass bubble rendering in {SOURCE}")
         if IMPORT not in source:
             anchor = "import org.telegram.messenger.MessageObject;"
             if anchor not in source:
