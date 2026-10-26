@@ -92,19 +92,14 @@ public final class VgramEdgeGlowView extends View implements SharedPreferences.O
     }
 
     @Override public WindowInsets onApplyWindowInsets(WindowInsets insets) {
-        if (Build.VERSION.SDK_INT >= 31) {
-            float radius = 0;
-            RoundedCorner[] corners = {
-                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_TOP_LEFT),
-                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_TOP_RIGHT),
-                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_BOTTOM_LEFT),
-                    insets.getRoundedCorner(WindowInsets.ROUND_CORNER_BOTTOM_RIGHT)
-            };
-            for (RoundedCorner corner : corners) {
-                if (corner != null) radius = Math.max(radius, corner.getRadius());
-            }
-            if (radius > 0) cornerRadius = radius;
+        float radius = dp(16);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                RoundedCorner corner = insets.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT);
+                if (corner != null) radius = corner.getRadius();
+            } catch (Throwable ignored) { }
         }
+        if (radius > 0) cornerRadius = radius;
         return super.onApplyWindowInsets(insets);
     }
 
