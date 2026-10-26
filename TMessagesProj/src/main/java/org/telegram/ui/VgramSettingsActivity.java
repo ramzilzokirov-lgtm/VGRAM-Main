@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import org.telegram.ui.VgramModules.Audio.VgramSoundLab;
+import org.telegram.ui.VgramModules.UI.VgramEdgeGlowView;
+import org.telegram.ui.VgramModules.UI.VgramGlassStyle;
 
 import android.widget.Toast;
 
@@ -126,6 +128,47 @@ public class VgramSettingsActivity extends VgramBaseActivity {
         });
 
         addToggle("Жидкое стекло", "Полупрозрачные панели и мягкие контуры.", "glass", true);
+
+        LinearLayout edgeGlow = card("Edge Glow · свечение по краям", "Тонкий акцентный контур. Режим звука реагирует на бас при включённом Haptic Bass.");
+        int edgeMode = getSharedPreferences("vgram_ui", MODE_PRIVATE).getInt("edge_glow_mode", VgramEdgeGlowView.MODE_OFF);
+        String[] edgeNames = { "Выкл", "Только при звуке", "Всегда" };
+        LinearLayout edgeChoices = new LinearLayout(this);
+        edgeChoices.setOrientation(LinearLayout.HORIZONTAL);
+        for (int i = 0; i < edgeNames.length; i++) {
+            final int mode = i;
+            TextView choice = label((edgeMode == i ? "✓  " : "") + edgeNames[i], 11, accent(), true);
+            choice.setGravity(Gravity.CENTER);
+            choice.setPadding(dp(4), dp(12), dp(4), dp(12));
+            choice.setBackground(panel(0xff22252a, edgeMode == i ? accent() : 0xff454951, 12));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(46), 1);
+            lp.setMargins(dp(3), dp(7), dp(3), dp(3));
+            edgeChoices.addView(choice, lp);
+            choice.setOnClickListener(v -> {
+                getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("edge_glow_mode", mode).apply();
+                recreate();
+            });
+            VgramMotion.applySpringTouch(choice);
+        }
+        edgeGlow.addView(edgeChoices);
+        addToggle("Анимированный Aurora-фон", "Мягкие цветовые пятна в VGRAM Studio.", "aurora_background", true);
+
+        LinearLayout glassOpacity = card("Прозрачность стекла", "Уровень альфа-канала для жидких поверхностей и обводки сообщений.");
+        SeekBar opacity = new SeekBar(this);
+        opacity.setMax(70);
+        opacity.setProgress(VgramGlassStyle.opacityPercent(this) - 20);
+        glassOpacity.addView(label("Прозрачность облачков: " + VgramGlassStyle.opacityPercent(this) + "%", 12, 0xffb9bbc1, false));
+        TextView opacityLabel = (TextView) glassOpacity.getChildAt(glassOpacity.getChildCount() - 1);
+        glassOpacity.addView(opacity, margin(0, dp(5), 0, dp(6)));
+        opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (!fromUser) return;
+                int percent = value + 20;
+                getSharedPreferences("vgram_ui", MODE_PRIVATE).edit().putInt("glass_bubble_opacity", percent).apply();
+                opacityLabel.setText("Прозрачность облачков: " + percent + "%");
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
 
         LinearLayout soundLab = card("Звук и DSP", "Пресеты обрабатывают звук текущего VGRAM Player через его audio session. Эффекты зависят от поддержки AudioFX устройством.");
         VgramSoundLab soundEngine = VgramSoundLab.get(getApplicationContext());
