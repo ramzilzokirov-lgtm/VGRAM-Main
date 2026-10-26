@@ -19,6 +19,7 @@ on:
       - "TMessagesProj/src/main/java/org/telegram/ui/Cells/VgramGlassDrawable.java"
       - "scripts/patch_chat_message_cell.py"
       - "TMessagesProj/src/main/java/org/telegram/ui/Vgram*.java"
+      - "TMessagesProj/src/main/java/org/telegram/ui/Components/ScrollSlidingTextTabStrip.java"
       - "TMessagesProj/src/main/java/org/telegram/messenger/Vgram*.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
       - "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
