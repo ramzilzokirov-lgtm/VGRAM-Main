@@ -626,6 +626,14 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         scrollView.setFillViewport(true);
         sizeNotifierFrameLayout.addView(scrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
+        ImageView vgramLoginLogo = new ImageView(context);
+        vgramLoginLogo.setImageResource(R.drawable.vgram_launcher_icon);
+        vgramLoginLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        vgramLoginLogo.setContentDescription("VGRAM");
+        vgramLoginLogo.setElevation(AndroidUtilities.dp(4));
+        sizeNotifierFrameLayout.addView(vgramLoginLogo, LayoutHelper.createFrame(
+                30, 30, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, AndroidUtilities.statusBarHeight + 4, 0, 0));
+
         keyboardLinearLayout = new LinearLayout(context);
         keyboardLinearLayout.setOrientation(LinearLayout.VERTICAL);
         scrollView.addView(keyboardLinearLayout, LayoutHelper.createScroll(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT));
