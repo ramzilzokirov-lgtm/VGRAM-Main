@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 /** Low-bin FFT bass detector with rate-limited, short haptic pulses. */
 public final class VgramHapticSubwoofer {
     private static final String TAG = "VgramHapticBass";
+    private static VgramHapticSubwoofer instance;
     private final Context appContext;
     private Visualizer visualizer;
     private Vibrator vibrator;
@@ -22,6 +23,11 @@ public final class VgramHapticSubwoofer {
     public VgramHapticSubwoofer(Context context) {
         appContext = context.getApplicationContext();
         vibrator = (Vibrator) appContext.getSystemService(Context.VIBRATOR_SERVICE);
+    }
+
+    public static synchronized VgramHapticSubwoofer get(Context context) {
+        if (instance == null) instance = new VgramHapticSubwoofer(context);
+        return instance;
     }
 
     public synchronized boolean start(ExoPlayer player) {
@@ -55,7 +61,7 @@ public final class VgramHapticSubwoofer {
             }, Visualizer.getMaxCaptureRate() / 2, false, true);
             visualizer.setEnabled(true);
             return true;
-        } catch (SecurityException | IllegalStateException | RuntimeException error) {
+        } catch (RuntimeException error) {
             Log.w(TAG, "Visualizer permission or audio session unavailable", error);
             stop();
             return false;
