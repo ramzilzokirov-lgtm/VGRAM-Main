@@ -144,10 +144,15 @@ jobs:
           done < <(find TMessagesProj/src/main/res -type f \( -name "vgram_icon_*.xml" -o -name "vgram_icon_*.png" -o -name "vgram_icon_*.webp" \) -print0)
 
       - name: Integrate VGRAM indicators into clean upstream ChatMessageCell
+        shell: bash
         run: |
-          python3 scripts/patch_chat_message_cell.py upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "import org.telegram.messenger.VgramBadgeSync;" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          set -euxo pipefail
+          target="upstream/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java"
+          test -s "$target" || { echo "ERROR: upstream ChatMessageCell.java is missing or empty: $target"; exit 1; }
+          python3 -X faulthandler scripts/patch_chat_message_cell.py "$target"
+          grep -q "import org.telegram.messenger.VgramBadgeSync;" "$target"
+          grep -q "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);" "$target"
+          echo "ChatMessageCell VGRAM integration checks passed."
           # The pinned upstream revision may not expose currentBackgroundDrawable.draw(canvas).
           # The indicator integration is required; glass rendering is applied only when a safe draw hook exists.
 
