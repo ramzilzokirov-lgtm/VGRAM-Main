@@ -489,7 +489,8 @@ jobs:
           # synchronous Premium gate here rather than relying on an unoverlaid source file.
           user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
           text = user_config.read_text(encoding="utf-8")
-          pattern = r"(?m)^    public boolean isPremium\(\) \{\n        TLRPC\.User user = currentUser;\n        if \(user == null\) \{\n            return false;\n        \}\n        return user\.premium;\n    \}"          replacement = """    public boolean isPremium() {
+          pattern = r"(?m)^    public boolean isPremium\(\) \{\n        TLRPC\.User user = currentUser;\n        if \(user == null\) \{\n            return false;\n        \}\n        return user\.premium;\n    }"
+          replacement = """    public boolean isPremium() {
                   TLRPC.User user = currentUser;
                   if (user == null) {
                       return false;
