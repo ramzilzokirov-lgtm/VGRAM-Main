@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -264,12 +265,61 @@ public final class VgramAudioService {
         close.setGravity(Gravity.CENTER);
         row.addView(close, new LinearLayout.LayoutParams(AndroidUtilities.dp(34), AndroidUtilities.dp(40)));
         miniBar.addView(row, new FrameLayout.LayoutParams(-1, -1));
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-1, AndroidUtilities.dp(56), Gravity.BOTTOM);
-        lp.leftMargin = AndroidUtilities.dp(12);
-        lp.rightMargin = AndroidUtilities.dp(12);
-        lp.bottomMargin = AndroidUtilities.dp(76);
+        titleView.setVisibility(View.GONE);
+        close.setVisibility(View.GONE);
+        cover.setLayoutParams(new LinearLayout.LayoutParams(AndroidUtilities.dp(32), AndroidUtilities.dp(32)));
+        play.setLayoutParams(new LinearLayout.LayoutParams(AndroidUtilities.dp(32), AndroidUtilities.dp(32)));
+        miniBar.setContentDescription("VGRAM Player — нажмите, чтобы развернуть; удерживайте и перемещайте для смены положения");
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(AndroidUtilities.dp(120), AndroidUtilities.dp(48), Gravity.TOP | Gravity.LEFT);
+        lp.leftMargin = Math.max(AndroidUtilities.dp(8), root.getWidth() - AndroidUtilities.dp(132));
+        lp.topMargin = AndroidUtilities.dp(110);
         root.addView(miniBar, lp);
-        miniBar.setOnClickListener(v -> activity.startActivity(new Intent(activity, VgramPlayer.class)));
+        final float[] down = new float[2];
+        final int[] start = new int[2];
+        final boolean[] moved = new boolean[1];
+        miniBar.setOnTouchListener((view, event) -> {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) miniBar.getLayoutParams();
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                down[0] = event.getRawX(); down[1] = event.getRawY();
+                start[0] = params.leftMargin; start[1] = params.topMargin; moved[0] = false;
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                int dx = Math.round(event.getRawX() - down[0]);
+                int dy = Math.round(event.getRawY() - down[1]);
+                if (Math.abs(dx) > AndroidUtilities.dp(4) || Math.abs(dy) > AndroidUtilities.dp(4)) moved[0] = true;
+                if (moved[0]) {
+                    params.leftMargin = Math.max(0, Math.min(root.getWidth() - miniBar.getWidth(), start[0] + dx));
+                    params.topMargin = Math.max(0, Math.min(root.getHeight() - miniBar.getHeight(), start[1] + dy));
+                    params.gravity = Gravity.TOP | Gravity.LEFT;
+                    miniBar.setLayoutParams(params);
+                }
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
+                if (!moved[0] && event.getAction() == MotionEvent.ACTION_UP) {
+                    activity.startActivity(new Intent(activity, VgramPlayer.class));
+                    return true;
+                }
+                int maxX = Math.max(0, root.getWidth() - miniBar.getWidth());
+                int maxY = Math.max(0, root.getHeight() - miniBar.getHeight());
+                int targetX = params.leftMargin + miniBar.getWidth() / 2 < root.getWidth() / 2 ? AndroidUtilities.dp(8) : Math.max(AndroidUtilities.dp(8), maxX - AndroidUtilities.dp(8));
+                int targetY = Math.max(AndroidUtilities.dp(8), Math.min(maxY - AndroidUtilities.dp(8), params.topMargin));
+                int fromX = params.leftMargin, fromY = params.topMargin;
+                miniBar.animate().cancel();
+                android.animation.ValueAnimator snap = android.animation.ValueAnimator.ofFloat(0f, 1f);
+                snap.setDuration(280L);
+                snap.setInterpolator(new android.view.animation.OvershootInterpolator(1.15f));
+                snap.addUpdateListener(anim -> {
+                    float t = (Float) anim.getAnimatedValue();
+                    FrameLayout.LayoutParams moving = (FrameLayout.LayoutParams) miniBar.getLayoutParams();
+                    moving.leftMargin = Math.round(fromX + (targetX - fromX) * t);
+                    moving.topMargin = Math.round(fromY + (targetY - fromY) * t);
+                    miniBar.setLayoutParams(moving);
+                });
+                snap.start();
+                return true;
+            }
+            return true;
+        });
         play.setOnClickListener(v -> toggle(activity));
         close.setOnClickListener(v -> stop(activity));
         VgramMotion.applySpringTouch(miniBar);
