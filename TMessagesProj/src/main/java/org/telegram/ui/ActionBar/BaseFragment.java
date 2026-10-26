@@ -287,6 +287,23 @@ public abstract class BaseFragment {
     @CallSuper
     protected void onViewCreated(View view) {
         glassEngine.setRoot(view);
+        if (this instanceof org.telegram.ui.LoginActivity && view != null) {
+            view.setBackground(org.telegram.ui.VgramGlassDrawable.card(view.getContext()));
+            applyVgramLoginMotion(view);
+        }
+    }
+
+    private void applyVgramLoginMotion(View view) {
+        if (view == null || view instanceof android.widget.EditText) return;
+        if (view.isClickable() || view.isLongClickable()) {
+            org.telegram.ui.VgramMotion.applySpringTouch(view);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                applyVgramLoginMotion(group.getChildAt(i));
+            }
+        }
     }
 
     protected View createView(Context context) {
