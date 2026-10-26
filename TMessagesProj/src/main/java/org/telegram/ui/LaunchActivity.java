@@ -7175,6 +7175,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     @SuppressWarnings("unchecked")
     public void didReceivedNotification(int id, final int account, Object... args) {
+        if (id == NotificationCenter.didReceiveNewMessages) VgramEdgeGlowView.pulse(this, 0.58f);
         if (id == NotificationCenter.appDidLogout) {
             switchToAvailableAccountOrLogout();
         } else if (id == NotificationCenter.openBoostForUsersDialog) {
