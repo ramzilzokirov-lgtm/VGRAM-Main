@@ -54,6 +54,7 @@ public final class VgramVaultManager {
     }
 
     public static synchronized Set<Long> getHiddenDialogIds(Context context) {
+        if (isDecoySession(context)) return new HashSet<>();
         String encrypted = prefs(context).getString(HIDDEN, "");
         HashSet<Long> ids = new HashSet<>();
         if (encrypted.isEmpty()) return ids;
