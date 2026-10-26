@@ -1228,10 +1228,14 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         private int currentColor;
         private Paint paint = new Paint();
+        private VgramAuroraDrawable vgramAuroraDrawable;
 
         public TopView(Context context) {
             super(context);
             setWillNotDraw(false);
+            if (context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getBoolean("aurora_background", true)) {
+                vgramAuroraDrawable = new VgramAuroraDrawable(getResources().getDisplayMetrics().density, VgramTheme.accent(context), false);
+            }
         }
 
         @Override
@@ -1300,10 +1304,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
             emoji.attach();
+            if (vgramAuroraDrawable != null) vgramAuroraDrawable.start();
         }
 
         @Override
         protected void onDetachedFromWindow() {
+            if (vgramAuroraDrawable != null) vgramAuroraDrawable.stop();
             super.onDetachedFromWindow();
             emoji.detach();
         }
@@ -1377,6 +1383,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (progressToGradient > 0) {
                     backgroundPaint.setAlpha((int) (0xFF * progressToGradient));
                     canvas.drawRect(0, 0, getMeasuredWidth(), y1, backgroundPaint);
+                    if (vgramAuroraDrawable != null) {
+                        vgramAuroraDrawable.setAccentColor(VgramTheme.accent(getContext()));
+                        vgramAuroraDrawable.setBounds(0, 0, getMeasuredWidth(), y1);
+                        vgramAuroraDrawable.draw(canvas);
+                    }
                 }
                 if (hasEmoji) {
                     final float loadedScale = emojiLoadedT.set(isEmojiLoaded());
