@@ -276,6 +276,9 @@ public abstract class BaseFragment {
     }
 
     private View performCreateViewImpl(Context context) {
+        if (context != null) {
+            org.telegram.ui.VgramTheme.apply(context.getApplicationContext());
+        }
         final View view = createView(context);
         onViewCreated(view);
         return view;
@@ -544,6 +547,10 @@ public abstract class BaseFragment {
     @CallSuper
     public void onResume() {
         isPaused = false;
+        Context activityContext = getParentActivity();
+        if (activityContext != null) {
+            org.telegram.ui.VgramTheme.apply(activityContext.getApplicationContext());
+        }
         if (actionBar != null) {
             actionBar.onResume();
         }
