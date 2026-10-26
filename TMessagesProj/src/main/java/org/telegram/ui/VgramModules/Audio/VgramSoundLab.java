@@ -113,20 +113,17 @@ public final class VgramSoundLab {
                     player.setPlaybackParameters(new PlaybackParameters(0.85f, 1.0f));
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, true);
-                    setEnabled(virtualizer, false);
                     if (reverb != null) reverb.setPreset(PresetReverb.PRESET_LARGEHALL);
                     break;
                 case NIGHTCORE:
                     player.setPlaybackParameters(new PlaybackParameters(1.25f, 1.25f));
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, false);
-                    setEnabled(virtualizer, false);
                     break;
                 case SPATIAL_8D:
                     player.setPlaybackParameters(PlaybackParameters.DEFAULT);
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, false);
-                    setEnabled(virtualizer, false);
                     if (stereoPanProcessor != null) stereoPanProcessor.resetPan();
                     spatialStartMs = System.currentTimeMillis();
                     handler.post(spatialSweep);
@@ -136,7 +133,6 @@ public final class VgramSoundLab {
                     player.setPlaybackParameters(PlaybackParameters.DEFAULT);
                     setEnabled(bassBoost, false);
                     setEnabled(reverb, false);
-                    setEnabled(virtualizer, false);
                     if (stereoPanProcessor != null) stereoPanProcessor.resetPan();
                     break;
             }
