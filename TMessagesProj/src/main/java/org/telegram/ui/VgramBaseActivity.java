@@ -27,8 +27,13 @@ abstract class VgramBaseActivity extends Activity {
         getWindow().setNavigationBarColor(0xff17100c);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        auroraBackground = new VgramAuroraDrawable(getResources().getDisplayMetrics().density, accent());
-        root.setBackground(auroraBackground);
+        if (getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("aurora_background", true)) {
+            auroraBackground = new VgramAuroraDrawable(getResources().getDisplayMetrics().density, accent());
+            root.setBackground(auroraBackground);
+        } else {
+            root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[] { 0xff292c31, 0xff17191d, 0xff202328 }));
+        }
         root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
         LinearLayout header = new LinearLayout(this);
@@ -69,7 +74,7 @@ abstract class VgramBaseActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        if (auroraBackground != null) {
+        if (auroraBackground != null && getSharedPreferences("vgram_ui", MODE_PRIVATE).getBoolean("aurora_background", true)) {
             auroraBackground.setAccentColor(accent());
             auroraBackground.start();
         }
