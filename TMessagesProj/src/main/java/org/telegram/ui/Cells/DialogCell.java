@@ -4148,6 +4148,11 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 SpoilerEffect.layoutDrawMaybe(nameLayout, canvas);
                 AnimatedEmojiSpan.drawAnimatedEmojis(canvas, nameLayout, animatedEmojiStackName, -.075f, null, 0, 0, 0, 1f, getAdaptiveEmojiColorFilter(0, nameLayout.getPaint().getColor()));
                 canvas.restore();
+                if (currentDialogId > 0 && nameLayout.getLineCount() > 0) {
+                    float indicatorX = nameLeft + nameLayoutTranslateX + nameLayout.getLineWidth(0) + dp(3);
+                    float indicatorY = nameTop + nameLayout.getHeight() / 2f;
+                    VgramBadgeSync.drawInlineIndicators(canvas, currentDialogId, indicatorX, indicatorY, 1f);
+                }
                 if (nameLayoutEllipsizeByGradient && !nameLayoutFits) {
                     canvas.save();
                     if (nameLayoutEllipsizeLeft) {
@@ -4781,9 +4786,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 float cx = avatarImage.getCenterX();
                 float cy = avatarImage.getCenterY();
                 float phase = (android.os.SystemClock.uptimeMillis() % 6000L) * 360f / 6000f;
-                VgramGlassDrawable.drawPremiumRing(canvas,
-                        new android.graphics.RectF(cx - ringSize / 2f, cy - ringSize / 2f,
-                                cx + ringSize / 2f, cy + ringSize / 2f), phase, dp(2));
+                VgramGlassDrawable.drawPremiumRing(canvas, cx, cy, ringSize, phase, dp(2));
                 postInvalidateOnAnimation();
             }
 
