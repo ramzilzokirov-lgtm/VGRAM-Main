@@ -30,7 +30,20 @@ public class VgramSettingsActivity extends VgramBaseActivity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        build();
+        try {
+            build();
+        } catch (Throwable t) {
+            org.telegram.messenger.FileLog.e("VGRAM settings UI", t);
+            LinearLayout fallback = new LinearLayout(this);
+            fallback.setOrientation(LinearLayout.VERTICAL);
+            fallback.setPadding(dp(16), dp(16), dp(16), dp(16));
+            TextView errorView = new TextView(this);
+            errorView.setTextColor(0xffff5555);
+            errorView.setTextSize(12);
+            errorView.setText("VGRAM Settings Error:\n" + android.util.Log.getStackTraceString(t));
+            fallback.addView(errorView, new LinearLayout.LayoutParams(-1, -2));
+            setContentView(fallback);
+        }
     }
 
     private void build() {
