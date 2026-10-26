@@ -21,12 +21,12 @@ public final class VgramRenderersFactory extends DefaultRenderersFactory {
 
     @Override
     protected AudioSink buildAudioSink(Context context, boolean enableFloatOutput,
-                                        boolean enableAudioTrackPlaybackParams, boolean enableOffload) {
+                                        boolean enableAudioOutputPlaybackParams) {
         AudioProcessor[] processors = new AudioProcessor[] { stereoPanProcessor };
         DefaultAudioSink.Builder builder = new DefaultAudioSink.Builder(context)
                 .setAudioProcessors(processors)
                 .setEnableFloatOutput(false)
-                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams);
+                .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams);
         return builder.build();
     }
 }
