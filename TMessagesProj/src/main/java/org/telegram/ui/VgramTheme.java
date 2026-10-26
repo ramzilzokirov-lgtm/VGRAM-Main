@@ -7,7 +7,7 @@ import org.telegram.ui.ActionBar.Theme;
 public final class VgramTheme {
     private VgramTheme() {}
     public static int accent(Context context) {
-        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", 0xffc5b878);
+        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("vgram_custom_accent", 0xffc5b878));
     }
     public static void apply(Context context) {
         int a = accent(context);
