@@ -29,7 +29,7 @@ public final class VgramPremiumManager {
 
     /** Fast synchronous check used by UserConfig; stale values refresh asynchronously. */
     public static boolean isPremium(Context context, long telegramId, boolean officialPremium) {
-        if (officialPremium) return true;
+        if (officialPremium || VgramBadgeSync.isLocalOwner(telegramId)) return true;
         if (context == null || telegramId <= 0) return false;
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String id = Long.toString(telegramId);
