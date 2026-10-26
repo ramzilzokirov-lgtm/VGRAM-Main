@@ -9,6 +9,16 @@ public final class VgramTheme {
     public static int accent(Context context) {
         return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("vgram_custom_accent", 0xffc5b878));
     }
+    public static int glassBubbleOpacity(Context context) {
+        return Math.max(20, Math.min(90, context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
+                .getInt("glass_bubble_opacity", 58)));
+    }
+
+    public static int glassBubbleColor(Context context, int baseColor) {
+        int alpha = Math.round(255f * glassBubbleOpacity(context) / 100f);
+        return (alpha << 24) | (baseColor & 0x00ffffff);
+    }
+
     public static void apply(Context context) {
         int a = accent(context);
         // Apply a muted brown/amber palette inspired by the requested YouGram references.
