@@ -2,7 +2,6 @@ package org.telegram.ui.VgramModules.Audio;
 
 import androidx.media3.common.C;
 import androidx.media3.common.audio.BaseAudioProcessor;
-import androidx.media3.common.audio.AudioProcessor;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -28,6 +27,10 @@ public final class VgramStereoPanAudioProcessor extends BaseAudioProcessor {
             return inputAudioFormat;
         }
         return AudioFormat.NOT_SET;
+    }
+
+    @Override public void queueInput(ByteBuffer inputBuffer) {
+        onQueueInput(inputBuffer);
     }
 
     @Override protected void onQueueInput(ByteBuffer inputBuffer) {
