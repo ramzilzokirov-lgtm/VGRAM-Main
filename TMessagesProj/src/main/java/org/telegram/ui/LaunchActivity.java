@@ -464,6 +464,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipToPadding(false);
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
+        // Replace Telegram's plain content reveal with VGRAM's short graphite-style entrance.
+        frameLayout.postDelayed(() -> VgramMotion.playEntrance(LaunchActivity.this, frameLayout), 90L);
         vgramEdgeGlowView = new VgramEdgeGlowView(this);
         rootAnimatedInsetsListener = new WindowAnimatedInsetsProvider(frameLayout);
         pipActivityController.addPipListener(new IPipActivityListener() {
