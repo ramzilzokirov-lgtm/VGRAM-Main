@@ -465,7 +465,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
         vgramEdgeGlowView = new VgramEdgeGlowView(this);
-        frameLayout.addView(vgramEdgeGlowView, new FrameLayout.LayoutParams(-1, -1));
         rootAnimatedInsetsListener = new WindowAnimatedInsetsProvider(frameLayout);
         pipActivityController.addPipListener(new IPipActivityListener() {
             final ActivityVisibilityController activityVisibilityController = createActivityVisibilityController(false);
@@ -548,6 +547,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 setVisibility(GONE);
             }
         });
+        frameLayout.addView(vgramEdgeGlowView, new FrameLayout.LayoutParams(-1, -1));
         setupActionBarLayout();
         drawerLayoutContainer.setParentActionBarLayout(actionBarLayout);
         actionBarLayout.setDrawerLayoutContainer(drawerLayoutContainer);
