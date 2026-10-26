@@ -18,7 +18,8 @@ public final class VgramHapticSubwoofer {
     private Vibrator vibrator;
     private boolean enabled;
     private long lastPulseMs;
-    private int threshold = 92;\n    private int activeSessionId = -1;
+    private int threshold = 92;
+    private int activeSessionId = -1;
 
     public VgramHapticSubwoofer(Context context) {
         appContext = context.getApplicationContext();
