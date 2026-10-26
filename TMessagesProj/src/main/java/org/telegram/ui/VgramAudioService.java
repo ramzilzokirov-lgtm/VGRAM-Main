@@ -109,9 +109,13 @@ public final class VgramAudioService {
                 player = new ExoPlayer.Builder(appContext, renderersFactory).build();
                 installLaunchActivityMiniPlayerHook(appContext);
                 player.addListener(new Player.Listener() {
-                    @Override public void onIsPlayingChanged(boolean isPlaying) { refreshMiniPlayerSafely(); }
-                    @Override public void onMediaItemTransition(MediaItem item, int reason) { refreshMiniPlayerSafely(); }
-                    @Override public void onPlaybackStateChanged(int state) { refreshMiniPlayerSafely(); }
+                    @Override public void onIsPlayingChanged(boolean isPlaying) { syncAudioModules(); refreshMiniPlayerSafely(); }
+                    @Override public void onMediaItemTransition(MediaItem item, int reason) {
+                        VgramSoundLab.get(appContext).releaseForTrackChange();
+                        syncAudioModules();
+                        refreshMiniPlayerSafely();
+                    }
+                    @Override public void onPlaybackStateChanged(int state) { syncAudioModules(); refreshMiniPlayerSafely(); }
                     @Override public void onPlayerError(androidx.media3.common.PlaybackException error) {
                         android.util.Log.w("VgramAudioService", "Playback failed; keeping the app alive", error);
                         refreshMiniPlayerSafely();
