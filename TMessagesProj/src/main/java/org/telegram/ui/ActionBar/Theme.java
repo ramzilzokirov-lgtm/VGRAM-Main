@@ -5636,6 +5636,12 @@ public class Theme {
         if (themeInfo == null) {
             return;
         }
+        // Re-apply VGRAM's selected palette after Telegram finishes changing theme colors.
+        AndroidUtilities.runOnUIThread(() -> {
+            if (ApplicationLoader.applicationContext != null) {
+                org.telegram.ui.VgramTheme.apply(ApplicationLoader.applicationContext);
+            }
+        });
         ThemeEditorView editorView = ThemeEditorView.getInstance();
         if (editorView != null) {
             editorView.destroy();
