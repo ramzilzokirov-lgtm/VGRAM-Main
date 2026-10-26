@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import org.telegram.ui.VgramModules.UI.VgramAuroraDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 abstract class VgramBaseActivity extends Activity {
     protected LinearLayout body;
+    private VgramAuroraDrawable auroraBackground;
     protected int accent() { return VgramTheme.accent(this); }
     protected int dp(float value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
 
@@ -25,8 +27,8 @@ abstract class VgramBaseActivity extends Activity {
         getWindow().setNavigationBarColor(0xff17100c);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-            new int[] { 0xff292c31, 0xff17191d, 0xff202328 }));
+        auroraBackground = new VgramAuroraDrawable(getResources().getDisplayMetrics().density, accent());
+        root.setBackground(auroraBackground);
         root.setPadding(dp(18), dp(10), dp(18), dp(14));
 
         LinearLayout header = new LinearLayout(this);
@@ -63,6 +65,19 @@ abstract class VgramBaseActivity extends Activity {
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, margin(0, dp(5), 0, 0));
         setContentView(root);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (auroraBackground != null) {
+            auroraBackground.setAccentColor(accent());
+            auroraBackground.start();
+        }
+    }
+
+    @Override protected void onPause() {
+        if (auroraBackground != null) auroraBackground.stop();
+        super.onPause();
     }
 
     protected LinearLayout card(String title, String description) {
