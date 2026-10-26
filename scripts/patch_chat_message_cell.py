@@ -14,7 +14,7 @@ IMPORT = "import org.telegram.messenger.VgramBadgeSync;"
 CALL = "VgramBadgeSync.drawInlineIndicators(canvas, this, currentMessageObject);"
 GLASS_IMPORT = "import org.telegram.ui.VgramModules.UI.VgramGlassStyle;"
 GLASS_CALL = "VgramGlassStyle.drawDrawableBorder(canvas, currentBackgroundDrawable, getContext());"
-GLASS_DRAW = re.compile(r"(?im)^(?P<indent>[ \\t]*)currentBackgroundDrawable\\.draw\\(canvas\\)\\s*;")
+GLASS_DRAW = re.compile(r"(?im)^(?P<indent>[ \t]*)currentBackgroundDrawable\.draw\(canvas\)\s*;")
 NAME_LAYOUT_DRAW = re.compile(
     r"(?im)^(?P<indent>[ \t]*)(?P<layout>\w*(?:name|author|title)\w*Layout)"
     r"\.draw\(canvas\)\s*;"
@@ -46,13 +46,13 @@ def main() -> None:
             match_glass = GLASS_DRAW.search(source)
             if match_glass:
                 if GLASS_IMPORT not in source:
-                    messenger_import = re.search(r"(?m)^import org\\.telegram\\.messenger\\.[^;]+;\\s*$", source)
+                    messenger_import = re.search(r"(?m)^import org\.telegram\.messenger\.[^;]+;\s*$", source)
                     if messenger_import:
                         insert_at = messenger_import.end()
-                        source = source[:insert_at] + "\\n" + GLASS_IMPORT + source[insert_at:]
+                        source = source[:insert_at] + "\n" + GLASS_IMPORT + source[insert_at:]
                         match_glass = GLASS_DRAW.search(source)
                 if GLASS_IMPORT in source and match_glass:
-                    source = source[:match_glass.end()] + "\\n" + match_glass.group("indent") + GLASS_CALL + source[match_glass.end():]
+                    source = source[:match_glass.end()] + "\n" + match_glass.group("indent") + GLASS_CALL + source[match_glass.end():]
                     SOURCE.write_text(source, encoding="utf-8")
                     print(f"Added liquid-glass border to {SOURCE}")
         if IMPORT not in source:
@@ -99,10 +99,10 @@ def main() -> None:
     glass_match = GLASS_DRAW.search(source)
     if glass_match:
         if GLASS_IMPORT not in source:
-            source = source[:glass_match.start()] + GLASS_IMPORT + "\\n" + source[glass_match.start():]
+            source = source[:glass_match.start()] + GLASS_IMPORT + "\n" + source[glass_match.start():]
             glass_match = GLASS_DRAW.search(source)
         if glass_match and GLASS_CALL not in source:
-            source = source[:glass_match.end()] + "\\n" + glass_match.group("indent") + GLASS_CALL + source[glass_match.end():]
+            source = source[:glass_match.end()] + "\n" + glass_match.group("indent") + GLASS_CALL + source[glass_match.end():]
     if source.count(CALL) != 1 or source.count(IMPORT) != 1:
         fail("post-patch idempotency check failed", source, line_number, line_number)
 
