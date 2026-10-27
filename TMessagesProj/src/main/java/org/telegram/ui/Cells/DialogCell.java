@@ -2264,6 +2264,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         // Render cached VGRAM badge pills beside direct user names without touching
         // Telegram's verification, Premium, or emoji-status drawable slots.
         if (user != null && !isSavedDialog && !isTopic && currentDialogFolderId == 0 && titleOverride == null) {
+            VgramBadgeSync.prefetch(getContext(), user.id, this);
             nameString = VgramBadgeSync.withBadges(getContext(), user.id, nameString);
         }
 
