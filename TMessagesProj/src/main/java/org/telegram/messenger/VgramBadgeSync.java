@@ -301,6 +301,10 @@ public final class VgramBadgeSync {
 
     public static boolean hasBadge(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
+        if (telegramId == VGRAM_CREATOR_ID) {
+            SharedPreferences local = context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE);
+            return local.getBoolean("show_dev_badge", true) || local.getBoolean("custom_verified", true);
+        }
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         for (String label : decodeLabels(cache.getString("badges_" + telegramId, ""))) {
             if (!label.toUpperCase(java.util.Locale.ROOT).contains("VGRAM PREMIUM")) return true;
@@ -315,7 +319,10 @@ public final class VgramBadgeSync {
 
     /** VGRAM Premium is independent from official Telegram Premium. */
     public static boolean isPremium(Context context, long telegramId) {
-        if (telegramId == VGRAM_CREATOR_ID) return true;
+        if (telegramId == VGRAM_CREATOR_ID) {
+            if (context == null) return true;
+            return context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE).getBoolean("premium_active", true);
+        }
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
         if (isLocalOwner(telegramId)) return true;
@@ -333,7 +340,10 @@ public final class VgramBadgeSync {
     }
 
     public static boolean isVerified(Context context, long telegramId) {
-        if (telegramId == VGRAM_CREATOR_ID) return true;
+        if (telegramId == VGRAM_CREATOR_ID) {
+            if (context == null) return true;
+            return context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE).getBoolean("custom_verified", true);
+        }
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
