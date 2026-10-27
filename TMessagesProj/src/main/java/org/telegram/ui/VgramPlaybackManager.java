@@ -146,8 +146,10 @@ public final class VgramPlaybackManager {
         if (track == null || track.streamUrl.isEmpty()) { notifyError("У трека нет доступной ссылки на аудиопоток"); return; }
         Uri uri = Uri.parse(track.streamUrl);
         String scheme = uri.getScheme();
-        if (uri.getHost() == null || !("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
-            notifyError("Нужна корректная HTTP(S)-ссылка на аудиопоток"); return;
+        boolean remoteStream = uri.getHost() != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme));
+        boolean localMedia = "content".equalsIgnoreCase(scheme) || "file".equalsIgnoreCase(scheme);
+        if (!remoteStream && !localMedia) {
+            notifyError("Источник аудио недоступен"); return;
         }
         currentTrack = track; buffering = true; main.removeCallbacks(progressTask); notifyTrack(); notifyState();
         try { VgramAudioService.setTrack(appContext, track.displayTitle(), track.streamUrl, track.coverUrl); }
