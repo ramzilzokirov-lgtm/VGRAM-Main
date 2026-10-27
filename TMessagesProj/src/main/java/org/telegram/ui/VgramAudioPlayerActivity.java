@@ -2,6 +2,7 @@ package org.telegram.ui;
 
 import android.Manifest;
 import android.content.ContentUris;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -99,6 +100,25 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         searchField.setPadding(dp(18), dp(12), dp(18), dp(12));
         searchField.setBackground(panel(0xff201c30, 0x557c4dff, 24));
         root.addView(searchField, new LinearLayout.LayoutParams(-1, -2));
+
+        // Native provider shortcuts: search stays inside the user's official Spotify/SoundCloud app
+        // when installed, otherwise Android opens the provider's web search page.
+        LinearLayout providers = new LinearLayout(this);
+        providers.setOrientation(LinearLayout.HORIZONTAL);
+        providers.setGravity(Gravity.CENTER_VERTICAL);
+        TextView spotifySearch = providerChip("Spotify", 0xff1db954);
+        TextView soundCloudSearch = providerChip("SoundCloud", 0xffff7a24);
+        LinearLayout.LayoutParams providerParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        providerParams.topMargin = dp(9);
+        providerParams.rightMargin = dp(6);
+        providers.addView(spotifySearch, providerParams);
+        LinearLayout.LayoutParams cloudParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        cloudParams.topMargin = dp(9);
+        cloudParams.leftMargin = dp(6);
+        providers.addView(soundCloudSearch, cloudParams);
+        root.addView(providers);
+        spotifySearch.setOnClickListener(v -> openProviderSearch("spotify"));
+        soundCloudSearch.setOnClickListener(v -> openProviderSearch("soundcloud"));
 
         FrameLayout playerCard = new FrameLayout(this);
         playerCard.setBackground(panel(0xff161424, 0x30ffffff, 20));
@@ -258,6 +278,37 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
     private void playTrack(VgramPlaybackManager.VgramTrack track) {
         currentIndex = allTracks.indexOf(track);
         playback.play(track);
+    }
+
+    private TextView providerChip(String text, int accent) {
+        TextView chip = label(text, 13, 0xfff5f1ff, true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setCompoundDrawablePadding(dp(7));
+        chip.setPadding(dp(12), 0, dp(12), 0);
+        chip.setBackground(panel(0x1affffff, (accent & 0x00ffffff) | 0x55000000, 22));
+        chip.setElevation(dp(2));
+        return chip;
+    }
+
+    private void openProviderSearch(String provider) {
+        String query = searchField == null ? "" : searchField.getText().toString().trim();
+        if (query.isEmpty()) {
+            Toast.makeText(this, "Сначала введите название трека или исполнителя", Toast.LENGTH_SHORT).show();
+            searchField.requestFocus();
+            return;
+        }
+        Uri uri;
+        if ("spotify".equals(provider)) {
+            uri = Uri.parse("https://open.spotify.com/search/" + Uri.encode(query));
+        } else {
+            uri = Uri.parse("https://soundcloud.com/search/sounds?q=" + Uri.encode(query));
+        }
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException error) {
+            Toast.makeText(this, "Не удалось открыть поиск музыкального сервиса", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private TextView control(String text, int size) {
