@@ -116,7 +116,7 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_chats_tabUnreadUnactiveBackground, 0xff34373d, false);
         Theme.setColor(Theme.key_chat_inBubble, 0xff292c31, false);
         Theme.setColor(Theme.key_chat_inBubbleSelected, 0xff34373d, false);
-        Theme.setColor(Theme.key_chat_outBubbleSelected, 0xff4b4739, false);
+        Theme.setColor(Theme.key_chat_outBubbleSelected, blend(a, 0xff17191d, 0.30f), false);
         Theme.setColor(Theme.key_chat_inBubbleShadow, 0x22000000, false);
         Theme.setColor(Theme.key_chat_outBubbleShadow, 0x22000000, false);
         Theme.setColor(Theme.key_chat_inBubbleSelectedOverlay, 0x22000000, false);
@@ -124,7 +124,7 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_chat_messageTextIn, 0xffeeece5, false);
         Theme.setColor(Theme.key_chat_messageTextOut, 0xfff0eee6, false);
         Theme.setColor(Theme.key_chat_messageLinkIn, a, false);
-        Theme.setColor(Theme.key_chat_messageLinkOut, 0xffe0d39a, false);
+        Theme.setColor(Theme.key_chat_messageLinkOut, a, false);
         Theme.setColor(Theme.key_chat_messagePanelBackground, 0xff202328, false);
         Theme.setColor(Theme.key_chat_messagePanelShadow, 0x33000000, false);
         Theme.setColor(Theme.key_chat_messagePanelText, 0xffeeece5, false);
