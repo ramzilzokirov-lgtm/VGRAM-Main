@@ -95,6 +95,7 @@ import org.telegram.tgnet.tl.TL_stories;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Adapters.DialogsAdapter;
 import org.telegram.ui.AvatarSpan;
+import org.telegram.ui.VgramBadgeSync;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.AnimatedEmojiSpan;
 import org.telegram.ui.Components.AnimatedFloat;
@@ -2258,6 +2259,12 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                     nameString = getString(R.string.HiddenName);
                 }
             }
+        }
+
+        // Render cached VGRAM badge pills beside direct user names without touching
+        // Telegram's verification, Premium, or emoji-status drawable slots.
+        if (user != null && !isSavedDialog && !isTopic && currentDialogFolderId == 0 && titleOverride == null) {
+            nameString = VgramBadgeSync.withBadges(getContext(), user.id, nameString);
         }
 
         int timeWidth;
