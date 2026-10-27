@@ -264,7 +264,7 @@ public class ThemeColors {
         defaultColors[key_chats_mentionIcon] = 0xffffffff;
         defaultColors[key_chats_menuBackground] = 0xffffffff;
         defaultColors[key_chats_menuItemText] = 0xff444444;
-        defaultColors[key_chats_menuItemCheck] = 0xff598fba;
+        defaultColors[key_chats_menuItemCheck] = 0xffd6b65c;
         defaultColors[key_chats_menuItemIcon] = 0xff889198;
         defaultColors[key_chats_menuName] = 0xffffffff;
         defaultColors[key_chats_menuPhone] = 0xffffffff;
@@ -317,8 +317,8 @@ public class ThemeColors {
         defaultColors[key_chat_outMediaIconSelected] = 0xffe1f8cf;
         defaultColors[key_chat_messageTextIn] = 0xff000000;
         defaultColors[key_chat_messageTextOut] = 0xff000000;
-        defaultColors[key_chat_messageLinkIn] = 0xff2678b6;
-        defaultColors[key_chat_messageLinkOut] = 0xff2678b6;
+        defaultColors[key_chat_messageLinkIn] = 0xffd6b65c;
+        defaultColors[key_chat_messageLinkOut] = 0xffd6b65c;
         defaultColors[key_chat_serviceText] = 0xffffffff;
         defaultColors[key_chat_serviceLink] = 0xffffffff;
         defaultColors[key_chat_serviceIcon] = 0xffffffff;
@@ -382,7 +382,7 @@ public class ThemeColors {
         defaultColors[key_chat_outPreviewLine] = 0xff88c97b;
         defaultColors[key_chat_inSiteNameText] = TELEGRAM_COLOR_TEXT;
         defaultColors[key_chat_outSiteNameText] = 0xff55ab4f;
-        defaultColors[key_chat_inContactNameText] = 0xff4e9ad4;
+        defaultColors[key_chat_inContactNameText] = 0xffd6b65c;
         defaultColors[key_chat_outContactNameText] = 0xff55ab4f;
         defaultColors[key_chat_inContactPhoneText] = 0xff2f3438;
         defaultColors[key_chat_inContactPhoneSelectedText] = 0xff2f3438;
@@ -406,7 +406,7 @@ public class ThemeColors {
         defaultColors[key_chat_inAudioPerformerSelectedText] = 0xff2f3438;
         defaultColors[key_chat_outAudioPerformerText] = 0xff354234;
         defaultColors[key_chat_outAudioPerformerSelectedText] = 0xff354234;
-        defaultColors[key_chat_inAudioTitleText] = 0xff4e9ad4;
+        defaultColors[key_chat_inAudioTitleText] = 0xffd6b65c;
         defaultColors[key_chat_outAudioTitleText] = 0xff55ab4f;
         defaultColors[key_chat_inAudioDurationText] = 0xffa1aab3;
         defaultColors[key_chat_outAudioDurationText] = 0xff65b05b;
@@ -504,7 +504,7 @@ public class ThemeColors {
         defaultColors[key_chat_messagePanelVoiceLockBackground] = 0xff242528;
         defaultColors[key_chat_messagePanelVoiceLockShadow] = 0xff000000;
         defaultColors[key_chat_recordTime] = 0xff8e959b;
-        defaultColors[key_chat_emojiPanelNewTrending] = 0xff4da6ea;
+        defaultColors[key_chat_emojiPanelNewTrending] = 0xffd6b65c;
         defaultColors[key_chat_gifSaveHintText] = 0xffffffff;
         defaultColors[key_chat_gifSaveHintBackground] = 0xE21f2b38;
         defaultColors[key_chat_goDownButton] = 0xffffffff;
@@ -561,7 +561,7 @@ public class ThemeColors {
         defaultColors[key_player_progressCachedBackground] = 0xffC5DCF0;
         defaultColors[key_player_progress] = 0xff54AAEB;
         defaultColors[key_player_button] = 0xff333333;
-        defaultColors[key_player_buttonActive] = 0xff4ca8ea;
+        defaultColors[key_player_buttonActive] = 0xffd6b65c;
 
         defaultColors[key_sheet_scrollUp] = 0xffe1e4e8;
         defaultColors[key_sheet_other] = 0xffc9cdd3;
@@ -582,14 +582,14 @@ public class ThemeColors {
         defaultColors[key_location_sendLiveLocationBackground] = 0xff4fc244;
         defaultColors[key_location_sendLiveLocationIcon] = 0xffffffff;
         defaultColors[key_location_sendLiveLocationText] = 0xff36ab24;
-        defaultColors[key_location_liveLocationProgress] = 0xff359fe5;
-        defaultColors[key_location_placeLocationBackground] = 0xff4ca8ea;
+        defaultColors[key_location_liveLocationProgress] = 0xffd6b65c;
+        defaultColors[key_location_placeLocationBackground] = 0xffd6b65c;
         defaultColors[key_location_actionIcon] = 0xff3a4045;
         defaultColors[key_location_actionActiveIcon] = 0xff4290e6;
         defaultColors[key_location_actionBackground] = 0xffffffff;
         defaultColors[key_location_actionPressedBackground] = 0xfff2f2f2;
 
-        defaultColors[key_dialog_liveLocationProgress] = 0xff359fe5;
+        defaultColors[key_dialog_liveLocationProgress] = 0xffd6b65c;
 
         defaultColors[key_calls_callReceivedGreenIcon] = 0xff00c853;
         defaultColors[key_calls_callReceivedRedIcon] = 0xffff4848;
@@ -601,7 +601,7 @@ public class ThemeColors {
         defaultColors[key_featuredStickers_addButtonPressed] = 0xff2288d1;
         defaultColors[key_featuredStickers_removeButtonText] = 0xff5093d3;
         defaultColors[key_featuredStickers_buttonText] = 0xffffffff;
-        defaultColors[key_featuredStickers_unread] = 0xff4da6ea;
+        defaultColors[key_featuredStickers_unread] = 0xffd6b65c;
         defaultColors[key_buttonNeutral] = 0xFFE4E4E4;
         defaultColors[key_buttonNeutralText] = DEFAULT_BLACK_TEXT;
 
@@ -656,8 +656,8 @@ public class ThemeColors {
 
         defaultColors[key_chat_outTextSelectionHighlight] = 0x2E3F9923;
         defaultColors[key_chat_inTextSelectionHighlight] = 0x50D6B65C;
-        defaultColors[key_chat_TextSelectionCursor] = 0xFF419FE8;
-        defaultColors[key_chat_outTextSelectionCursor] = 0xFF419FE8;
+        defaultColors[key_chat_TextSelectionCursor] = 0xFFD6B65C;
+        defaultColors[key_chat_outTextSelectionCursor] = 0xFFD6B65C;
         defaultColors[key_chat_outBubbleLocationPlaceholder] = 0x1e307311;
         defaultColors[key_chat_inBubbleLocationPlaceholder] = 0x1e506373;
         defaultColors[key_chat_BlurAlpha] = 0xB2000000;
@@ -828,9 +828,9 @@ public class ThemeColors {
         defaultColors[key_starsGradient1] = 0xffFEC846;
         defaultColors[key_starsGradient2] = 0xffEC920A;
 
-        defaultColors[key_stories_circle1] = 0xFF2C9EFC; // 0xFF39DF3C;
+        defaultColors[key_stories_circle1] = 0xFFD6B65C; // 0xFF39DF3C;
         defaultColors[key_stories_circle2] = 0xFF2fc183; // 0xFF4DBBFF;
-        defaultColors[key_stories_circle_dialog1] = 0xFF2C9EFC; // 0xFF4AED55;
+        defaultColors[key_stories_circle_dialog1] = 0xFFD6B65C; // 0xFF4AED55;
         defaultColors[key_stories_circle_dialog2] = 0xFF2fc183; // 0xFF4DC3FF;
         defaultColors[key_stories_circle_closeFriends1] = 0xFF81ce2d; // 0xFFC9EB38;
         defaultColors[key_stories_circle_closeFriends2] = 0xFF18bd36; // 0xFF09C167;
