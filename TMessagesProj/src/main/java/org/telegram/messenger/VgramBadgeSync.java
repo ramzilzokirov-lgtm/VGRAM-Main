@@ -109,12 +109,22 @@ public final class VgramBadgeSync {
         SpannableStringBuilder result = new SpannableStringBuilder(name == null ? "" : name);
         if (context == null || telegramId <= 0) return result;
         if (telegramId == VGRAM_CREATOR_ID) {
-            result.append("  Разработчик VGRAM");
-            int developerStart = result.length() - "Разработчик VGRAM".length();
-            result.setSpan(new BadgePillSpan("Разработчик VGRAM"), developerStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-            result.append("  ✦ VGRAM PREMIUM");
-            int premiumStart = result.length() - "✦ VGRAM PREMIUM".length();
-            result.setSpan(new BadgePillSpan("✦ VGRAM PREMIUM"), premiumStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            SharedPreferences local = context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE);
+            if (local.getBoolean("show_dev_badge", true)) {
+                result.append("  ◆ DEV");
+                int developerStart = result.length() - "◆ DEV".length();
+                result.setSpan(new BadgePillSpan("◆ DEV"), developerStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (local.getBoolean("custom_verified", true)) {
+                result.append("  ✓");
+                int verifiedStart = result.length() - "✓".length();
+                result.setSpan(new BadgePillSpan("✓"), verifiedStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (local.getBoolean("premium_active", true)) {
+                result.append("  ✦ VGRAM PREMIUM");
+                int premiumStart = result.length() - "✦ VGRAM PREMIUM".length();
+                result.setSpan(new BadgePillSpan("✦ VGRAM PREMIUM"), premiumStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             return result;
         }
         seedLocalOwner(context);
