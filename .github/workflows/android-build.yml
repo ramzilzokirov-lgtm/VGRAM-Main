@@ -731,14 +731,6 @@ jobs:
           TAG="v${VERSION}"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
           gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
-,
-                  r'\1\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);',
-                  launch_source
-              )
-              if config_count < 1:
-                  raise SystemExit("VGRAM Premium bootstrap failed: theme hook not found")
-          launch.write_text(launch_source, encoding="utf-8")
-          print("Verified VGRAM theme hooks and local creator Premium bootstrap in LaunchActivity.")
 
           # VgramBaseActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
 
