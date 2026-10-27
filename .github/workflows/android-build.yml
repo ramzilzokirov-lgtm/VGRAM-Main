@@ -1,5 +1,5 @@
 name: VGRAM Android Build
-# VGRAM source overlay includes player, profile rows, badge roles, and explicit launcher aliases
+# VGRAM source overlay includes profile rows, badge roles, and explicit launcher aliases; player UI disabled
 
 on:
   push:
@@ -39,7 +39,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: vgram-android-build-v2-${{ github.ref }}
+  group: vgram-android-build-v3-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
