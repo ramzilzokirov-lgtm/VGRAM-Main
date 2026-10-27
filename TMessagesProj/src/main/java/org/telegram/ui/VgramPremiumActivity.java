@@ -28,12 +28,6 @@ public class VgramPremiumActivity extends VgramBaseActivity {
     private void buildPremiumScreen() {
         setupScreen("VGRAM PREMIUM", "VGRAM Premium", "Локальные визуальные функции. Настройки сохраняются на этом устройстве.");
         LinearLayout status = card("✦  VGRAM Premium активен", "Создатель VGRAM · локальная активация · без серверных запросов");
-        TextView badge = label("  ◆ DEV     ✓ VERIFIED  ", 13, 0xffd9c7ff, true);
-        badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(12), dp(10), dp(12), dp(10));
-        badge.setBackground(panel(0x267c4dff, 0x557c4dff, 18));
-        status.addView(badge, margin(0, dp(12), 0, 0));
-
         LinearLayout controls = card("Визуальные функции", "Переключатели применяются и сохраняются сразу.");
         addLocalSwitch(controls, "Кастомная галочка верификации", "Локальная отметка VGRAM рядом с именем.", "custom_verified", VgramConfig.isVerified);
         addLocalSwitch(controls, "Бейдж Создателя (DEV) в профиле и чатах", "Локальный бейдж создателя.", "show_dev_badge", VgramConfig.showDevBadge);
