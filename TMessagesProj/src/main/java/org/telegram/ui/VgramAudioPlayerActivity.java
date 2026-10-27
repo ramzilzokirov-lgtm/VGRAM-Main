@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
+import android.graphics.drawable.GradientDrawable;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -89,7 +91,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(16), dp(10), dp(16), dp(16));
-        root.setBackgroundColor(0xff0d0c13);
+        root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xff171326, 0xff0d0c13, 0xff09090e}));
 
         TextView heroTitle = label("ТВОЯ МУЗЫКА", 22, 0xfff5f1ff, true);
         root.addView(heroTitle, margin(0, dp(2), 0, dp(3)));
@@ -103,7 +106,9 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         searchField.setHint("⌕  Название трека или исполнитель");
         searchField.setTextSize(15);
         searchField.setPadding(dp(18), dp(12), dp(18), dp(12));
-        searchField.setBackground(panel(0xff201c30, 0x557c4dff, 24));
+        searchField.setBackground(panel(0xff211d32, 0x997c4dff, 24));
+        searchField.setCompoundDrawablePadding(dp(8));
+        searchField.setElevation(dp(3));
         root.addView(searchField, new LinearLayout.LayoutParams(-1, -2));
 
         // Native provider shortcuts: search stays inside the user's official Spotify/SoundCloud app
@@ -113,8 +118,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         LinearLayout providers = new LinearLayout(this);
         providers.setOrientation(LinearLayout.HORIZONTAL);
         providers.setGravity(Gravity.CENTER_VERTICAL);
-        TextView spotifySearch = providerChip("♫  Spotify", "Открыть поиск в Spotify", 0xff1db954);
-        TextView soundCloudSearch = providerChip("☁  SoundCloud", "Открыть поиск в SoundCloud", 0xffff7a24);
+        TextView spotifySearch = providerChip("♫   Spotify", "Поиск треков в Spotify", 0xff1ed760);
+        TextView soundCloudSearch = providerChip("☁   SoundCloud", "Поиск треков в SoundCloud", 0xffff7a24);
         LinearLayout.LayoutParams providerParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
         providerParams.topMargin = dp(9);
         providerParams.rightMargin = dp(6);
@@ -128,7 +133,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         soundCloudSearch.setOnClickListener(v -> openProviderSearch("soundcloud"));
 
         FrameLayout playerCard = new FrameLayout(this);
-        playerCard.setBackground(panel(0xff161424, 0x30ffffff, 20));
+        playerCard.setBackground(panel(0xff211b35, 0x667c4dff, 26));
+        playerCard.setElevation(dp(5));
         LinearLayout playerContent = new LinearLayout(this);
         playerContent.setOrientation(LinearLayout.VERTICAL);
         playerContent.setPadding(dp(18), dp(17), dp(18), dp(16));
@@ -145,8 +151,9 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         visualizer = new VgramVisualizerView(this);
         playerContent.addView(visualizer, new LinearLayout.LayoutParams(-1, dp(58)));
         progress = new SeekBar(this);
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xff9e75ff));
-        progress.setThumbTintList(android.content.res.ColorStateList.valueOf(0xff9e75ff));
+        progress.setProgressTintList(ColorStateList.valueOf(0xffb69aff));
+        progress.setThumbTintList(ColorStateList.valueOf(0xffd4c3ff));
+        progress.setProgressBackgroundTintList(ColorStateList.valueOf(0xff454052));
         playerContent.addView(progress, margin(0, dp(4), 0, 0));
         LinearLayout times = new LinearLayout(this);
         times.setOrientation(LinearLayout.HORIZONTAL);
@@ -168,7 +175,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         TextView prev = control("⏮", 18);
         playButton = control("▶", 22);
         playButton.setTextColor(Color.WHITE);
-        playButton.setBackground(panel(0xff7c4dff, 0x66ffffff, 28));
+        playButton.setBackground(panel(0xff8057e8, 0xffb69aff, 28));
+        playButton.setElevation(dp(4));
         TextView next = control("⏭", 18);
         TextView stereo = control("STEREO  OFF", 11);
         controls.addView(prev, controlParams());
@@ -200,6 +208,9 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         root.addView(libraryHeader, margin(0, dp(5), 0, dp(8)));
         RecyclerView list = new RecyclerView(this);
         list.setLayoutManager(new LinearLayoutManager(this));
+        list.setClipToPadding(false);
+        list.setPadding(0, dp(2), 0, dp(8));
+        list.setBackgroundColor(Color.TRANSPARENT);
         adapter = new TrackAdapter();
         list.setAdapter(adapter);
         root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -300,8 +311,11 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         chip.setGravity(Gravity.CENTER);
         chip.setContentDescription(description);
         chip.setPadding(dp(10), 0, dp(10), 0);
-        chip.setBackground(panel(0x1affffff, (accent & 0x00ffffff) | 0x77000000, 18));
-        chip.setElevation(dp(2));
+        chip.setBackground(panel(0xff211d30, (accent & 0x00ffffff) | 0xff000000, 18));
+        chip.setElevation(dp(3));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        chip.setMinHeight(dp(44));
         return chip;
     }
 
@@ -313,28 +327,16 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
             return;
         }
         String encoded = Uri.encode(query);
-        Uri appUri;
-        Uri webUri;
-        if ("spotify".equals(provider)) {
-            appUri = Uri.parse("spotify:search:" + encoded);
-            webUri = Uri.parse("https://open.spotify.com/search/" + encoded);
-        } else {
-            appUri = Uri.parse("soundcloud://search?q=" + encoded);
-            webUri = Uri.parse("https://soundcloud.com/search/sounds?q=" + encoded);
-        }
-
-        // Prefer the official provider app so the search result stays in its own service.
-        // If it is not installed or does not expose this URI scheme, fall back to its website.
+        Uri searchUri = "spotify".equals(provider)
+                ? Uri.parse("https://open.spotify.com/search/" + encoded)
+                : Uri.parse("https://soundcloud.com/search/sounds?q=" + encoded);
+        // Use official HTTPS app links: Android opens the provider app when its verified
+        // app-link is configured, otherwise the official search page opens in a browser.
         try {
-            Intent appIntent = new Intent(Intent.ACTION_VIEW, appUri);
-            appIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(appIntent);
-        } catch (android.content.ActivityNotFoundException | SecurityException appError) {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, webUri));
-            } catch (android.content.ActivityNotFoundException | SecurityException webError) {
-                Toast.makeText(this, "Не удалось открыть " + ("spotify".equals(provider) ? "Spotify" : "SoundCloud"), Toast.LENGTH_LONG).show();
-            }
+            Intent intent = new Intent(Intent.ACTION_VIEW, searchUri);
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, "Не удалось открыть " + ("spotify".equals(provider) ? "Spotify" : "SoundCloud"), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -360,10 +362,11 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
             LinearLayout row = new LinearLayout(VgramAudioPlayerActivity.this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(dp(8), dp(8), dp(8), dp(8));
-            row.setBackground(panel(0x18ffffff, 0x20ffffff, 16));
+            row.setBackground(panel(0xff171622, 0x332e2a42, 18));
+            row.setElevation(dp(1));
             ImageView cover = new ImageView(VgramAudioPlayerActivity.this);
             cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            cover.setBackground(panel(0xff29233d, 0x30ffffff, 12));
+            cover.setBackground(panel(0xff29233d, 0x557c4dff, 14));
             row.addView(cover, new LinearLayout.LayoutParams(dp(48), dp(48)));
             LinearLayout labels = new LinearLayout(VgramAudioPlayerActivity.this);
             labels.setOrientation(LinearLayout.VERTICAL);
@@ -388,7 +391,9 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
                 h.cover.setImageURI(Uri.parse(track.coverUrl));
                 if (h.cover.getDrawable() == null) h.cover.setImageResource(android.R.drawable.ic_media_play);
             } catch (RuntimeException ignored) { h.cover.setImageResource(android.R.drawable.ic_media_play); }
+            h.itemView.setContentDescription(track.title + ", " + track.artist + ", " + formatTime(track.durationMs));
             h.itemView.setOnClickListener(v -> playTrack(track));
+            h.play.setContentDescription("Воспроизвести " + track.title);
             h.play.setOnClickListener(v -> playTrack(track));
         }
         @Override public int getItemCount() { return visibleTracks.size(); }
