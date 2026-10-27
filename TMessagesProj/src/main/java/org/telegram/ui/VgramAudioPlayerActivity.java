@@ -1,223 +1,337 @@
 package org.telegram.ui;
 
-import org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
-
+import android.Manifest;
+import android.content.ContentUris;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.telegram.messenger.UserConfig;
+import org.telegram.ui.VgramModules.Audio.VgramVisualizerView;
+
+import java.util.ArrayList;
+import java.util.Locale;
+
 public class VgramAudioPlayerActivity extends VgramBaseActivity {
-    private EditText urlField;
-    private TextView status, playButton, trackTitle, emptyTitle, emptyMessage;
-    private SeekBar progress;
-    private TextView elapsedTime, totalTime;
-    private final Handler progressHandler = new Handler(Looper.getMainLooper());
-    private final Runnable progressTicker = new Runnable() { @Override public void run() { if (playback != null && progress != null && !draggingProgress) playbackListener.onProgress(playback.getCurrentPosition(), playback.getDuration()); progressHandler.postDelayed(this, 200L); } };
-    private VgramVisualizerView wave;
+    private static final int REQUEST_AUDIO_PERMISSION = 4817;
+    private final ArrayList<VgramPlaybackManager.VgramTrack> allTracks = new ArrayList<>();
+    private final ArrayList<VgramPlaybackManager.VgramTrack> visibleTracks = new ArrayList<>();
     private VgramPlaybackManager playback;
-    private boolean draggingProgress;
+    private TrackAdapter adapter;
+    private EditText searchField;
+    private TextView currentTitle, currentArtist, playButton, elapsed, total, empty;
+    private SeekBar progress;
+    private VgramVisualizerView visualizer;
+    private ImageView blurredCover;
+    private LinearLayout root;
+    private boolean dragging;
+    private int currentIndex = -1;
+    private boolean stereoPan;
 
-    private static void detachFromParent(View view) {
-        if (view != null && view.getParent() instanceof ViewGroup) {
-            ((ViewGroup) view.getParent()).removeView(view);
-        }
-    }
-
-    private final VgramPlaybackManager.PlaybackListener playbackListener = new VgramPlaybackManager.PlaybackListener() {
+    private final VgramPlaybackManager.PlaybackListener listener = new VgramPlaybackManager.PlaybackListener() {
         @Override public void onTrackChanged(VgramPlaybackManager.VgramTrack track) {
             if (track == null) {
-                if (trackTitle != null) trackTitle.setText("Ничего не воспроизводится");
-                if (status != null) status.setText("Готов к воспроизведению");
+                currentTitle.setText("Ничего не воспроизводится");
+                currentArtist.setText("Выберите трек из медиатеки");
                 return;
             }
-            if (trackTitle != null) trackTitle.setText(track.displayTitle());
-            if (urlField != null && !track.streamUrl.isEmpty() && !track.streamUrl.equals(urlField.getText().toString())) urlField.setText(track.streamUrl);
-            if (status != null) status.setText("Трек выбран");
-            if (emptyTitle != null) emptyTitle.setText("");
-            if (emptyMessage != null) emptyMessage.setText("");
+            currentTitle.setText(track.title);
+            currentArtist.setText(track.artist.isEmpty() ? "Неизвестный исполнитель" : track.artist);
+            for (int i = 0; i < allTracks.size(); i++) {
+                if (allTracks.get(i).id.equals(track.id)) { currentIndex = i; break; }
+            }
+            if (adapter != null) adapter.notifyDataSetChanged();
         }
-        @Override public void onStateChanged(boolean isPlaying) {
-            if (playButton != null) playButton.setText(isPlaying ? "Ⅱ  Пауза" : "▶  Воспроизвести / продолжить");
-            if (wave != null) wave.setPlaying(isPlaying);
-            if (status != null && playback != null && playback.getCurrentTrack() != null) status.setText(isPlaying ? "Воспроизведение" : playback.isBuffering() ? "Буферизация…" : "Пауза");
+        @Override public void onStateChanged(boolean playing) {
+            playButton.setText(playing ? "Ⅱ" : "▶");
+            visualizer.setPlaying(playing);
         }
-        @Override public void onProgress(long currentMs, long totalMs) {
-            if (progress == null || draggingProgress) return;
-            progress.setMax((int) Math.min(Integer.MAX_VALUE, Math.max(1L, totalMs)));
-            progress.setProgress((int) Math.min(progress.getMax(), currentMs));
-            if (elapsedTime != null) elapsedTime.setText(formatTime(currentMs));
-            if (totalTime != null) totalTime.setText(formatTime(totalMs));
+        @Override public void onProgress(long now, long duration) {
+            if (dragging) return;
+            progress.setMax((int) Math.max(1L, Math.min(Integer.MAX_VALUE, duration)));
+            progress.setProgress((int) Math.min(progress.getMax(), now));
+            elapsed.setText(formatTime(now));
+            total.setText(formatTime(duration));
         }
         @Override public void onError(String message) {
-            if (status != null) status.setText("Ошибка воспроизведения");
-            if (playButton != null) playButton.setText("↻  Повторить");
-            if (!isFinishing()) Toast.makeText(VgramAudioPlayerActivity.this, message, Toast.LENGTH_LONG).show();
-            showEmptyState("Проверьте подключение к сети", message);
+            Toast.makeText(VgramAudioPlayerActivity.this, message, Toast.LENGTH_LONG).show();
         }
     };
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         playback = VgramPlaybackManager.getInstance(getApplicationContext());
-        try {
-        setupScreen("VGRAM AUDIO", "Потоковый плеер", "Воспроизведение продолжается при закрытии этого экрана.");
-        LinearLayout c = card("Сейчас играет", "Вставьте прямую HTTP(S)-ссылку на аудиофайл или поток.");
-        trackTitle = label("Ничего не воспроизводится", 14, 0xfff1f0eb, true);
-        detachFromParent(trackTitle);
-        c.addView(trackTitle, margin(0, dp(2), 0, dp(8)));
-        wave = new VgramVisualizerView(this);
-        detachFromParent(wave);
-        c.addView(wave, margin(0, dp(8), 0, dp(10)));
+        setupScreen("VGRAM AUDIO", "Музыка", "Поиск по локальным аудиофайлам устройства.");
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(14), dp(8), dp(14), dp(16));
+        root.setBackgroundColor(0xff0d0c13);
+
+        searchField = new EditText(this);
+        searchField.setSingleLine(true);
+        searchField.setTextColor(0xfff5f1ff);
+        searchField.setHintTextColor(0xffaaa4bc);
+        searchField.setHint("⌕  Поиск треков, исполнителей...");
+        searchField.setTextSize(15);
+        searchField.setPadding(dp(18), dp(12), dp(18), dp(12));
+        searchField.setBackground(panel(0xff201c30, 0x557c4dff, 24));
+        root.addView(searchField, new LinearLayout.LayoutParams(-1, -2));
+
+        FrameLayout playerCard = new FrameLayout(this);
+        playerCard.setBackground(panel(0xff161424, 0x30ffffff, 20));
+        LinearLayout playerContent = new LinearLayout(this);
+        playerContent.setOrientation(LinearLayout.VERTICAL);
+        playerContent.setPadding(dp(16), dp(14), dp(16), dp(14));
+        blurredCover = new ImageView(this);
+        blurredCover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        blurredCover.setAlpha(0.12f);
+        if (Build.VERSION.SDK_INT >= 31) blurredCover.setRenderEffect(RenderEffect.createBlurEffect(24f, 24f, Shader.TileMode.CLAMP));
+        playerCard.addView(blurredCover, new FrameLayout.LayoutParams(-1, -1));
+        playerCard.addView(playerContent, new FrameLayout.LayoutParams(-1, -2, Gravity.TOP));
+        currentTitle = label("Ничего не воспроизводится", 17, 0xfff5f1ff, true);
+        currentArtist = label("Выберите трек из медиатеки", 13, 0xffb7b1c8, false);
+        playerContent.addView(currentTitle);
+        playerContent.addView(currentArtist, margin(0, dp(3), 0, dp(8)));
+        visualizer = new VgramVisualizerView(this);
+        playerContent.addView(visualizer, new LinearLayout.LayoutParams(-1, dp(58)));
         progress = new SeekBar(this);
-        progress.setMax(1);
-        detachFromParent(progress);
-        c.addView(progress, margin(0, 0, 0, dp(2)));
-        LinearLayout timeRow = new LinearLayout(this);
-        timeRow.setOrientation(LinearLayout.HORIZONTAL);
-        timeRow.setGravity(Gravity.CENTER_VERTICAL);
-        elapsedTime = label("00:00", 11, 0xffc5b878, true);
-        totalTime = label("00:00", 11, 0xffb9bbc1, false);
-        timeRow.addView(elapsedTime, new LinearLayout.LayoutParams(0, -2, 1));
-        totalTime.setGravity(Gravity.RIGHT);
-        timeRow.addView(totalTime, new LinearLayout.LayoutParams(0, -2, 1));
-        detachFromParent(timeRow);
-        c.addView(timeRow, margin(0, 0, 0, dp(8)));
+        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xff9e75ff));
+        progress.setThumbTintList(android.content.res.ColorStateList.valueOf(0xff9e75ff));
+        playerContent.addView(progress, margin(0, dp(4), 0, 0));
+        LinearLayout times = new LinearLayout(this);
+        times.setOrientation(LinearLayout.HORIZONTAL);
+        elapsed = label("00:00", 11, 0xffc7c1d6, false);
+        total = label("00:00", 11, 0xffc7c1d6, false);
+        times.addView(elapsed, new LinearLayout.LayoutParams(0, -2, 1));
+        total.setGravity(Gravity.RIGHT);
+        times.addView(total, new LinearLayout.LayoutParams(0, -2, 1));
+        playerContent.addView(times);
         progress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) { if (fromUser && elapsedTime != null) elapsedTime.setText(formatTime(value)); }
-            @Override public void onStartTrackingTouch(SeekBar bar) { draggingProgress = true; }
-            @Override public void onStopTrackingTouch(SeekBar bar) {
-                draggingProgress = false;
-                playback.seekTo(bar.getProgress());
-            }
+            public void onProgressChanged(SeekBar bar, int value, boolean fromUser) { if (fromUser) elapsed.setText(formatTime(value)); }
+            public void onStartTrackingTouch(SeekBar bar) { dragging = true; }
+            public void onStopTrackingTouch(SeekBar bar) { dragging = false; playback.seekTo(bar.getProgress()); }
         });
-        urlField = new EditText(this);
-        urlField.setSingleLine(true);
-        urlField.setTextColor(0xfff1f0eb);
-        urlField.setHintTextColor(0xff9b9da3);
-        urlField.setHint("https://…/audio.mp3");
-        urlField.setTextSize(14);
-        urlField.setPadding(dp(13), dp(12), dp(13), dp(12));
-        urlField.setBackground(panel(0xff202328, 0x667faaa5, 14));
-        detachFromParent(urlField);
-        c.addView(urlField, margin(0, dp(4), 0, dp(10)));
-        status = label("Готов к воспроизведению", 12, 0xffb9bbc1, false);
-        detachFromParent(status);
-        c.addView(status, margin(0, 0, 0, dp(10)));
-        playButton = label("▶  Воспроизвести поток", 14, 0xff17191d, true);
-        playButton.setGravity(Gravity.CENTER);
-        playButton.setPadding(dp(15), dp(14), dp(15), dp(14));
-        playButton.setBackground(panel(accent(), 0x99ffffff, 18));
-        detachFromParent(playButton);
-        c.addView(playButton, new LinearLayout.LayoutParams(-1, -2));
-        playButton.setOnClickListener(v -> onPlayPressed());
-        detachFromParent(c);
-        body.addView(c, margin(0, 0, 0, dp(12)));
 
-        LinearLayout emptyCard = card("Поиск аудио", "Введите прямую ссылку на аудиопоток и нажмите «Повторить поиск».");
-        emptyTitle = label("Ничего не найдено", 15, 0xfff1f0eb, true);
-        detachFromParent(emptyTitle);
-        emptyCard.addView(emptyTitle, margin(0, 0, 0, dp(4)));
-        emptyMessage = label("Поиск выполняется по прямым HTTP(S)-ссылкам.", 12, 0xffb9bbc1, false);
-        detachFromParent(emptyMessage);
-        emptyCard.addView(emptyMessage, margin(0, 0, 0, dp(10)));
-        TextView retry = label("↻  Повторить поиск", 14, 0xff17191d, true);
-        retry.setGravity(Gravity.CENTER);
-        retry.setPadding(dp(12), dp(12), dp(12), dp(12));
-        retry.setBackground(panel(accent(), 0x99ffffff, 16));
-        retry.setOnClickListener(v -> searchAndPlay());
-        VgramMotion.applySpringTouch(retry);
-        detachFromParent(retry);
-        emptyCard.addView(retry, new LinearLayout.LayoutParams(-1, -2));
-        detachFromParent(emptyCard);
-        body.addView(emptyCard, margin(0, 0, 0, dp(12)));
-        LinearLayout sourceCard = card("Поддержка источников", "Плеер принимает прямые HTTP(S)-ссылки на аудиопотоки. Страницы SoundCloud и Spotify не являются прямыми аудиопотоками.");
-        detachFromParent(sourceCard);
-        body.addView(sourceCard, margin(0, 0, 0, dp(12)));
-        VgramMotion.applySpringTouch(playButton);
-        renderCurrentTrack();
-        } catch (Throwable t) {
-            org.telegram.messenger.FileLog.e("VGRAM audio player UI", t);
-            LinearLayout fallback = new LinearLayout(this);
-            fallback.setOrientation(LinearLayout.VERTICAL);
-            fallback.setPadding(dp(16), dp(16), dp(16), dp(16));
-            TextView error = new TextView(this);
-            error.setTextColor(0xffff5555);
-            error.setTextSize(12);
-            error.setText("VGRAM Audio Player Error:\n" + android.util.Log.getStackTraceString(t));
-            fallback.addView(error, new LinearLayout.LayoutParams(-1, -2));
-            setContentView(fallback);
+        LinearLayout controls = new LinearLayout(this);
+        controls.setGravity(Gravity.CENTER);
+        controls.setPadding(0, dp(8), 0, dp(4));
+        TextView prev = control("⏮", 18);
+        playButton = control("▶", 22);
+        playButton.setTextColor(Color.WHITE);
+        playButton.setBackground(panel(0xff7c4dff, 0x66ffffff, 28));
+        TextView next = control("⏭", 18);
+        TextView stereo = control("STEREO  OFF", 11);
+        controls.addView(prev, controlParams());
+        controls.addView(playButton, controlParams());
+        controls.addView(next, controlParams());
+        controls.addView(stereo, controlParams());
+        playerContent.addView(controls);
+        prev.setOnClickListener(v -> playRelative(-1));
+        next.setOnClickListener(v -> playRelative(1));
+        playButton.setOnClickListener(v -> playback.togglePlayPause());
+        stereo.setOnClickListener(v -> {
+            stereoPan = !stereoPan;
+            stereo.setText(stereoPan ? "STEREO  ON" : "STEREO  OFF");
+            stereo.setTextColor(stereoPan ? 0xffc8aaff : 0xffb7b1c8);
+            org.telegram.ui.VgramModules.Audio.VgramStereoPanAudioProcessor processor = VgramAudioService.getStereoPanAudioProcessor();
+            if (processor != null) processor.setEnabled(stereoPan);
+        });
+        root.addView(playerCard, margin(0, dp(12), 0, dp(10)));
+
+        TextView section = label("Медиатека устройства", 16, 0xfff5f1ff, true);
+        root.addView(section, margin(0, dp(4), 0, dp(8)));
+        RecyclerView list = new RecyclerView(this);
+        list.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new TrackAdapter();
+        list.setAdapter(adapter);
+        root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
+        empty = label("Ищем музыку на устройстве…", 13, 0xffb7b1c8, false);
+        empty.setGravity(Gravity.CENTER);
+        root.addView(empty, new LinearLayout.LayoutParams(-1, dp(44)));
+        body.addView(root, new LinearLayout.LayoutParams(-1, -1));
+
+        searchField.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) { filterTracks(s.toString()); }
+            public void afterTextChanged(Editable e) {}
+        });
+        if (hasAudioPermission()) loadLocalTracks(); else requestAudioPermission();
+        playback.addListener(listener);
+    }
+
+    private boolean hasAudioPermission() {
+        String permission = Build.VERSION.SDK_INT >= 33 ? "android.permission.READ_MEDIA_AUDIO" : Manifest.permission.READ_EXTERNAL_STORAGE;
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestAudioPermission() {
+        String permission = Build.VERSION.SDK_INT >= 33 ? "android.permission.READ_MEDIA_AUDIO" : Manifest.permission.READ_EXTERNAL_STORAGE;
+        requestPermissions(new String[]{permission}, REQUEST_AUDIO_PERMISSION);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == REQUEST_AUDIO_PERMISSION) {
+            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) loadLocalTracks();
+            else empty.setText("Разрешите доступ к аудио, чтобы искать музыку на устройстве.");
         }
     }
 
-    private void onPlayPressed() {
-        if (playback.getCurrentTrack() != null && playback.getPlayer().getMediaItemCount() > 0) {
-            playback.togglePlayPause();
-        } else {
-            searchAndPlay();
+    private void loadLocalTracks() {
+        allTracks.clear();
+        Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = {MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.ALBUM_ID, MediaStore.Audio.Media.IS_MUSIC};
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+        try (Cursor cursor = getContentResolver().query(collection, projection, selection, null,
+                MediaStore.Audio.Media.TITLE + " COLLATE NOCASE ASC")) {
+            if (cursor != null) {
+                int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+                int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+                int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
+                int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
+                int albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(idCol);
+                    String title = cursor.getString(titleCol);
+                    String artist = cursor.getString(artistCol);
+                    long duration = cursor.getLong(durationCol);
+                    long album = cursor.getLong(albumCol);
+                    Uri uri = ContentUris.withAppendedId(collection, id);
+                    Uri cover = Uri.parse("content://media/external/audio/albumart/" + album);
+                    allTracks.add(new VgramPlaybackManager.VgramTrack(Long.toString(id),
+                            title == null || title.isEmpty() ? "Без названия" : title,
+                            artist == null ? "" : artist, uri.toString(), cover.toString(), duration));
+                }
+            }
+        } catch (SecurityException error) {
+            empty.setText("Нет разрешения на чтение музыкальных файлов.");
+        } catch (RuntimeException error) {
+            empty.setText("Не удалось прочитать медиатеку устройства.");
+            android.util.Log.w("VgramAudioPlayer", "MediaStore query failed", error);
         }
+        filterTracks(searchField.getText().toString());
     }
 
-    private void searchAndPlay() {
-        String raw = urlField == null || urlField.getText() == null ? "" : urlField.getText().toString().trim();
-        Uri uri = Uri.parse(raw);
-        String scheme = uri.getScheme();
-        if (uri.getHost() == null || !("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
-            showEmptyState("Ничего не найдено", "Укажите полную ссылку HTTP(S) на прямой аудиопоток.");
-            return;
+    private void filterTracks(String query) {
+        visibleTracks.clear();
+        String needle = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        for (VgramPlaybackManager.VgramTrack track : allTracks) {
+            if (needle.isEmpty() || track.title.toLowerCase(Locale.ROOT).contains(needle)
+                    || track.artist.toLowerCase(Locale.ROOT).contains(needle)) visibleTracks.add(track);
         }
-        status.setText("Подключение к потоку…");
-        playback.play(new VgramPlaybackManager.VgramTrack(raw, raw, "", raw, "", 0L));
+        if (adapter != null) adapter.notifyDataSetChanged();
+        empty.setText(visibleTracks.isEmpty()
+                ? (allTracks.isEmpty() ? "Музыка на устройстве не найдена" : "По запросу ничего не найдено")
+                : visibleTracks.size() + " треков");
     }
 
-    private void showEmptyState(String title, String message) {
-        if (emptyTitle != null) emptyTitle.setText(title);
-        if (emptyMessage != null) emptyMessage.setText(message);
+    private void playRelative(int offset) {
+        if (allTracks.isEmpty()) return;
+        int next = currentIndex < 0 ? 0 : (currentIndex + offset + allTracks.size()) % allTracks.size();
+        playTrack(allTracks.get(next));
     }
 
-    private void renderCurrentTrack() {
-        VgramPlaybackManager.VgramTrack track = playback.getCurrentTrack();
-        if (track != null) {
-            trackTitle.setText(track.displayTitle());
-            if (!track.streamUrl.isEmpty()) urlField.setText(track.streamUrl);
-        }
-        playbackListener.onStateChanged(playback.isPlaying());
-        playbackListener.onProgress(playback.getCurrentPosition(), playback.getDuration());
+    private void playTrack(VgramPlaybackManager.VgramTrack track) {
+        currentIndex = allTracks.indexOf(track);
+        playback.play(track);
     }
 
-    @Override protected void onResume() {
-        super.onResume();
-        if (playback == null) playback = VgramPlaybackManager.getInstance(getApplicationContext());
-        playback.addListener(playbackListener);
-        progressHandler.removeCallbacks(progressTicker);
-        progressHandler.post(progressTicker);
+    private TextView control(String text, int size) {
+        TextView v = label(text, size, 0xffe9e3ff, true);
+        v.setGravity(Gravity.CENTER);
+        v.setPadding(dp(10), dp(10), dp(10), dp(10));
+        v.setBackground(panel(0x18ffffff, 0x30ffffff, 24));
+        return v;
     }
 
-    @Override protected void onPause() {
-        if (playback != null) playback.removeListener(playbackListener);
-        progressHandler.removeCallbacks(progressTicker);
-        super.onPause();
-    }
-
-    @Override protected void onDestroy() {
-        // Deliberately do not stop/release playback: the manager owns the player.
-        if (playback != null) playback.removeListener(playbackListener);
-        progressHandler.removeCallbacks(progressTicker);
-        super.onDestroy();
+    private LinearLayout.LayoutParams controlParams() {
+        return new LinearLayout.LayoutParams(0, dp(48), 1);
     }
 
     private static String formatTime(long millis) {
         long seconds = Math.max(0L, millis) / 1000L;
-        return String.format(java.util.Locale.US, "%02d:%02d", seconds / 60L, seconds % 60L);
+        return String.format(Locale.US, "%02d:%02d", seconds / 60L, seconds % 60L);
     }
 
+    private final class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.Holder> {
+        @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LinearLayout row = new LinearLayout(VgramAudioPlayerActivity.this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(8), dp(8), dp(8), dp(8));
+            row.setBackground(panel(0x18ffffff, 0x20ffffff, 16));
+            ImageView cover = new ImageView(VgramAudioPlayerActivity.this);
+            cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            cover.setBackground(panel(0xff29233d, 0x30ffffff, 12));
+            row.addView(cover, new LinearLayout.LayoutParams(dp(48), dp(48)));
+            LinearLayout labels = new LinearLayout(VgramAudioPlayerActivity.this);
+            labels.setOrientation(LinearLayout.VERTICAL);
+            labels.setPadding(dp(10), 0, dp(8), 0);
+            row.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+            TextView title = label("", 14, 0xfff5f1ff, true);
+            TextView artist = label("", 12, 0xffb7b1c8, false);
+            TextView duration = label("", 11, 0xffb7b1c8, false);
+            labels.addView(title);
+            labels.addView(artist, margin(0, dp(2), 0, 0));
+            labels.addView(duration, margin(0, dp(2), 0, 0));
+            TextView play = control("▶", 15);
+            row.addView(play, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            return new Holder(row, cover, title, artist, duration, play);
+        }
+        @Override public void onBindViewHolder(@NonNull Holder h, int position) {
+            VgramPlaybackManager.VgramTrack track = visibleTracks.get(position);
+            h.title.setText(track.title);
+            h.artist.setText(track.artist.isEmpty() ? "Неизвестный исполнитель" : track.artist);
+            h.duration.setText(formatTime(track.durationMs));
+            try {
+                h.cover.setImageURI(Uri.parse(track.coverUrl));
+                if (h.cover.getDrawable() == null) h.cover.setImageResource(android.R.drawable.ic_media_play);
+            } catch (RuntimeException ignored) { h.cover.setImageResource(android.R.drawable.ic_media_play); }
+            h.itemView.setOnClickListener(v -> playTrack(track));
+            h.play.setOnClickListener(v -> playTrack(track));
+        }
+        @Override public int getItemCount() { return visibleTracks.size(); }
+        final class Holder extends RecyclerView.ViewHolder {
+            final ImageView cover; final TextView title, artist, duration, play;
+            Holder(View item, ImageView cover, TextView title, TextView artist, TextView duration, TextView play) {
+                super(item); this.cover=cover; this.title=title; this.artist=artist; this.duration=duration; this.play=play;
+            }
+        }
+    }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (playback != null) playback.addListener(listener);
+    }
+    @Override protected void onPause() {
+        if (playback != null) playback.removeListener(listener);
+        super.onPause();
+    }
+    @Override protected void onDestroy() {
+        if (playback != null) playback.removeListener(listener);
+        super.onDestroy();
+    }
 }
