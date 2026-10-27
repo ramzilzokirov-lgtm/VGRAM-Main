@@ -109,28 +109,34 @@ public final class VgramBadgeSync {
         SpannableStringBuilder result = new SpannableStringBuilder(name == null ? "" : name);
         if (context == null || telegramId <= 0) return result;
         if (telegramId == VGRAM_CREATOR_ID) {
+            // The creator gets exactly one developer pill. Verification and Premium are
+            // represented in their own UI and must not be appended repeatedly to every name.
             SharedPreferences local = VgramConfig.preferences(context, UserConfig.selectedAccount);
             if (local.getBoolean("show_dev_badge", true)) {
-                result.append("  ◆ DEV");
-                int developerStart = result.length() - "◆ DEV".length();
-                result.setSpan(new BadgePillSpan("◆ DEV"), developerStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (local.getBoolean("custom_verified", true)) {
-                result.append("  ✓");
-                int verifiedStart = result.length() - "✓".length();
-                result.setSpan(new BadgePillSpan("✓"), verifiedStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (local.getBoolean("premium_active", true)) {
-                result.append("  ✦ VGRAM PREMIUM");
-                int premiumStart = result.length() - "✦ VGRAM PREMIUM".length();
-                result.setSpan(new BadgePillSpan("✦ VGRAM PREMIUM"), premiumStart, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+                result.append("  ◆ Разработчик VGRAM");
+                int start = result.length() - "◆ Разработчик VGRAM".length();
+                result.setSpan(new BadgePillSpan("◆ Разработчик VGRAM"), start, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             return result;
         }
         seedLocalOwner(context);
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String cached = cache.getString("badges_" + telegramId, "");
+        java.util.LinkedHashMap<String, String> unique = new java.util.LinkedHashMap<>();
         for (String label : decodeLabels(cached)) {
+            String key = label.toLowerCase(java.util.Locale.ROOT).replace("✓ ", "").trim();
+            if (key.contains("разработчик vgram")) key = "developer";
+            else if (key.contains("один из разработчиков vgram")) key = "team";
+            else if (key.contains("канал верифицирован vgram")) key = "verified_channel";
+            unique.putIfAbsent(key, label);
+        }
+        if (unique.isEmpty()) {
+            result.append("  Пользователь VGRAM");
+            int start = result.length() - "Пользователь VGRAM".length();
+            result.setSpan(new BadgePillSpan("Пользователь VGRAM"), start, result.length(), SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return result;
+        }
+        for (String label : unique.values()) {
             if (result.length() > 0) result.append("  ");
             int start = result.length();
             result.append(label);
