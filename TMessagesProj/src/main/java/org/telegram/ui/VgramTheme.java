@@ -7,30 +7,151 @@ import org.telegram.ui.ActionBar.Theme;
 public final class VgramTheme {
     private VgramTheme() {}
     public static int accent(Context context) {
-        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", 0xffc5b878);
+        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("vgram_custom_accent", 0xffd6b65c));
     }
+    public static int glassBubbleOpacity(Context context) {
+        return Math.max(20, Math.min(90, context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
+                .getInt("glass_bubble_opacity", 58)));
+    }
+
+    public static int glassBubbleColor(Context context, int baseColor) {
+        int alpha = Math.round(255f * glassBubbleOpacity(context) / 100f);
+        return (alpha << 24) | (baseColor & 0x00ffffff);
+    }
+
     public static void apply(Context context) {
         int a = accent(context);
-        // Apply a muted brown/amber palette inspired by the requested YouGram references.
-        Theme.setColor(Theme.key_windowBackgroundWhite, 0xff17191d, false);
+        // Apply the VGRAM graphite-and-muted-gold palette across Telegram-backed UI color keys.
+        Theme.setColor(Theme.key_windowBackgroundWhite, 0xff101112, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xffeeece5, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffb5b5b0, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteGrayText2, 0xff8f9297, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteHintText, 0xff777b81, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteInputField, 0xff292c31, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteInputField, 0xff292a2b, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteInputFieldActivated, a, false);
-        Theme.setColor(Theme.key_dialogBackground, 0xff22252a, false);
-        Theme.setColor(Theme.key_dialogBackgroundGray, 0xff191b1f, false);
+        Theme.setColor(Theme.key_dialogBackground, 0xff1a1b1d, false);
+        Theme.setColor(Theme.key_dialogBackgroundGray, 0xff151618, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueButton, a, false);
-        Theme.setColor(Theme.key_actionBarDefault, 0xff191b20, false);
+        Theme.setColor(Theme.key_actionBarDefault, 0xff191a1b, false);
         Theme.setColor(Theme.key_actionBarDefaultIcon, 0xffe6e5df, false);
         Theme.setColor(Theme.key_actionBarDefaultTitle, 0xfff0efea, false);
         Theme.setColor(Theme.key_chats_unreadCounter, a, false);
         Theme.setColor(Theme.key_chats_nameMessage, a, false);
         Theme.setColor(Theme.key_chat_outBubble, blend(a, 0xff282b30, 0.30f), false);
+        Theme.setColor(Theme.key_windowBackgroundGray, 0xff171819, false);
+        Theme.setColor(Theme.key_windowBackgroundGrayShadow, 0x33101215, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteValueText, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteLinkText, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteGrayIcon, 0xffa9a9a2, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText3, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText4, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText5, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText6, a, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteBlueText7, a, false);
+        Theme.setColor(Theme.key_dialogTextBlack, 0xffeeece5, false);
+        Theme.setColor(Theme.key_dialogTextLink, a, false);
+        Theme.setColor(Theme.key_dialogTextBlue, a, false);
+        Theme.setColor(Theme.key_dialogTextBlue2, a, false);
+        Theme.setColor(Theme.key_dialogTextBlue4, a, false);
+        Theme.setColor(Theme.key_dialogTextGray, 0xffb5b5b0, false);
+        Theme.setColor(Theme.key_dialogTextGray2, 0xff8f9297, false);
+        Theme.setColor(Theme.key_dialogTextGray3, 0xff8f9297, false);
+        Theme.setColor(Theme.key_dialogTextGray4, 0xff777b81, false);
+        Theme.setColor(Theme.key_dialogTextHint, 0xff777b81, false);
+        Theme.setColor(Theme.key_listSelector, (a & 0x00ffffff) | 0x22000000, false);
+        Theme.setColor(Theme.key_settings_listSelector, (a & 0x00ffffff) | 0x22000000, false);
+        Theme.setColor(Theme.key_divider, 0x332f3339, false);
+        Theme.setColor(Theme.key_checkbox, a, false);
+        Theme.setColor(Theme.key_checkboxCheck, 0xff17191d, false);
+        Theme.setColor(Theme.key_checkboxSquareBackground, 0xff292c31, false);
+        Theme.setColor(Theme.key_checkboxSquareCheck, a, false);
+        Theme.setColor(Theme.key_radioBackgroundChecked, a, false);
+        Theme.setColor(Theme.key_switchTrackChecked, blend(a, 0xff17191d, 0.48f), false);
+        Theme.setColor(Theme.key_switchTrackBlue, 0xff34373d, false);
+        Theme.setColor(Theme.key_switchTrackBlueChecked, blend(a, 0xff17191d, 0.48f), false);
+        Theme.setColor(Theme.key_switchTrackBlueThumbChecked, a, false);
+        Theme.setColor(Theme.key_switch2TrackChecked, blend(a, 0xff17191d, 0.48f), false);
+        Theme.setColor(Theme.key_actionBarDefaultSubtitle, 0xffa6a8a9, false);
+        Theme.setColor(Theme.key_actionBarDefaultSearchPlaceholder, 0xff8f9297, false);
+        Theme.setColor(Theme.key_actionBarDefaultSelector, (a & 0x00ffffff) | 0x22000000, false);
+        Theme.setColor(Theme.key_actionBarDefaultSubmenuBackground, 0xff222426, false);
+        Theme.setColor(Theme.key_actionBarDefaultSubmenuItem, 0xffeeece5, false);
+        Theme.setColor(Theme.key_actionBarDefaultSubmenuItemIcon, a, false);
+        Theme.setColor(Theme.key_actionBarDefaultSubmenuSeparator, 0x332f3339, false);
+        Theme.setColor(Theme.key_actionBarTabActiveText, a, false);
+        Theme.setColor(Theme.key_actionBarTabUnactiveText, 0xffa6a8a9, false);
+        Theme.setColor(Theme.key_actionBarTabLine, a, false);
+        Theme.setColor(Theme.key_chats_name, 0xffeeece5, false);
+        Theme.setColor(Theme.key_chats_nameArchived, 0xffb5b5b0, false);
+        Theme.setColor(Theme.key_chats_secretName, a, false);
+        Theme.setColor(Theme.key_chats_message, 0xffaeb1b5, false);
+        Theme.setColor(Theme.key_chats_messageArchived, 0xff8f9297, false);
+        Theme.setColor(Theme.key_chats_message_threeLines, 0xffaeb1b5, false);
+        Theme.setColor(Theme.key_chats_nameMessageArchived, a, false);
+        Theme.setColor(Theme.key_chats_nameMessage_threeLines, a, false);
+        Theme.setColor(Theme.key_chats_nameMessageArchived_threeLines, a, false);
+        Theme.setColor(Theme.key_chats_draft, a, false);
+        Theme.setColor(Theme.key_chats_date, 0xff96999f, false);
+        Theme.setColor(Theme.key_chats_date_bold, a, false);
+        Theme.setColor(Theme.key_chats_unreadCounterMuted, 0xff66696f, false);
+        Theme.setColor(Theme.key_chats_unreadCounterText, 0xff17191d, false);
+        Theme.setColor(Theme.key_chats_pinnedOverlay, 0x22202020, false);
+        Theme.setColor(Theme.key_chats_menuBackground, 0xff222426, false);
+        Theme.setColor(Theme.key_chats_menuItemText, 0xffeeece5, false);
+        Theme.setColor(Theme.key_chats_menuItemCheck, a, false);
+        Theme.setColor(Theme.key_chats_menuItemIcon, a, false);
+        Theme.setColor(Theme.key_chats_menuName, 0xffeeece5, false);
+        Theme.setColor(Theme.key_chats_menuPhone, 0xffaeb1b5, false);
+        Theme.setColor(Theme.key_chats_actionIcon, a, false);
+        Theme.setColor(Theme.key_chats_actionBackground, blend(a, 0xff17191d, 0.20f), false);
+        Theme.setColor(Theme.key_chats_actionPressedBackground, (a & 0x00ffffff) | 0x33000000, false);
+        Theme.setColor(Theme.key_chats_archiveBackground, 0xff22252a, false);
+        Theme.setColor(Theme.key_chats_archivePinBackground, a, false);
+        Theme.setColor(Theme.key_chats_archiveIcon, a, false);
+        Theme.setColor(Theme.key_chats_archiveText, a, false);
+        Theme.setColor(Theme.key_chats_tabUnreadActiveBackground, a, false);
+        Theme.setColor(Theme.key_chats_tabUnreadUnactiveBackground, 0xff34373d, false);
+        Theme.setColor(Theme.key_chat_inBubble, 0xff292c31, false);
+        Theme.setColor(Theme.key_chat_inBubbleSelected, 0xff34373d, false);
+        Theme.setColor(Theme.key_chat_outBubbleSelected, blend(a, 0xff17191d, 0.30f), false);
+        Theme.setColor(Theme.key_chat_inBubbleShadow, 0x22000000, false);
+        Theme.setColor(Theme.key_chat_outBubbleShadow, 0x22000000, false);
+        Theme.setColor(Theme.key_chat_inBubbleSelectedOverlay, 0x22000000, false);
+        Theme.setColor(Theme.key_chat_outBubbleSelectedOverlay, (a & 0x00ffffff) | 0x22000000, false);
+        Theme.setColor(Theme.key_chat_messageTextIn, 0xffeeece5, false);
+        Theme.setColor(Theme.key_chat_messageTextOut, 0xfff0eee6, false);
+        Theme.setColor(Theme.key_chat_messageLinkIn, a, false);
+        Theme.setColor(Theme.key_chat_messageLinkOut, a, false);
+        Theme.setColor(Theme.key_chat_messagePanelBackground, 0xff202122, false);
+        Theme.setColor(Theme.key_chat_messagePanelShadow, 0x33000000, false);
+        Theme.setColor(Theme.key_chat_messagePanelText, 0xffeeece5, false);
+        Theme.setColor(Theme.key_chat_messagePanelHint, 0xff8f9297, false);
+        Theme.setColor(Theme.key_chat_messagePanelCursor, a, false);
+        Theme.setColor(Theme.key_chat_messagePanelIcons, 0xffb5b5b0, false);
+        Theme.setColor(Theme.key_chat_messagePanelSend, a, false);
+        Theme.setColor(Theme.key_chat_messagePanelVoiceBackground, a, false);
+        Theme.setColor(Theme.key_chat_emojiPanelBackground, 0xff202122, false);
+        Theme.setColor(Theme.key_chat_emojiPanelShadowLine, 0x332f3339, false);
+        Theme.setColor(Theme.key_chat_emojiPanelIconSelected, a, false);
+        Theme.setColor(Theme.key_chat_wallpaper, 0xff171819, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to1, 0xff202122, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to2, 0xff171819, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to3, 0xff252627, false);
+        Theme.setColor(Theme.key_profile_title, 0xffeeece5, false);
+        Theme.setColor(Theme.key_profile_status, 0xffa6a8a9, false);
+        Theme.setColor(Theme.key_profile_actionIcon, a, false);
+        Theme.setColor(Theme.key_profile_actionBackground, 0xff292c31, false);
+        Theme.setColor(Theme.key_profile_actionPressedBackground, (a & 0x00ffffff) | 0x33000000, false);
+        Theme.setColor(Theme.key_profile_tabText, 0xffa6a8a9, false);
+        Theme.setColor(Theme.key_profile_tabSelectedText, a, false);
+        Theme.setColor(Theme.key_profile_tabSelectedLine, a, false);
+        Theme.setColor(Theme.key_profile_tabSelector, (a & 0x00ffffff) | 0x22000000, false);
+        Theme.setColor(Theme.key_featuredStickers_addButton, a, false);
+        Theme.setColor(Theme.key_featuredStickers_addButton2, a, false);
+        Theme.setColor(Theme.key_featuredStickers_addButtonPressed, blend(a, 0xff17191d, 0.25f), false);
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needCheckSystemBarColors);
     }
     private static int blend(int foreground, int background, float amount) {
