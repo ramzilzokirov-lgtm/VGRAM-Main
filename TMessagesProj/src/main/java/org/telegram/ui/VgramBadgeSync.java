@@ -83,7 +83,17 @@ public final class VgramBadgeSync {
         return clean;
     }
 
+    /** Fetches badge data for a chat-list row without blocking the UI thread. */
+    public static void prefetch(Context context, long telegramId, View target) {
+        if (context == null || telegramId <= 0) return;
+        refresh(context, telegramId, null, "", target);
+    }
+
     private static void refresh(Context context, long telegramId, SimpleTextView title, CharSequence baseName) {
+        refresh(context, telegramId, title, baseName, null);
+    }
+
+    private static void refresh(Context context, long telegramId, SimpleTextView title, CharSequence baseName, View target) {
         final Context app = context.getApplicationContext();
         final String id = Long.toString(telegramId);
         SharedPreferences cache = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -120,7 +130,12 @@ public final class VgramBadgeSync {
                     String result = labels.toString();
                     cache.edit().putString("badges_" + id, result).putLong("time_" + id, System.currentTimeMillis()).apply();
                     MAIN.post(() -> {
-                        if (title.getParent() != null) title.setText(withBadges(app, telegramId, baseName));
+                        if (title != null && title.getParent() != null) {
+                            title.setText(withBadges(app, telegramId, baseName));
+                        }
+                        if (target != null && target.isAttachedToWindow()) {
+                            target.invalidate();
+                        }
                     });
                 } catch (Exception ignored) {
                     // Preserve cached labels and retry on a later profile visit.
