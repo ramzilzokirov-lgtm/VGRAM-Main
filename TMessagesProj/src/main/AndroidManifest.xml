@@ -156,10 +156,6 @@
         <activity-alias android:enabled="false" android:name="org.telegram.messenger.LaunchActivityAlias10" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/vgram_icon_10" android:roundIcon="@mipmap/vgram_icon_10" android:label="V Chrome" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" /></intent-filter>
         </activity-alias>
-
-
-        <activity android:name="org.telegram.ui.VgramPlayer" android:exported="false" android:screenOrientation="unspecified" />
-
         <activity
             android:name="org.telegram.ui.LaunchActivity"
             android:theme="@style/Theme.TMessages.Start"
