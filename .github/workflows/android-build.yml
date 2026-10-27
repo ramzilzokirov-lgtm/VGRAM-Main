@@ -336,8 +336,8 @@ jobs:
           # Previously activation only ran when the user opened the Premium settings screen.
           if "VgramConfig.activateIfCreator" not in launch_source:
               launch_source, config_count = re.subn(
-                  r"(?m)^(\\s*VgramTheme\\.apply\\(this\\);\\s*)",
-                  r"\\1\\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);",
+                  r"(?m)^(\s*VgramTheme\.apply\(this\);\s*)",
+                  r"\1\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);",
                   launch_source, count=1
               )
               if config_count != 1:
