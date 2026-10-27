@@ -575,24 +575,37 @@ public final class VgramBadgeSync {
     }
 
     private static List<String> decodeLabels(String stored) {
-        ArrayList<String> labels = new ArrayList<>();
-        if (stored == null || stored.isEmpty()) return labels;
+        // Normalize legacy cache entries and duplicate server role aliases before rendering.
+        java.util.LinkedHashSet<String> unique = new java.util.LinkedHashSet<>();
+        if (stored == null || stored.isEmpty()) return new ArrayList<>();
         try {
             JSONArray array = new JSONArray(stored);
             for (int i = 0; i < array.length(); i++) {
-                String label = array.optString(i, "").trim();
-                if (!label.isEmpty()) labels.add(label);
+                String label = normalizeBadgeLabel(array.optString(i, ""));
+                if (!label.isEmpty()) unique.add(label);
             }
         } catch (Exception legacyFormat) {
-            // Accept old cache entries like "◆ TESTER  ◆ OG" once, without requiring a cache reset.
             String[] parts = stored.split("\\s*◆\\s*");
             for (String part : parts) {
-                String label = part.trim();
-                if (label.startsWith("✦ VGRAM PREMIUM")) label = "VGRAM PREMIUM";
-                if (!label.isEmpty()) labels.add(label);
+                String label = normalizeBadgeLabel(part);
+                if (!label.isEmpty()) unique.add(label);
             }
         }
-        return labels;
+        return new ArrayList<>(unique);
+    }
+
+    private static String normalizeBadgeLabel(String raw) {
+        if (raw == null) return "";
+        String label = raw.trim().replaceAll("\\s+", " ");
+        if (label.isEmpty() || "null".equalsIgnoreCase(label)) return "";
+        String lower = label.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("premium") || lower.equals("vgram_premium")) return "✦ VGRAM PREMIUM";
+        if (isVerificationRole(lower) || lower.startsWith("✓ ")) {
+            String role = lower.startsWith("✓ ") ? label.substring(2).trim() : label;
+            String mapped = verificationLabelForRole(role);
+            if (mapped != null && !mapped.isEmpty()) return "✓ " + mapped;
+        }
+        return label;
     }
 
     private static final class BadgePillSpan extends ReplacementSpan {
