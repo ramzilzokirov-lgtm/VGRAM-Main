@@ -26,6 +26,10 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.Dialog;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -330,13 +334,39 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         Uri searchUri = "spotify".equals(provider)
                 ? Uri.parse("https://open.spotify.com/search/" + encoded)
                 : Uri.parse("https://soundcloud.com/search/sounds?q=" + encoded);
-        // Use official HTTPS app links: Android opens the provider app when its verified
-        // app-link is configured, otherwise the official search page opens in a browser.
+        // Show the official provider search page inside VGRAM. Controls and player UI remain
+        // native Android views; only the provider-owned search results are web content.
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, searchUri);
-            startActivity(intent);
-        } catch (android.content.ActivityNotFoundException | SecurityException error) {
-            Toast.makeText(this, "Не удалось открыть " + ("spotify".equals(provider) ? "Spotify" : "SoundCloud"), Toast.LENGTH_LONG).show();
+            Dialog dialog = new Dialog(this);
+            LinearLayout shell = new LinearLayout(this);
+            shell.setOrientation(LinearLayout.VERTICAL);
+            shell.setBackground(panel(0xff0d0c13, 0xff7c4dff, 20));
+            LinearLayout bar = new LinearLayout(this);
+            bar.setGravity(Gravity.CENTER_VERTICAL);
+            bar.setPadding(dp(16), dp(10), dp(10), dp(10));
+            TextView title = label(("spotify".equals(provider) ? "Spotify" : "SoundCloud") + " · поиск", 16, 0xfff5f1ff, true);
+            bar.addView(title, new LinearLayout.LayoutParams(0, dp(44), 1f));
+            TextView close = control("✕", 16);
+            bar.addView(close, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            shell.addView(bar);
+            WebView results = new WebView(this);
+            results.getSettings().setJavaScriptEnabled(true);
+            results.getSettings().setDomStorageEnabled(true);
+            results.setBackgroundColor(0xff0d0c13);
+            results.setWebViewClient(new WebViewClient());
+            shell.addView(results, new LinearLayout.LayoutParams(-1, 0, 1f));
+            close.setOnClickListener(v -> dialog.dismiss());
+            dialog.setContentView(shell);
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawableResource(android.R.color.transparent);
+                window.setLayout(-1, -1);
+            }
+            dialog.show();
+            if (dialog.getWindow() != null) dialog.getWindow().setLayout(-1, -1);
+            results.loadUrl(searchUri.toString());
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "Не удалось открыть поиск внутри VGRAM", Toast.LENGTH_LONG).show();
         }
     }
 
