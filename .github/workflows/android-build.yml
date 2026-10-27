@@ -500,11 +500,11 @@ jobs:
           badge_source = badge_sync.read_text(encoding="utf-8")
           dialog_source = dialog_cell.read_text(encoding="utf-8")
           profile_source = profile.read_text(encoding="utf-8")
-          for marker in ["withBadges(", "stripRenderedBadges(", "BadgePillSpan"]:
+          for marker in ["withBadges(", "stripRenderedBadges(", "BadgePillSpan", "prefetch(", "target.invalidate()"]:
               if marker not in badge_source:
                   raise SystemExit("VGRAM badge renderer incomplete: " + marker)
-          if "VgramBadgeSync.withBadges(" not in dialog_source:
-              raise SystemExit("VGRAM badge rendering is not wired into DialogCell.")
+          if "VgramBadgeSync.withBadges(" not in dialog_source or "VgramBadgeSync.prefetch(" not in dialog_source:
+              raise SystemExit("VGRAM badge rendering or asynchronous cache refresh is not wired into DialogCell.")
           if "VgramBadgeSync.apply(" not in profile_source:
               raise SystemExit("VGRAM badge refresh is not wired into ProfileActivity.")
           print("VGRAM badge renderer, chat-list integration, and profile refresh validated.")
