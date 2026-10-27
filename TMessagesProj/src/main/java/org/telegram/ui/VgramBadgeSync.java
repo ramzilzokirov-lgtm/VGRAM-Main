@@ -59,9 +59,28 @@ public final class VgramBadgeSync {
     /** Applies cached badges immediately and refreshes them asynchronously. */
     public static void apply(Context context, long telegramId, SimpleTextView title) {
         if (context == null || title == null || telegramId <= 0) return;
-        CharSequence base = title.getText();
+        // ProfileActivity can refresh its title repeatedly. Strip only our own spans first,
+        // otherwise each refresh can append another copy of the same cached badge.
+        CharSequence base = stripRenderedBadges(title.getText());
         title.setText(withBadges(context, telegramId, base));
         refresh(context, telegramId, title, base);
+    }
+
+    private static CharSequence stripRenderedBadges(CharSequence text) {
+        if (text == null || text.length() == 0) return "";
+        SpannableStringBuilder clean = new SpannableStringBuilder(text);
+        BadgePillSpan[] spans = clean.getSpans(0, clean.length(), BadgePillSpan.class);
+        for (int i = spans.length - 1; i >= 0; i--) {
+            int start = clean.getSpanStart(spans[i]);
+            int end = clean.getSpanEnd(spans[i]);
+            if (start < 0 || end <= start) continue;
+            int deleteStart = start;
+            if (deleteStart >= 2 && clean.charAt(deleteStart - 1) == ' ' && clean.charAt(deleteStart - 2) == ' ') {
+                deleteStart -= 2;
+            }
+            clean.delete(deleteStart, end);
+        }
+        return clean;
     }
 
     private static void refresh(Context context, long telegramId, SimpleTextView title, CharSequence baseName) {
