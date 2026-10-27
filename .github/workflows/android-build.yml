@@ -332,8 +332,413 @@ jobs:
           else:
               raise SystemExit("VGRAM theme integration failed: could not find LaunchActivity.onResume")
 
+          # Activate creator-only VGRAM Premium entitlements on normal app startup too.
+          # Previously activation only ran when the user opened the Premium settings screen.
+          if "VgramConfig.activateIfCreator" not in launch_source:
+              launch_source, config_count = re.subn(
+                  r'(?m)^(\s*VgramTheme\.apply\(this\);\s*)
+
+          # VgramBaseActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # VgramSettingsActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+
+          # VgramPluginsActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # VgramDevelopersActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # VgramUpdateActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # Use the Android Material Components library and a Material 3 theme for VGRAM screens.
+          # Keep the upstream Telegram screens intact; only VGRAM-owned activities use this theme.
+          gradle_file = root / "TMessagesProj/build.gradle"
+          gradle_text = gradle_file.read_text(encoding="utf-8")
+          material_dependency = "implementation 'com.google.android.material:material:1.12.0'"
+          if material_dependency not in gradle_text:
+              dependency_anchor = "dependencies {"
+              if gradle_text.count(dependency_anchor) != 1:
+                  raise SystemExit("VGRAM Material 3 patch failed: Gradle dependencies block not found")
+              gradle_text = gradle_text.replace(dependency_anchor, dependency_anchor + "\n    " + material_dependency, 1)
+              gradle_file.write_text(gradle_text, encoding="utf-8")
+          print("Added Material Components dependency for VGRAM's Material 3 screens.")
+
+          # VgramBadgesActivity.java is committed and overlaid before validation/build.
+
+
+          # VGRAM-owned help and capabilities screens (no Telegram-branded FAQ link).
+          # VgramQuestionsActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # VgramFeaturesActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # VgramPrivacyActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # Register internal screens. Upstream already provides FileProvider and REQUEST_INSTALL_PACKAGES.
+          manifest = root / "TMessagesProj/src/main/AndroidManifest.xml"
+          manifest_text = manifest.read_text(encoding="utf-8")
+          app_end = "    </application>"
+          screen_declarations = """        <activity android:name="org.telegram.ui.VgramSettingsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramPrivacyActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramUpdateActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramDevelopersActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramPluginsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramBadgesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramQuestionsActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramFeaturesActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          <activity android:name="org.telegram.ui.VgramBannerCropActivity" android:exported="false" android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+          """
+          manifest_text = re.sub(r'android:icon="@mipmap/icon_[0-9]+_launcher"', 'android:icon="@drawable/vgram_launcher_icon"', manifest_text)
+          if "org.telegram.ui.VgramBadgesActivity" not in manifest_text:
+              if manifest_text.count(app_end) != 1:
+                  raise SystemExit("VGRAM patch failed: AndroidManifest application closing tag changed")
+              manifest_text = manifest_text.replace(app_end, screen_declarations + app_end, 1)
+              manifest.write_text(manifest_text, encoding="utf-8")
+
+          launch = root / "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java"
+          launch_source = launch.read_text(encoding="utf-8")
+          if "VgramTheme.apply(this);" not in launch_source:
+              launch_source, launch_count = re.subn(
+                  r'(?m)^(\s*super\.onCreate\(savedInstanceState\);\s*)',
+                  r'\1\n        VgramTheme.apply(this);',
+                  launch_source, count=1
+              )
+              if launch_count != 1:
+                  raise SystemExit("VGRAM patch failed: LaunchActivity.onCreate insertion point not found")
+              launch.write_text(launch_source, encoding="utf-8")
+          # Apply VGRAM colors before Telegram constructs the phone-number / login screens.
+          # LaunchActivity alone is too late for some login fragments restored during startup.
+          login_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
+          if not login_activity.exists():
+              raise SystemExit("VGRAM patch failed: LoginActivity.java not found in Telegram source")
+          login_source = login_activity.read_text(encoding="utf-8")
+          if "VgramTheme.apply(getParentActivity())" not in login_source:
+              login_source, login_count = re.subn(
+                  r'(?m)^(\s*)public View createView\(Context context\) \{',
+                  r'\1public View createView(Context context) {\n\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  login_source, count=1
+              )
+              if login_count != 1:
+                  raise SystemExit("VGRAM patch failed: LoginActivity.createView(Context) insertion point not found")
+              login_activity.write_text(login_source, encoding="utf-8")
+          # The Telegram cloud-password fragment is a separate screen. Apply the palette there too,
+          # especially input text, hint, and active-field colors, without replacing Telegram auth logic.
+          two_step = root / "TMessagesProj/src/main/java/org/telegram/ui/TwoStepVerificationActivity.java"
+          two_step_source = two_step.read_text(encoding="utf-8")
+          if "VgramTheme.apply(getParentActivity())" not in two_step_source:
+              two_step_source, two_step_count = re.subn(
+                  r'(?m)^(\s*)public View createView\(Context context\) \{',
+                  r'\1public View createView(Context context) {\n\1    if (getParentActivity() != null) VgramTheme.apply(getParentActivity());',
+                  two_step_source, count=1
+              )
+              if two_step_count != 1:
+                  raise SystemExit("VGRAM password-screen theme integration failed: TwoStepVerificationActivity.createView not found")
+              two_step.write_text(two_step_source, encoding="utf-8")
+          print("Applied VGRAM palette before building the real Telegram login / phone-number UI.")
+
+          print("Installed VGRAM Studio, persistent accent settings, developers page and native OTA updater.")
+
+          # Telegram's graphite/gold palette is committed in ThemeColors.java and overlaid before build.
+
+
+          # VgramBadgeSync.java is committed under TMessagesProj and copied into the pinned upstream source.
+
+          # The banner implementation is committed in ProfileActivity.java and overlaid above.
+          # Never mutate this integration during CI; fail with an actionable message if absent.
+          profile_activity = root / "TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java"
+          profile_source = profile_activity.read_text(encoding="utf-8")
+          print("VGRAM profile banner overlay is intentionally disabled; checking badge integration only.")
+          print("Applied VGRAM graphite/gold palette to real Telegram UI color definitions.")
+          print("Committed extended VGRAM palette is ready.")
+
+          # Server badge rendering is committed in ProfileActivity.java; do not patch source here.
+
+
+
+          props = root / "gradle.properties"
+          text = props.read_text(encoding="utf-8")
+          run_number = os.environ.get("GITHUB_RUN_NUMBER", "1")
+          version_name = "0.1." + run_number
+          text = re.sub(r"(?m)^APP_VERSION_CODE=.*$", "APP_VERSION_CODE=" + run_number, text)
+          text = re.sub(r"(?m)^APP_VERSION_NAME=.*$", "APP_VERSION_NAME=" + version_name, text)
+          text = re.sub(r"(?m)^APP_PACKAGE=.*$", "APP_PACKAGE=org.vgram.messenger", text)
+          # Firebase's Google Services Gradle plugin requires a client entry for each
+          # Android applicationId, including the beta flavor's .beta suffix.
+          import json
+          google_services = root / "TMessagesProj_App/google-services.json"
+          if google_services.is_file():
+              google_data = json.loads(google_services.read_text(encoding="utf-8"))
+              clients = google_data.get("client", [])
+              template = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") in ("org.telegram.messenger", "org.telegram.messenger.beta")), None)
+              if template is None:
+                  raise SystemExit("VGRAM build patch failed: no upstream Firebase client template found")
+              for package_name in ("org.vgram.messenger", "org.vgram.messenger.beta"):
+                  existing = next((x for x in clients if x.get("client_info", {}).get("android_client_info", {}).get("package_name") == package_name), None)
+                  if existing is None:
+                      cloned = json.loads(json.dumps(template))
+                      cloned["client_info"]["android_client_info"]["package_name"] = package_name
+                      clients.append(cloned)
+              google_data["client"] = clients
+              google_services.write_text(json.dumps(google_data, indent=2) + "\n", encoding="utf-8")
+          # CI memory limit is smaller than a developer workstation.
+          text = re.sub(r'(?m)^org.gradle.jvmargs=.*$', 'org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8', text)
+          props.write_text(text, encoding="utf-8")
+
+          buildvars = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
+          text = buildvars.read_text(encoding="utf-8")
+          # VgramApiDiagnostics.java is committed; only per-build credentials are injected into BuildVars.
+
+          text = re.sub(r'public static boolean CHECK_UPDATES = true;', 'public static boolean CHECK_UPDATES = false;', text, count=1)
+          api_id = os.environ.get("TG_API_ID", "").strip()
+          api_hash = os.environ.get("TG_API_HASH", "").strip()
+          if api_id and api_hash:
+              if not api_id.isdigit():
+                  raise SystemExit("TG_API_ID must contain digits only")
+              text = re.sub(r'public static int APP_ID = \d+;', f'public static int APP_ID = {api_id};', text, count=1)
+              text = re.sub(r'public static String APP_HASH = "[^"]*";', f'public static String APP_HASH = "{api_hash}";', text, count=1)
+          else:
+              print("WARNING: TG_API_ID/TG_API_HASH secrets not both set; upstream development API values remain. Configure your own values before distribution.")
+          buildvars.write_text(text, encoding="utf-8")
+
+          # The APK is built from a clean upstream checkout, so patch the upstream
+          # synchronous Premium gate here rather than relying on an unoverlaid source file.
+          user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
+          text = user_config.read_text(encoding="utf-8")
+          pattern = r"(?m)^    public boolean isPremium\(\) \{\n        TLRPC\.User user = currentUser;\n        if \(user == null\) \{\n            return false;\n        \}\n        return user\.premium;\n    }"
+          replacement = """    public boolean isPremium() {
+                  TLRPC.User user = currentUser;
+                  if (user == null) {
+                      return false;
+                  }
+                  return VgramPremiumManager.isPremium(ApplicationLoader.applicationContext, user.id, user.premium);
+              }"""
+          text, patched = re.subn(pattern, lambda _match: replacement, text, count=1)
+          if patched != 1:
+              raise SystemExit("VGRAM Premium patch failed: UserConfig.isPremium() signature/body changed upstream")
+          user_config.write_text(text, encoding="utf-8")
+          print("Patched UserConfig.isPremium() to combine Telegram Premium with cached VGRAM Premium.")
+          PY
+
+      - name: Validate VGRAM build patch before compiling
+        working-directory: upstream
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+          p = Path("TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java")
+          s = p.read_text(encoding="utf-8")
+          required = ['R.string.VgramSettingsAppearance', 'R.string.VgramSettingsUpdates', 'R.string.VgramSettingsDevelopers', 'R.string.VgramSettingsPlugins', 'case 27:', 'case 28:', 'case 29:', 'case 30:']
+          missing = [x for x in required if x not in s]
+          if missing:
+              raise SystemExit("VGRAM settings integration incomplete: " + ", ".join(missing))
+          resource_root = ET.parse("TMessagesProj/src/main/res/values/strings.xml").getroot()
+          expected = {
+              "VgramSettingsAppearance": "Оформление VGRAM",
+              "VgramSettingsUpdates": "Обновления VGRAM",
+              "VgramSettingsDevelopers": "Разработчики",
+              "VgramSettingsPlugins": "Плагины VGRAM",
+              "VgramSettingsBadges": "Бейджи VGRAM",
+              "VgramSettingsPrivacy": "Политика конфиденциальности VGRAM",
+              "VgramSettingsQuestions": "Вопросы о VGRAM",
+              "VgramSettingsFeatures": "Возможности VGRAM",
+          }
+          actual = {node.attrib.get("name"): "".join(node.itertext()) for node in resource_root.findall("string")}
+          wrong = [name for name, value in expected.items() if actual.get(name) != value]
+          if wrong:
+              raise SystemExit("VGRAM settings string resources missing or mismatched: " + ", ".join(wrong))
+          print("VGRAM settings entries reference validated Android string resources.")
+          required_drawables = ["preview_smile", "preview_back", "preview_mic", "dino_pic", "wallet_action_card_gradient", "wallet_card_diamond", "vgram_settings_appearance", "vgram_settings_updates", "vgram_settings_developers", "vgram_settings_plugins", "vgram_settings_badges", "vgram_settings_privacy"]
+          drawable_dir = Path("TMessagesProj/src/main/res/drawable")
+          missing_drawables = [name for name in required_drawables if not (drawable_dir / (name + ".xml")).is_file()]
+          if missing_drawables:
+              raise SystemExit("VGRAM drawable integration incomplete: " + ", ".join(missing_drawables))
+          print("All compatibility drawables needed by the build are present.")
+          ui_sources = ["VgramTheme.java", "VgramBaseActivity.java", "VgramSupportActivity.java", "VgramSettingsActivity.java", "VgramPrivacyActivity.java", "VgramUpdateActivity.java", "VgramDevelopersActivity.java", "VgramPluginsActivity.java", "VgramBadgesActivity.java", "VgramQuestionsActivity.java", "VgramFeaturesActivity.java"]
+          for source_name in ui_sources:
+              if not (Path("TMessagesProj/src/main/java/org/telegram/ui") / source_name).is_file():
+                  raise SystemExit("VGRAM UI source missing: " + source_name)
+          if not (Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java")).is_file():
+              raise SystemExit("VGRAM messenger source missing: VgramBadgeSync.java")
+          if not (Path("TMessagesProj/src/main/java/org/telegram/ui/VgramAudioPlayerActivity.java")).is_file():
+              raise SystemExit("VGRAM UI source missing: VgramAudioPlayerActivity.java")
+          manifest = Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+          if any(name not in manifest for name in ["VgramSettingsActivity", "VgramSupportActivity", "VgramPrivacyActivity", "VgramUpdateActivity", "VgramDevelopersActivity", "VgramPluginsActivity", "VgramBadgesActivity", "VgramQuestionsActivity", "VgramFeaturesActivity", "VgramAudioPlayerActivity", "vgram_launcher_icon"]):
+              raise SystemExit("VGRAM Android manifest integration incomplete")
+          api_diagnostics = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramApiDiagnostics.java")
+          if not api_diagnostics.is_file():
+              raise SystemExit("VGRAM API diagnostics source missing")
+          gradle = Path("TMessagesProj/build.gradle").read_text(encoding="utf-8")
+          if "com.google.android.material:material:1.12.0" not in gradle:
+              raise SystemExit("VGRAM Material Components dependency missing")
+          for theme in ["Theme.Material3.DayNight.NoActionBar"]:
+              if theme not in manifest:
+                  raise SystemExit("VGRAM Material 3 activity theme missing")
+          print("VGRAM custom screens, API diagnostics and Material 3 dependencies are registered.")
+          profile_source = Path("TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java").read_text(encoding="utf-8")
+          required_profile_hooks = ["VgramBadgeSync.apply(getParentActivity(), user.id, nameTextView[a])"]
+          missing_profile_hooks = [hook for hook in required_profile_hooks if hook not in profile_source]
+          if missing_profile_hooks:
+              raise SystemExit("VGRAM profile badge integration incomplete: " + ", ".join(missing_profile_hooks))
+          if "vgramBannerLayer" in profile_source or "vgramBannerImage" in profile_source:
+              raise SystemExit("Unexpected VGRAM profile banner overlay remains in ProfileActivity.java")
+          print("Profile badge hook is present and profile banner overlays are absent.")
+          audio_source = Path("TMessagesProj/src/main/java/org/telegram/ui/VgramAudioService.java").read_text(encoding="utf-8")
+          for hook in ["getPlayerOnUiThread", "Ignoring track with an empty stream URL", "AndroidUtilities.runOnUIThread", "onPlayerError"]:
+              if hook not in audio_source:
+                  raise SystemExit("VGRAM playback safety integration incomplete: " + hook)
+          badge_source = Path("TMessagesProj/src/main/java/org/telegram/messenger/VgramBadgeSync.java").read_text(encoding="utf-8")
+          for hook in ["seedLocalOwner", "INDICATOR_PATH", "CELL_MATRIX_VALUES", "getLocalOwnerId"]:
+              if hook not in badge_source:
+                  raise SystemExit("VGRAM badge integration incomplete: " + hook)
+          dialog_source = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java").read_text(encoding="utf-8")
+          if "VgramBadgeSync.drawInlineIndicators(canvas, currentDialogId" not in dialog_source:
+              raise SystemExit("VGRAM dialog-cell indicator hook is missing")
+          glass_source = Path("TMessagesProj/src/main/java/org/telegram/ui/VgramGlassDrawable.java").read_text(encoding="utf-8")
+          if "RING_GRADIENT" not in glass_source or "drawPremiumRing(Canvas canvas, float centerX" not in glass_source:
+              raise SystemExit("VGRAM cached Premium ring renderer is missing")
+          print("VGRAM playback, badge, Premium ring, and dialog indicator guards passed.")
+          PY
+
+      - name: Prepare stable VGRAM signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Restore stable VGRAM signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: vgram-debug-keystore-v1
+
+      - name: Build debug APK
+        working-directory: upstream
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+        run: |
+          chmod +x gradlew
+          ./gradlew :TMessagesProj_App:assembleAfatDebug --no-daemon --stacktrace
+
+      - name: Collect APK and build metadata
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          mapfile -t apks < <(find upstream/TMessagesProj_App/build/outputs/apk -type f -name "*.apk" 2>/dev/null | sort)
+          if [ "${#apks[@]}" -eq 0 ]; then
+            echo "ERROR: Gradle produced no APK files."
+            exit 1
+          fi
+          selected=""
+          for candidate in "${apks[@]}"; do
+            if [[ "$candidate" == */afat/debug/*.apk ]]; then
+              if [ -n "$selected" ]; then
+                echo "ERROR: Multiple fat debug APKs found."
+                printf '  %s\n' "$selected" "$candidate"
+                exit 1
+              fi
+              selected="$candidate"
+            fi
+          done
+          if [ -z "$selected" ]; then
+            if [ "${#apks[@]}" -ne 1 ]; then
+              echo "ERROR: Could not uniquely select the APK. Found:"
+              printf '  %s\n' "${apks[@]}"
+              exit 1
+            fi
+            selected="${apks[0]}"
+          fi
+          echo "Selected APK: $selected"
+          cp "$selected" output/VGRAM-debug.apk
+          cp upstream-telegram-commit.txt output/ 2>/dev/null || true
+          VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
+          (cd output && sha256sum VGRAM-debug.apk > VGRAM-debug.apk.sha256)
+          printf 'VGRAM version: %s\nBuild run: %s\nSource APK: %s\n' "$VERSION" "${GITHUB_RUN_NUMBER}" "$selected" > output/build-info.txt
+
+      - name: Validate APK before publishing
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="output/VGRAM-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [ -z "$SDK_ROOT" ] || [ ! -d "$SDK_ROOT/build-tools" ]; then
+            echo "ERROR: Android SDK build-tools directory was not found."
+            exit 1
+          fi
+          BUILD_TOOLS="$(find "$SDK_ROOT/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          if [ ! -x "$BUILD_TOOLS/apksigner" ]; then
+            echo "ERROR: apksigner was not found in $BUILD_TOOLS"
+            exit 1
+          fi
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          if [ -x "$BUILD_TOOLS/aapt" ]; then
+            "$BUILD_TOOLS/aapt" dump badging "$APK" | tee output/apk-badging.txt
+          elif [ -x "$BUILD_TOOLS/aapt2" ]; then
+            "$BUILD_TOOLS/aapt2" dump badging "$APK" | tee output/apk-badging.txt
+          else
+            echo "ERROR: Neither aapt nor aapt2 is available."
+            exit 1
+          fi
+          grep -Eq "^package: name='org\\.vgram\\.messenger(\\.beta)?'" output/apk-badging.txt || {
+            echo "ERROR: APK package name is not an accepted VGRAM package (org.vgram.messenger or org.vgram.messenger.beta)."
+            exit 1
+          }
+          echo "APK archive, Android package metadata, and signing verification passed."
+
+      - name: Smoke test VGRAM startup in Android emulator
+        if: success()
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 32
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            set -eu
+            adb install output/VGRAM-debug.apk
+            adb logcat -c
+            adb shell monkey -p org.vgram.messenger 1
+            sleep 20
+            adb shell pidof org.vgram.messenger >/dev/null
+            adb logcat -d -s AndroidRuntime:E | tee output/runtime-smoke-logcat.txt
+            if grep -q "FATAL EXCEPTION" output/runtime-smoke-logcat.txt; then
+              echo "ERROR: AndroidRuntime reported a fatal exception during startup smoke test."
+              exit 1
+            fi
+            echo "VGRAM startup smoke test passed on Android API 32 emulator."
+
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VGRAM-debug-apk
+          path: output/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK for in-app OTA
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(grep '^APP_VERSION_NAME=' upstream/gradle.properties | cut -d= -f2-)"
+          TAG="v${VERSION}"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --title "VGRAM ${VERSION}" --notes "Automated VGRAM Android build ${VERSION}. SHA-256 checksum is published next to the APK."
+          gh release upload "$TAG" output/VGRAM-debug.apk output/VGRAM-debug.apk.sha256 --clobber
+,
+                  r'\1\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);',
+                  launch_source
+              )
+              if config_count < 1:
+                  raise SystemExit("VGRAM Premium bootstrap failed: theme hook not found")
           launch.write_text(launch_source, encoding="utf-8")
-          print("Verified VGRAM theme hooks in LaunchActivity.onCreate and onResume.")
+          print("Verified VGRAM theme hooks and local creator Premium bootstrap in LaunchActivity.")
 
           # VgramBaseActivity.java is committed under TMessagesProj and copied into the pinned upstream source.
 
