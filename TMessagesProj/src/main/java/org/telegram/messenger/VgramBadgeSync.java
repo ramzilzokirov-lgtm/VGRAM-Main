@@ -153,6 +153,10 @@ public final class VgramBadgeSync {
                 "  ◆ DEV", " ◆ DEV", "  ✓ VERIFIED", " ✓ VERIFIED",
                 "  ✓ DEV", " ✓ DEV", "  ✓", " ✓",
                 "  ✦ VGRAM PREMIUM", " ✦ VGRAM PREMIUM",
+                "  ◆ Разработчик VGRAM", " ◆ Разработчик VGRAM",
+                "  ✓ Разработчик VGRAM", " ✓ Разработчик VGRAM",
+                "  ✓ Один из разработчиков VGRAM", " ✓ Один из разработчиков VGRAM",
+                "  ✓ Канал верифицирован VGRAM", " ✓ Канал верифицирован VGRAM",
                 "  Разработчик VGRAM", " Разработчик VGRAM",
                 "  Пользователь VGRAM", " Пользователь VGRAM"
         };
@@ -509,6 +513,25 @@ public final class VgramBadgeSync {
                             labels.put(label);
                         }
                     }
+                    // Deduplicate the server payload before caching. Different API versions can
+                    // report the same role in both top-level fields and the badges array.
+                    java.util.LinkedHashMap<String, String> normalizedLabels = new java.util.LinkedHashMap<>();
+                    for (int i = 0; i < labels.length(); i++) {
+                        String label = labels.optString(i, "").trim();
+                        if (label.isEmpty()) continue;
+                        String key = label.toLowerCase(java.util.Locale.ROOT)
+                                .replace("✓", "").replace("◆", "").replace("✦", "")
+                                .replace("разработчик vgram", "developer")
+                                .replace("один из developerов vgram", "team")
+                                .replace("один из разработчиков vgram", "team")
+                                .replace("канал верифицирован vgram", "verified_channel")
+                                .replace("vgram premium", "premium").trim();
+                        normalizedLabels.putIfAbsent(key, label);
+                    }
+                    JSONArray uniqueLabels = new JSONArray();
+                    for (String label : normalizedLabels.values()) uniqueLabels.put(label);
+                    labels = uniqueLabels;
+
                     // The verification endpoint is authoritative for role status and can exist
                     // independently from the public profile/badge payload.
                     if (labels.length() == 0 && !cache.getString("badges_" + id, "").isEmpty()) {
