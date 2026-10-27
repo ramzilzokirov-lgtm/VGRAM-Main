@@ -29,7 +29,6 @@ public final class VgramConfig {
                 .putBoolean("custom_verified", isVerified)
                 .putBoolean("glass_profile", liquidGlassProfile)
                 .putBoolean("priority_media", priorityMediaLoading)
-                .putBoolean("gradient_banner", true)
                 .apply();
     }
 
