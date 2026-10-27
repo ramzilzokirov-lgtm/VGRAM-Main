@@ -7,7 +7,7 @@ import org.telegram.ui.ActionBar.Theme;
 public final class VgramTheme {
     private VgramTheme() {}
     public static int accent(Context context) {
-        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("vgram_custom_accent", 0xff7c4dff));
+        return context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("accent", context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE).getInt("vgram_custom_accent", 0xffd6b65c));
     }
     public static int glassBubbleOpacity(Context context) {
         return Math.max(20, Math.min(90, context.getSharedPreferences("vgram_ui", Context.MODE_PRIVATE)
@@ -21,27 +21,27 @@ public final class VgramTheme {
 
     public static void apply(Context context) {
         int a = accent(context);
-        // Apply the VGRAM graphite and violet Liquid Glass palette.
-        Theme.setColor(Theme.key_windowBackgroundWhite, 0xff0d0c13, false);
+        // Apply the VGRAM graphite-and-muted-gold palette across Telegram-backed UI color keys.
+        Theme.setColor(Theme.key_windowBackgroundWhite, 0xff101112, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlackText, 0xffeeece5, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteGrayText, 0xffb5b5b0, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteGrayText2, 0xff8f9297, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteHintText, 0xff777b81, false);
-        Theme.setColor(Theme.key_windowBackgroundWhiteInputField, 0xff292c31, false);
+        Theme.setColor(Theme.key_windowBackgroundWhiteInputField, 0xff292a2b, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteInputFieldActivated, a, false);
-        Theme.setColor(Theme.key_dialogBackground, 0xff161424, false);
-        Theme.setColor(Theme.key_dialogBackgroundGray, 0xff11101b, false);
+        Theme.setColor(Theme.key_dialogBackground, 0xff1a1b1d, false);
+        Theme.setColor(Theme.key_dialogBackgroundGray, 0xff151618, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueText, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueText2, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueIcon, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteBlueButton, a, false);
-        Theme.setColor(Theme.key_actionBarDefault, 0xff191b20, false);
+        Theme.setColor(Theme.key_actionBarDefault, 0xff191a1b, false);
         Theme.setColor(Theme.key_actionBarDefaultIcon, 0xffe6e5df, false);
         Theme.setColor(Theme.key_actionBarDefaultTitle, 0xfff0efea, false);
         Theme.setColor(Theme.key_chats_unreadCounter, a, false);
         Theme.setColor(Theme.key_chats_nameMessage, a, false);
         Theme.setColor(Theme.key_chat_outBubble, blend(a, 0xff282b30, 0.30f), false);
-        Theme.setColor(Theme.key_windowBackgroundGray, 0xff17191d, false);
+        Theme.setColor(Theme.key_windowBackgroundGray, 0xff171819, false);
         Theme.setColor(Theme.key_windowBackgroundGrayShadow, 0x33101215, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteValueText, a, false);
         Theme.setColor(Theme.key_windowBackgroundWhiteLinkText, a, false);
@@ -77,7 +77,7 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_actionBarDefaultSubtitle, 0xffa6a8a9, false);
         Theme.setColor(Theme.key_actionBarDefaultSearchPlaceholder, 0xff8f9297, false);
         Theme.setColor(Theme.key_actionBarDefaultSelector, (a & 0x00ffffff) | 0x22000000, false);
-        Theme.setColor(Theme.key_actionBarDefaultSubmenuBackground, 0xff22252a, false);
+        Theme.setColor(Theme.key_actionBarDefaultSubmenuBackground, 0xff222426, false);
         Theme.setColor(Theme.key_actionBarDefaultSubmenuItem, 0xffeeece5, false);
         Theme.setColor(Theme.key_actionBarDefaultSubmenuItemIcon, a, false);
         Theme.setColor(Theme.key_actionBarDefaultSubmenuSeparator, 0x332f3339, false);
@@ -99,7 +99,7 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_chats_unreadCounterMuted, 0xff66696f, false);
         Theme.setColor(Theme.key_chats_unreadCounterText, 0xff17191d, false);
         Theme.setColor(Theme.key_chats_pinnedOverlay, 0x22202020, false);
-        Theme.setColor(Theme.key_chats_menuBackground, 0xff22252a, false);
+        Theme.setColor(Theme.key_chats_menuBackground, 0xff222426, false);
         Theme.setColor(Theme.key_chats_menuItemText, 0xffeeece5, false);
         Theme.setColor(Theme.key_chats_menuItemCheck, a, false);
         Theme.setColor(Theme.key_chats_menuItemIcon, a, false);
@@ -125,7 +125,7 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_chat_messageTextOut, 0xfff0eee6, false);
         Theme.setColor(Theme.key_chat_messageLinkIn, a, false);
         Theme.setColor(Theme.key_chat_messageLinkOut, a, false);
-        Theme.setColor(Theme.key_chat_messagePanelBackground, 0xff202328, false);
+        Theme.setColor(Theme.key_chat_messagePanelBackground, 0xff202122, false);
         Theme.setColor(Theme.key_chat_messagePanelShadow, 0x33000000, false);
         Theme.setColor(Theme.key_chat_messagePanelText, 0xffeeece5, false);
         Theme.setColor(Theme.key_chat_messagePanelHint, 0xff8f9297, false);
@@ -133,13 +133,13 @@ public final class VgramTheme {
         Theme.setColor(Theme.key_chat_messagePanelIcons, 0xffb5b5b0, false);
         Theme.setColor(Theme.key_chat_messagePanelSend, a, false);
         Theme.setColor(Theme.key_chat_messagePanelVoiceBackground, a, false);
-        Theme.setColor(Theme.key_chat_emojiPanelBackground, 0xff202328, false);
+        Theme.setColor(Theme.key_chat_emojiPanelBackground, 0xff202122, false);
         Theme.setColor(Theme.key_chat_emojiPanelShadowLine, 0x332f3339, false);
         Theme.setColor(Theme.key_chat_emojiPanelIconSelected, a, false);
-        Theme.setColor(Theme.key_chat_wallpaper, 0xff17191d, false);
-        Theme.setColor(Theme.key_chat_wallpaper_gradient_to1, 0xff202328, false);
-        Theme.setColor(Theme.key_chat_wallpaper_gradient_to2, 0xff17191d, false);
-        Theme.setColor(Theme.key_chat_wallpaper_gradient_to3, 0xff25272b, false);
+        Theme.setColor(Theme.key_chat_wallpaper, 0xff171819, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to1, 0xff202122, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to2, 0xff171819, false);
+        Theme.setColor(Theme.key_chat_wallpaper_gradient_to3, 0xff252627, false);
         Theme.setColor(Theme.key_profile_title, 0xffeeece5, false);
         Theme.setColor(Theme.key_profile_status, 0xffa6a8a9, false);
         Theme.setColor(Theme.key_profile_actionIcon, a, false);
