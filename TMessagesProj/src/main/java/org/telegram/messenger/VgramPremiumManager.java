@@ -29,7 +29,8 @@ public final class VgramPremiumManager {
 
     /** Fast synchronous check used by UserConfig; stale values refresh asynchronously. */
     public static boolean isPremium(Context context, long telegramId, boolean officialPremium) {
-        if (officialPremium || VgramBadgeSync.isLocalOwner(telegramId)) return true;
+        // VGRAM Premium is deliberately independent from Telegram Premium.
+        if (VgramBadgeSync.isLocalOwner(telegramId)) return true;
         if (context == null || telegramId <= 0) return false;
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String id = Long.toString(telegramId);
@@ -68,7 +69,8 @@ public final class VgramPremiumManager {
                 }
                 if (code < 200 || code >= 300) throw new IllegalStateException("VGRAM Premium API HTTP " + code);
                 JSONObject json = new JSONObject(raw.toString());
-                boolean premium = json.optBoolean("premium", false);
+                boolean premium = json.optBoolean("vgram_premium",
+                        json.optBoolean("premium_active", json.optBoolean("premium", false)));
                 prefs.edit().putBoolean("premium_" + id, premium)
                         .putLong("time_" + id, System.currentTimeMillis()).apply();
             } catch (Exception ignored) {
