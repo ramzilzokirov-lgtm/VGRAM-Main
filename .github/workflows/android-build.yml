@@ -335,14 +335,15 @@ jobs:
           # Activate creator-only VGRAM Premium entitlements on normal app startup too.
           # Previously activation only ran when the user opened the Premium settings screen.
           if "VgramConfig.activateIfCreator" not in launch_source:
-              launch_source, config_count = re.subn(
-                  r"(?m)^(\s*VgramTheme\.apply\(this\);\s*)",
-                  r"\1\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);",
-                  launch_source, count=1
-              )
-              if config_count != 1:
+              theme_hook = "VgramTheme.apply(this);"
+              if theme_hook not in launch_source:
                   raise SystemExit("VGRAM Premium bootstrap failed: theme hook not found")
-              launch.write_text(launch_source, encoding="utf-8")
+              launch_source = launch_source.replace(
+                  theme_hook,
+                  theme_hook + "\n        org.telegram.messenger.VgramConfig.activateIfCreator(getApplicationContext(), org.telegram.messenger.UserConfig.selectedAccount);",
+                  1
+              )
+          launch.write_text(launch_source, encoding="utf-8")
           print("Verified VGRAM theme hooks and local creator Premium bootstrap in LaunchActivity.")
 
           
