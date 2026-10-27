@@ -704,7 +704,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
         items.add(SettingCell.Factory.of(27, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_appearance, getString(R.string.VgramSettingsAppearance), getString(R.string.VgramSettingsAppearanceInfo)));
         items.add(SettingCell.Factory.of(30, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_plugins, getString(R.string.VgramSettingsPlugins), getString(R.string.VgramSettingsPluginsInfo)));
-        items.add(SettingCell.Factory.of(31, 0xFFC5B878, 0xFF9E914C, R.drawable.vgram_settings_badges, getString(R.string.VgramSettingsBadges), getString(R.string.VgramSettingsBadgesInfo)));
+
         items.add(SettingCell.Factory.of(3, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
         items.add(SettingCell.Factory.of(5, IconBackgroundColors.RED.top, IconBackgroundColors.RED.bottom, R.drawable.settings_sounds, getString(R.string.SettingsNotifications), getString(R.string.SettingsNotificationsInfo)));
         items.add(SettingCell.Factory.of(6, IconBackgroundColors.BLUE_DEEP.top, IconBackgroundColors.BLUE_DEEP.bottom, R.drawable.settings_data, getString(R.string.SettingsData), getString(R.string.SettingsDataInfo)));
@@ -891,18 +891,12 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramPluginsActivity.class));
                 break;
             }
-            case 31: {
-                getParentActivity().startActivity(new Intent(getParentActivity(), VgramBadgesActivity.class));
-                break;
-            }
-            case 32: {
+case 32: {
                 getParentActivity().startActivity(new Intent(getParentActivity(), VgramAudioPlayerActivity.class));
                 break;
             }
             case 33: {
-                Intent intent = new Intent(getParentActivity(), VgramSettingsActivity.class);
-                intent.putExtra("vgram_section", "premium");
-                getParentActivity().startActivity(intent);
+                getParentActivity().startActivity(new Intent(getParentActivity(), VgramPremiumActivity.class));
                 break;
             }
         }
