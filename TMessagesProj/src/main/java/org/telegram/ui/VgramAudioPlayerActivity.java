@@ -133,6 +133,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         cloudParams.leftMargin = dp(6);
         providers.addView(soundCloudSearch, cloudParams);
         root.addView(providers);
+        VgramMotion.applySpringTouch(spotifySearch);
+        VgramMotion.applySpringTouch(soundCloudSearch);
         spotifySearch.setOnClickListener(v -> openProviderSearch("spotify"));
         soundCloudSearch.setOnClickListener(v -> openProviderSearch("soundcloud"));
 
@@ -188,6 +190,10 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         controls.addView(next, controlParams());
         controls.addView(stereo, controlParams());
         playerContent.addView(controls);
+        VgramMotion.applySpringTouch(prev);
+        VgramMotion.applySpringTouch(playButton);
+        VgramMotion.applySpringTouch(next);
+        VgramMotion.applySpringTouch(stereo);
         prev.setOnClickListener(v -> playRelative(-1));
         next.setOnClickListener(v -> playRelative(1));
         playButton.setOnClickListener(v -> playback.togglePlayPause());
@@ -222,6 +228,10 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         empty.setGravity(Gravity.CENTER);
         root.addView(empty, new LinearLayout.LayoutParams(-1, dp(44)));
         body.addView(root, new LinearLayout.LayoutParams(-1, -1));
+        root.setAlpha(0f);
+        root.setTranslationY(dp(14));
+        root.animate().alpha(1f).translationY(0f).setDuration(320L)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
 
         searchField.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -375,6 +385,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
         v.setGravity(Gravity.CENTER);
         v.setPadding(dp(10), dp(10), dp(10), dp(10));
         v.setBackground(panel(0x18ffffff, 0x30ffffff, 24));
+        VgramMotion.applySpringTouch(v);
         return v;
     }
 
@@ -421,6 +432,8 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
                 h.cover.setImageURI(Uri.parse(track.coverUrl));
                 if (h.cover.getDrawable() == null) h.cover.setImageResource(android.R.drawable.ic_media_play);
             } catch (RuntimeException ignored) { h.cover.setImageResource(android.R.drawable.ic_media_play); }
+            VgramMotion.applySpringTouch(h.itemView);
+            VgramMotion.applySpringTouch(h.play);
             h.itemView.setContentDescription(track.title + ", " + track.artist + ", " + formatTime(track.durationMs));
             h.itemView.setOnClickListener(v -> playTrack(track));
             h.play.setContentDescription("Воспроизвести " + track.title);
