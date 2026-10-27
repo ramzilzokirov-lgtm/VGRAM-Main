@@ -70,6 +70,7 @@ abstract class VgramBaseActivity extends Activity {
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, margin(0, dp(5), 0, 0));
         setContentView(root);
+        VgramMotion.playEntrance(this, root);
     }
 
     @Override protected void onResume() {
