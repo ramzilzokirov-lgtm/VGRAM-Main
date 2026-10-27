@@ -141,15 +141,14 @@ public final class VgramBadgeSync {
 
     private static CharSequence stripRenderedBadges(CharSequence source) {
         String value = source == null ? "" : source.toString();
-        // Older builds appended owner pills directly to the title. Remove those suffixes
-        // before re-rendering so repeated binds cannot stack the same developer labels.
+        // A title view can be rebound repeatedly. Strip any sequence of legacy VGRAM
+        // suffixes, including combinations written by older builds, before drawing once.
         String[] suffixes = {
-                "  ◆ DEV  ✓  ✦ VGRAM PREMIUM",
-                "  ◆ DEV  ✓",
-                "  ✦ VGRAM PREMIUM",
-                "  ✓ DEV",
-                "  ✓",
-                "  ◆ DEV"
+                "  ◆ DEV", " ◆ DEV", "  ✓ VERIFIED", " ✓ VERIFIED",
+                "  ✓ DEV", " ✓ DEV", "  ✓", " ✓",
+                "  ✦ VGRAM PREMIUM", " ✦ VGRAM PREMIUM",
+                "  Разработчик VGRAM", " Разработчик VGRAM",
+                "  Пользователь VGRAM", " Пользователь VGRAM"
         };
         boolean changed;
         do {
@@ -158,6 +157,7 @@ public final class VgramBadgeSync {
                 if (value.endsWith(suffix)) {
                     value = value.substring(0, value.length() - suffix.length()).trim();
                     changed = true;
+                    break;
                 }
             }
         } while (changed);
