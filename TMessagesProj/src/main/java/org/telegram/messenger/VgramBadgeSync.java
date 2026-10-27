@@ -139,10 +139,35 @@ public final class VgramBadgeSync {
         return result;
     }
 
+    private static CharSequence stripRenderedBadges(CharSequence source) {
+        String value = source == null ? "" : source.toString();
+        // Older builds appended owner pills directly to the title. Remove those suffixes
+        // before re-rendering so repeated binds cannot stack the same developer labels.
+        String[] suffixes = {
+                "  ◆ DEV  ✓  ✦ VGRAM PREMIUM",
+                "  ◆ DEV  ✓",
+                "  ✦ VGRAM PREMIUM",
+                "  ✓ DEV",
+                "  ✓",
+                "  ◆ DEV"
+        };
+        boolean changed;
+        do {
+            changed = false;
+            for (String suffix : suffixes) {
+                if (value.endsWith(suffix)) {
+                    value = value.substring(0, value.length() - suffix.length()).trim();
+                    changed = true;
+                }
+            }
+        } while (changed);
+        return value;
+    }
+
     /** Applies cached badges immediately and refreshes them asynchronously. */
     public static void apply(Context context, long telegramId, SimpleTextView title) {
         if (context == null || title == null || telegramId <= 0) return;
-        CharSequence base = title.getText();
+        CharSequence base = stripRenderedBadges(title.getText());
         title.setText(withBadges(context, telegramId, base));
         refresh(context, telegramId, title, base);
     }
