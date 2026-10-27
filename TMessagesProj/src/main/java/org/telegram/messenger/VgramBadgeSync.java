@@ -519,6 +519,16 @@ public final class VgramBadgeSync {
                     for (int i = 0; i < labels.length(); i++) {
                         String label = labels.optString(i, "").trim();
                         if (label.isEmpty()) continue;
+                        String normalizedRole = label.toLowerCase(java.util.Locale.ROOT)
+                                .replace("✓", "").replace("◆", "").replace("✦", "").trim();
+                        boolean ownerOnlyDeveloper = normalizedRole.equals("dev")
+                                || normalizedRole.equals("vgram_dev")
+                                || normalizedRole.equals("vgram_developer")
+                                || normalizedRole.equals("developer")
+                                || (normalizedRole.contains("разработчик vgram")
+                                    && !normalizedRole.contains("один из разработчиков"));
+                        // The developer badge belongs only to the VGRAM creator account.
+                        if (telegramId != VGRAM_CREATOR_ID && ownerOnlyDeveloper) continue;
                         String key = label.toLowerCase(java.util.Locale.ROOT)
                                 .replace("✓", "").replace("◆", "").replace("✦", "")
                                 .replace("разработчик vgram", "developer")
