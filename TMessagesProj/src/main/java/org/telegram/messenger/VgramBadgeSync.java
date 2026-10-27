@@ -109,7 +109,7 @@ public final class VgramBadgeSync {
         SpannableStringBuilder result = new SpannableStringBuilder(name == null ? "" : name);
         if (context == null || telegramId <= 0) return result;
         if (telegramId == VGRAM_CREATOR_ID) {
-            SharedPreferences local = context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE);
+            SharedPreferences local = VgramConfig.preferences(context, UserConfig.selectedAccount);
             if (local.getBoolean("show_dev_badge", true)) {
                 result.append("  ◆ DEV");
                 int developerStart = result.length() - "◆ DEV".length();
@@ -302,7 +302,7 @@ public final class VgramBadgeSync {
     public static boolean hasBadge(Context context, long telegramId) {
         if (context == null || telegramId <= 0) return false;
         if (telegramId == VGRAM_CREATOR_ID) {
-            SharedPreferences local = context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE);
+            SharedPreferences local = VgramConfig.preferences(context, UserConfig.selectedAccount);
             return local.getBoolean("show_dev_badge", true) || local.getBoolean("custom_verified", true);
         }
         SharedPreferences cache = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -321,7 +321,7 @@ public final class VgramBadgeSync {
     public static boolean isPremium(Context context, long telegramId) {
         if (telegramId == VGRAM_CREATOR_ID) {
             if (context == null) return true;
-            return context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE).getBoolean("premium_active", true);
+            return VgramConfig.preferences(context, UserConfig.selectedAccount).getBoolean("premium_active", true);
         }
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
@@ -342,7 +342,7 @@ public final class VgramBadgeSync {
     public static boolean isVerified(Context context, long telegramId) {
         if (telegramId == VGRAM_CREATOR_ID) {
             if (context == null) return true;
-            return context.getApplicationContext().getSharedPreferences("vgram_local_entitlements_" + UserConfig.selectedAccount, Context.MODE_PRIVATE).getBoolean("custom_verified", true);
+            return VgramConfig.preferences(context, UserConfig.selectedAccount).getBoolean("custom_verified", true);
         }
         if (context == null || telegramId <= 0) return false;
         seedLocalOwner(context);
