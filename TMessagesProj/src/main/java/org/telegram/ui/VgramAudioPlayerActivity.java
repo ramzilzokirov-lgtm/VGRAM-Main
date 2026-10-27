@@ -157,7 +157,7 @@ public class VgramAudioPlayerActivity extends VgramBaseActivity {
             stereo.setText(stereoPan ? "STEREO  ON" : "STEREO  OFF");
             stereo.setTextColor(stereoPan ? 0xffc8aaff : 0xffb7b1c8);
             org.telegram.ui.VgramModules.Audio.VgramStereoPanAudioProcessor processor = VgramAudioService.getStereoPanAudioProcessor();
-            if (processor != null) processor.setEnabled(stereoPan);
+            if (processor != null) { if (stereoPan) processor.setPhase(0.5f); else processor.resetPan(); }
         });
         root.addView(playerCard, margin(0, dp(12), 0, dp(10)));
 
